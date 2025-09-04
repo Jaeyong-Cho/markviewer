@@ -2,6 +2,9 @@
 
 A powerful web-based markdown viewer with PlantUML, Mermaid, and search capabilities.
 
+## Preview
+![alt text](./screenshot/image.png)
+
 ## Features
 
 - 📝 **Markdown Rendering**: Full markdown support with GitHub-style rendering

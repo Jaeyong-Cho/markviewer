@@ -43,12 +43,15 @@ class MarkdownRenderer extends Utils.EventEmitter {
             return this.createCodeBlock(code, language);
         };
 
-        // Custom image renderer for better handling
+        // Custom image renderer for better handling with relative path support
         renderer.image = (href, title, text) => {
-            const titleAttr = title ? ` title="${title}"` : '';
-            const altAttr = text ? ` alt="${text}"` : '';
+            const titleAttr = title ? ` title="${Utils.escapeHtml(title)}"` : '';
+            const altAttr = text ? ` alt="${Utils.escapeHtml(text)}"` : '';
             
-            return `<img src="${href}"${altAttr}${titleAttr} loading="lazy" />`;
+            // Create a unique identifier for this image to handle processing later
+            const imageId = Utils.generateId();
+            
+            return `<img src="${href}"${altAttr}${titleAttr} loading="lazy" data-image-id="${imageId}" data-original-src="${href}" />`;
         };
 
         // Custom table renderer with responsive wrapper
@@ -171,6 +174,7 @@ class MarkdownRenderer extends Utils.EventEmitter {
             // Process special content types
             await this.processPlantUMLBlocks();
             await this.processMermaidBlocks();
+            this.processImages();
             this.processInternalLinks();
             this.addCodeCopyButtons();
             this.generateTableOfContents();
@@ -340,6 +344,63 @@ class MarkdownRenderer extends Utils.EventEmitter {
                 this.showMermaidError(block, error, source || 'Unknown source');
             }
         }
+    }
+
+    /**
+     * Process images to handle relative paths and improve loading
+     */
+    processImages() {
+        const images = this.container.querySelectorAll('img[data-image-id]');
+        
+        images.forEach(img => {
+            const originalSrc = img.dataset.originalSrc;
+            if (!originalSrc) return;
+            
+            // Check if this is a relative path (doesn't start with http/https or /)
+            if (!originalSrc.startsWith('http://') && 
+                !originalSrc.startsWith('https://') && 
+                !originalSrc.startsWith('/') && 
+                !originalSrc.startsWith('data:')) {
+                
+                // This is a relative path - use the API to serve it
+                const currentFile = this.app && this.app.state ? this.app.state.currentFile : null;
+                
+                if (currentFile) {
+                    // Build API URL for relative image
+                    const apiUrl = `/api/image?imagePath=${encodeURIComponent(originalSrc)}&markdownPath=${encodeURIComponent(currentFile)}`;
+                    img.src = apiUrl;
+                } else {
+                    // Fallback: try to load as relative to current location
+                    console.warn('No current file context for relative image:', originalSrc);
+                }
+            } else {
+                // This is an absolute URL (http/https) or data URL - use it directly
+                img.src = originalSrc;
+            }
+            
+            // Add error handling for broken images
+            img.addEventListener('error', function(event) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'image-error';
+                errorDiv.innerHTML = `
+                    <div class="image-error-content">
+                        <span class="image-error-icon">🖼️</span>
+                        <span class="image-error-message">Image not found</span>
+                        <span class="image-error-path">${originalSrc}</span>
+                    </div>
+                `;
+                
+                // Replace the image with error message
+                if (img.parentNode) {
+                    img.parentNode.replaceChild(errorDiv, img);
+                }
+            });
+            
+            // Add loading indicator for larger images
+            img.addEventListener('load', function() {
+                img.classList.add('image-loaded');
+            });
+        });
     }
 
     /**

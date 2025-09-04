@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const fileHandler = require('./services/file-handler');
 const plantumlService = require('./services/plantuml-service');
 const searchService = require('./services/search-service');
@@ -162,6 +163,70 @@ class MarkViewerServer {
                 res.json(searchResults);
             } catch (error) {
                 console.error('Search error:', error);
+                res.status(500).json({ error: error.message });
+            }
+        });
+
+        // Image serving endpoint for markdown-relative images
+        this.app.get('/api/image', async (req, res) => {
+            try {
+                const { imagePath, markdownPath } = req.query;
+                
+                if (!imagePath) {
+                    return res.status(400).json({ error: 'Image path parameter is required' });
+                }
+
+                // Resolve image path relative to markdown file
+                let resolvedImagePath = imagePath;
+                
+                if (markdownPath && !path.isAbsolute(imagePath)) {
+                    // Get directory of the markdown file
+                    const markdownDir = path.dirname(markdownPath);
+                    // Resolve image path relative to markdown directory
+                    resolvedImagePath = path.resolve(markdownDir, imagePath);
+                }
+
+                // Security: Ensure the resolved path doesn't escape using path traversal
+                const normalizedPath = path.normalize(resolvedImagePath);
+                if (normalizedPath.includes('..')) {
+                    return res.status(403).json({ error: 'Invalid image path' });
+                }
+
+                // Check if file exists and is an image
+                const fs = require('fs').promises;
+                try {
+                    await fs.access(normalizedPath);
+                } catch (error) {
+                    return res.status(404).json({ error: 'Image file not found' });
+                }
+
+                // Get file extension to determine content type
+                const ext = path.extname(normalizedPath).toLowerCase();
+                const imageTypes = {
+                    '.png': 'image/png',
+                    '.jpg': 'image/jpeg',
+                    '.jpeg': 'image/jpeg',
+                    '.gif': 'image/gif',
+                    '.svg': 'image/svg+xml',
+                    '.webp': 'image/webp',
+                    '.bmp': 'image/bmp',
+                    '.ico': 'image/x-icon'
+                };
+
+                const contentType = imageTypes[ext];
+                if (!contentType) {
+                    return res.status(400).json({ error: 'Unsupported image format' });
+                }
+
+                // Set appropriate headers
+                res.setHeader('Content-Type', contentType);
+                res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+
+                // Send the image file
+                res.sendFile(normalizedPath);
+                
+            } catch (error) {
+                console.error('Error serving image:', error);
                 res.status(500).json({ error: error.message });
             }
         });
