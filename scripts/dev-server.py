@@ -75,7 +75,24 @@ def run_server(port=8080, directory='.', host='0.0.0.0'):
         sys.exit(0)
 
 if __name__ == "__main__":
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
-    directory = sys.argv[2] if len(sys.argv) > 2 else '.'
-    host = sys.argv[3] if len(sys.argv) > 3 else '0.0.0.0'
-    run_server(port, directory, host)
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='MarkViewer Development Server')
+    parser.add_argument('--port', '-p', type=int, default=8080, 
+                       help='Port number for the server (default: 8080)')
+    parser.add_argument('--directory', '-d', default='.', 
+                       help='Directory to serve (default: current directory)')
+    parser.add_argument('--host', default='0.0.0.0', 
+                       help='Host to bind to (default: 0.0.0.0 for external access)')
+    
+    # Support legacy positional arguments for backward compatibility
+    if len(sys.argv) > 1 and not sys.argv[1].startswith('-'):
+        # Legacy mode: python dev-server.py [port] [directory] [host]
+        port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
+        directory = sys.argv[2] if len(sys.argv) > 2 else '.'
+        host = sys.argv[3] if len(sys.argv) > 3 else '0.0.0.0'
+        run_server(port, directory, host)
+    else:
+        # New argument parsing mode
+        args = parser.parse_args()
+        run_server(args.port, args.directory, args.host)

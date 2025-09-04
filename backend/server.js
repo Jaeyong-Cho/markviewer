@@ -10,9 +10,19 @@ const searchService = require('./services/search-service');
  * Provides APIs for file operations, PlantUML rendering, and search
  */
 class MarkViewerServer {
-    constructor() {
+    constructor(options = {}) {
         this.app = express();
-        this.port = process.env.PORT || 3001;
+        
+        // Port configuration with multiple fallbacks
+        this.port = options.port || 
+                   process.argv[2] || 
+                   process.env.PORT || 
+                   process.env.BACKEND_PORT || 
+                   3001;
+        
+        // Convert to number if it's a string
+        this.port = parseInt(this.port, 10);
+        
         this.setupMiddleware();
         this.setupRoutes();
     }
@@ -186,7 +196,20 @@ class MarkViewerServer {
 }
 
 // Create and start server
-const server = new MarkViewerServer();
+const options = {};
+
+// Check for command line arguments
+const args = process.argv.slice(2);
+if (args.length > 0) {
+    const port = parseInt(args[0], 10);
+    if (!isNaN(port) && port > 0 && port <= 65535) {
+        options.port = port;
+    } else {
+        console.error('Invalid port number. Using default port.');
+    }
+}
+
+const server = new MarkViewerServer(options);
 server.start();
 
 module.exports = MarkViewerServer;
