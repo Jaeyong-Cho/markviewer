@@ -41,7 +41,7 @@ npm run dev
 ```
 
 This starts:
-- Backend API server on `http://localhost:3000`
+- Backend API server on `http://localhost:3001`
 - Frontend development server on `http://localhost:8080`
 
 ### 3. Open in Browser
@@ -219,6 +219,26 @@ For production deployment:
 
 ## Troubleshooting
 
+### MIME Type Errors / Module Loading Issues
+
+If you see errors like "Failed to load module script: Expected a JavaScript module script but the server responded with a MIME type of 'text/html'":
+
+1. **Use the custom development server**: The app includes a custom Python server that properly handles MIME types
+   ```bash
+   npm run dev  # Uses the enhanced development server
+   ```
+
+2. **Clear browser cache**: Hard refresh with `Ctrl+F5` (Windows/Linux) or `Cmd+Shift+R` (Mac)
+
+3. **Check port conflicts**: Ensure ports 3001 (backend) and 8080 (frontend) are available
+   ```bash
+   # Kill processes on conflicting ports
+   pkill -f "node.*server.js"
+   pkill -f "python3.*8080"
+   ```
+
+4. **Disable browser extensions**: Some ad blockers or security extensions may interfere
+
 ### PlantUML Not Working
 
 1. Verify Java is installed: `java -version`
@@ -227,7 +247,7 @@ For production deployment:
 
 ### Search Not Working
 
-1. Ensure backend server is running on port 3000
+1. Ensure backend server is running on port 3001
 2. Check browser console for API errors
 3. Verify the selected directory contains markdown files
 
@@ -242,6 +262,25 @@ For production deployment:
 1. Large directories: The app handles up to 1000+ files efficiently
 2. Large files: Files over 10MB are rejected with an error message
 3. Clear cache: Use browser dev tools to clear cache if needed
+
+### Development Server Issues
+
+If the development servers fail to start:
+
+1. **Port conflicts**: Change ports in configuration files
+   - Backend: `backend/server.js` (line with `this.port = process.env.PORT || 3001`)
+   - Frontend: `frontend/package.json` (serve script port parameter)
+
+2. **Permission issues**: Ensure scripts are executable
+   ```bash
+   chmod +x scripts/dev.sh
+   chmod +x scripts/dev-server.py
+   ```
+
+3. **Dependencies**: Reinstall if needed
+   ```bash
+   npm run install-all
+   ```
 
 ## Contributing
 

@@ -5,7 +5,7 @@
 
 class ApiClient {
     constructor() {
-        this.baseUrl = 'http://localhost:3000/api';
+        this.baseUrl = 'http://localhost:3001/api';
         this.timeout = 30000; // 30 seconds
     }
 
@@ -294,7 +294,8 @@ class ApiService {
 }
 
 // Create global API service instance
-window.api = new ApiService();
+window.API = ApiService; // Export class
+window.api = new ApiService(); // Export instance
 
 // Periodic cache cleanup
 setInterval(() => {

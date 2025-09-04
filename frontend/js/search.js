@@ -445,4 +445,5 @@ class SearchComponent extends Utils.EventEmitter {
 }
 
 // Make SearchComponent available globally
+window.SearchManager = SearchComponent;
 window.SearchComponent = SearchComponent;

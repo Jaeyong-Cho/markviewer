@@ -4,7 +4,8 @@
   "description": "Frontend for markdown viewer application",
   "main": "index.html",
   "scripts": {
-    "serve": "python3 -m http.server 8080",
+    "serve": "python3 ../scripts/dev-server.py 8081 .",
+    "serve-basic": "python3 -m http.server 8081",
     "build": "echo 'No build process needed for vanilla JS'"
   },
   "keywords": ["markdown", "viewer", "frontend"],

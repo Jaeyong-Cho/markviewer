@@ -574,5 +574,9 @@ class MarkViewerApp extends Utils.EventEmitter {
     }
 }
 
+// Export MarkViewerApp class globally
+window.MarkViewerApp = MarkViewerApp;
+
 // Initialize application when page loads
-window.app = new MarkViewerApp();
+// Note: This will be called from index.html after all dependencies are loaded
+// window.app = new MarkViewerApp();

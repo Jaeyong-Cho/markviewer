@@ -5,7 +5,8 @@
   "scripts": {
     "install-all": "cd backend && npm install && cd ../frontend && npm install",
     "start": "concurrently \"cd backend && npm start\" \"cd frontend && npm run serve\"",
-    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run serve\"",
+    "dev": "./scripts/dev.sh",
+    "dev-concurrent": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run serve\"",
     "setup": "npm run download-plantuml && npm run install-all",
     "download-plantuml": "node scripts/download-plantuml.js"
   },

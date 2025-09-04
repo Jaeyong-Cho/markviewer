@@ -3,7 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>MarkViewer - Markdown Viewer</title>
+    
+    <!-- Prevent module loading issues -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self'; 
+        script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; 
+        style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; 
+        connect-src 'self' http://localhost:3001;
+        img-src 'self' data: blob:;
+    ">
     
     <!-- External libraries from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/marked@9.1.2/marked.min.js"></script>
@@ -251,12 +262,160 @@ function renderMarkdown(content) {
         </div>
     </div>
 
-    <!-- Application scripts -->
-    <script src="js/utils.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/renderer.js"></script>
-    <script src="js/sidebar.js"></script>
-    <script src="js/search.js"></script>
-    <script src="js/app.js"></script>
+    <!-- Application scripts - Load in dependency order with cache busting -->
+    <script>
+        // Enhanced script loading with error handling and proper dependency management
+        const timestamp = new Date().getTime();
+        let loadedScripts = 0;
+        const totalScripts = 6;
+        let allScriptsLoaded = false;
+        
+        const loadScript = (src) => {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = `${src}?v=${timestamp}`;
+                script.defer = false; // Load synchronously for better dependency management
+                
+                script.onload = () => {
+                    loadedScripts++;
+                    console.log(`✅ Loaded: ${src} (${loadedScripts}/${totalScripts})`);
+                    resolve();
+                };
+                
+                script.onerror = (error) => {
+                    console.error(`❌ Failed to load: ${src}`, error);
+                    reject(new Error(`Failed to load ${src}`));
+                };
+                
+                document.head.appendChild(script);
+            });
+        };
+        
+        // Load scripts sequentially to ensure proper dependency order
+        const scripts = [
+            'js/utils.js',
+            'js/api.js', 
+            'js/renderer.js',
+            'js/sidebar.js',
+            'js/search.js',
+            'js/app.js'
+        ];
+        
+        // Load scripts one by one to ensure dependency order
+        async function loadScriptsSequentially() {
+            try {
+                for (const script of scripts) {
+                    await loadScript(script);
+                    // Small delay to ensure script execution
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+                console.log('🎉 All scripts loaded successfully');
+                allScriptsLoaded = true;
+                
+                // Trigger dependency check after all scripts are loaded
+                window.dispatchEvent(new CustomEvent('scriptsLoaded'));
+            } catch (error) {
+                console.error('💥 Script loading failed:', error);
+                document.body.innerHTML = `
+                    <div style="padding: 20px; color: red; font-family: monospace;">
+                        <h2>Script Loading Error</h2>
+                        <p>Failed to load application scripts: ${error.message}</p>
+                        <p>Please refresh the page or check the console for details.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Start loading scripts
+        loadScriptsSequentially();
+    </script>
+    
+    <!-- Initialize application after all scripts are loaded -->
+    <script>
+        let appInitialized = false;
+        
+        function initializeApp() {
+            if (appInitialized) return;
+            
+            // Check if all dependencies are loaded
+            const dependencies = {
+                Utils: typeof Utils !== 'undefined',
+                API: typeof API !== 'undefined', 
+                MarkdownRenderer: typeof MarkdownRenderer !== 'undefined',
+                Sidebar: typeof Sidebar !== 'undefined',
+                SearchManager: typeof SearchManager !== 'undefined',
+                MarkViewerApp: typeof MarkViewerApp !== 'undefined'
+            };
+            
+            const missingDeps = Object.entries(dependencies)
+                .filter(([name, loaded]) => !loaded)
+                .map(([name]) => name);
+            
+            if (missingDeps.length === 0) {
+                console.log('🚀 All dependencies loaded, starting MarkViewer...');
+                console.log('Dependencies check:', dependencies);
+                
+                try {
+                    window.app = new MarkViewerApp();
+                    appInitialized = true;
+                    console.log('✅ MarkViewer application initialized successfully');
+                } catch (error) {
+                    console.error('❌ Failed to initialize MarkViewer:', error);
+                }
+            } else {
+                console.warn(`⏳ Missing dependencies: ${missingDeps.join(', ')}`);
+                console.log('Current state:', dependencies);
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // Try to initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 DOM Content Loaded');
+            
+            // Wait for scripts to be loaded
+            const maxAttempts = 100; // 10 seconds max
+            let attempts = 0;
+            
+            const tryInitialize = () => {
+                attempts++;
+                
+                if (initializeApp()) {
+                    console.log(`✅ App initialized after ${attempts} attempts`);
+                    return;
+                }
+                
+                if (attempts >= maxAttempts) {
+                    console.error('❌ Failed to initialize app after maximum attempts');
+                    console.error('This usually means some script files failed to load properly');
+                    
+                    // Show user-friendly error
+                    const errorDiv = document.createElement('div');
+                    errorDiv.style.cssText = 'position: fixed; top: 20px; left: 20px; right: 20px; background: #ff6b6b; color: white; padding: 15px; border-radius: 5px; z-index: 9999;';
+                    errorDiv.innerHTML = `
+                        <strong>Application Failed to Start</strong><br>
+                        Some JavaScript files may not have loaded properly. 
+                        Please refresh the page or check your network connection.
+                        <button onclick="this.parentElement.remove()" style="float: right; background: none; border: none; color: white; cursor: pointer;">×</button>
+                    `;
+                    document.body.appendChild(errorDiv);
+                    return;
+                }
+                
+                setTimeout(tryInitialize, 100);
+            };
+            
+            // Start trying to initialize
+            setTimeout(tryInitialize, 100);
+        });
+        
+        // Also listen for the custom scriptsLoaded event
+        window.addEventListener('scriptsLoaded', function() {
+            console.log('📦 Scripts loaded event received');
+            setTimeout(initializeApp, 200); // Small delay to ensure script execution
+        });
+    </script>
 </body>
 </html>
