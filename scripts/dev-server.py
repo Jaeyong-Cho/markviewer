@@ -48,7 +48,7 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         
         super().end_headers()
 
-def run_server(port=8080, directory='.'):
+def run_server(port=8080, directory='.', host='0.0.0.0'):
     """Run the custom HTTP server"""
     # Change to the specified directory
     if directory != '.':
@@ -58,8 +58,10 @@ def run_server(port=8080, directory='.'):
     handler = CustomHTTPRequestHandler
     
     try:
-        with socketserver.TCPServer(("", port), handler) as httpd:
-            print(f"Serving directory '{os.getcwd()}' at http://localhost:{port}/")
+        with socketserver.TCPServer((host, port), handler) as httpd:
+            print(f"Serving directory '{os.getcwd()}' at http://{host}:{port}/")
+            if host == '0.0.0.0':
+                print(f"External access: http://<your-ip>:{port}/")
             print("Press Ctrl+C to stop the server")
             httpd.serve_forever()
     except OSError as e:
@@ -75,4 +77,5 @@ def run_server(port=8080, directory='.'):
 if __name__ == "__main__":
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
     directory = sys.argv[2] if len(sys.argv) > 2 else '.'
-    run_server(port, directory)
+    host = sys.argv[3] if len(sys.argv) > 3 else '0.0.0.0'
+    run_server(port, directory, host)

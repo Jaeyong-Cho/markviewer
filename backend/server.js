@@ -29,7 +29,22 @@ class MarkViewerServer {
 
         // Enable CORS for frontend communication
         this.app.use(cors({
-            origin: ['http://localhost:8080', 'http://127.0.0.1:8080'],
+            origin: function(origin, callback) {
+                // Allow requests with no origin (mobile apps, curl, etc.)
+                if (!origin) return callback(null, true);
+                
+                // Allow localhost and local network access
+                const allowedOrigins = [
+                    /^https?:\/\/localhost(:\d+)?$/,
+                    /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
+                    /^https?:\/\/192\.168\.\d+\.\d+(:\d+)?$/,
+                    /^https?:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/,
+                    /^https?:\/\/172\.(1[6-9]|2\d|3[01])\.\d+\.\d+(:\d+)?$/
+                ];
+                
+                const isAllowed = allowedOrigins.some(pattern => pattern.test(origin));
+                callback(null, isAllowed);
+            },
             credentials: true
         }));
 
@@ -161,10 +176,11 @@ class MarkViewerServer {
      * Start the server
      */
     start() {
-        this.app.listen(this.port, () => {
-            console.log(`MarkViewer server running on http://localhost:${this.port}`);
-            console.log(`API available at http://localhost:${this.port}/api`);
-            console.log(`Frontend available at http://localhost:${this.port}`);
+        this.app.listen(this.port, '0.0.0.0', () => {
+            console.log(`MarkViewer server running on http://0.0.0.0:${this.port}`);
+            console.log(`API available at http://0.0.0.0:${this.port}/api`);
+            console.log(`Frontend available at http://0.0.0.0:${this.port}`);
+            console.log(`External access: http://<your-ip>:${this.port}`);
         });
     }
 }

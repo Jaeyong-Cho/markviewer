@@ -217,6 +217,30 @@ For production deployment:
 3. Configure the backend server with proper environment variables
 4. Set up reverse proxy for API endpoints
 
+### External Access
+
+To allow external devices (mobile, other computers) to access your MarkViewer:
+
+1. **Start with external access enabled**:
+   ```bash
+   ./scripts/start-external.sh
+   ```
+
+2. **Find your IP address**:
+   - The script will automatically display available network interfaces
+   - Or manually check: `ifconfig` (macOS/Linux) or `ipconfig` (Windows)
+
+3. **Access from external devices**:
+   - Frontend: `http://<your-ip>:8080`
+   - API: `http://<your-ip>:3001/api`
+
+4. **Firewall considerations**:
+   - Make sure ports 3001 and 8080 are open on your firewall
+   - On macOS: System Preferences → Security & Privacy → Firewall
+   - The application automatically allows local network access (192.168.x.x, 10.x.x.x ranges)
+
+5. **Security note**: External access is designed for local networks. Do not expose to public internet without proper security measures.
+
 ## Troubleshooting
 
 ### MIME Type Errors / Module Loading Issues
