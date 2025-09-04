@@ -13,8 +13,8 @@ The search functionality has been enhanced to provide comprehensive search capab
 ### 2. Enhanced Result Display
 - **Match Breakdown**: Shows separate counts for filename vs. content matches
 - **Visual Indicators**: 
-  - 📁 icon for filename matches
-  - 📄 icon for content matches
+  - "FILE" label for filename matches
+  - "CONTENT" label for content matches
 - **Preview Support**: Click "Preview" button to see file content without opening
 
 ### 3. Improved Search Results
@@ -65,10 +65,10 @@ The search functionality has been enhanced to provide comprehensive search capab
 ### Searching for "API"
 - Finds files named "api.md"
 - Finds files containing "API" in content
-- Shows both types with appropriate icons
+- Shows both types with appropriate labels
 - Provides previews of matching content
 
 ### Searching for filenames
 - "README" finds all README files
-- Shows filename match with 📁 icon
+- Shows filename match with "FILE" label
 - Still searches content for additional matches

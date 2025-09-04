@@ -244,7 +244,7 @@ class MarkdownRenderer extends Utils.EventEmitter {
         // Properly encode the original trimmed code for the data attribute by using base64
         const encodedCode = btoa(unescape(encodeURIComponent(trimmedCode)));
         
-        const result = `<div class="code-block-wrapper"><div class="code-block-header">${languageLabel}<button class="code-copy-btn" data-code-b64="${encodedCode}" title="Copy code">📋</button></div><pre><code class="hljs${languageClass}">${highlightedCode}</code></pre></div>`;
+        const result = `<div class="code-block-wrapper"><div class="code-block-header">${languageLabel}<button class="code-copy-btn" data-code-b64="${encodedCode}" title="Copy code">Copy</button></div><pre><code class="hljs${languageClass}">${highlightedCode}</code></pre></div>`;
         
         return result;
     }
@@ -385,20 +385,20 @@ class MarkdownRenderer extends Utils.EventEmitter {
                 try {
                     const success = await Utils.copyToClipboard(code);
                     if (success) {
-                        button.textContent = '✅';
+                        button.textContent = 'Copied!';
                         button.title = 'Copied!';
                         setTimeout(() => {
-                            button.textContent = '📋';
+                            button.textContent = 'Copy';
                             button.title = 'Copy code';
                         }, 2000);
                     } else {
                         throw new Error('Copy failed');
                     }
                 } catch (error) {
-                    button.textContent = '❌';
+                    button.textContent = 'Failed';
                     button.title = 'Copy failed';
                     setTimeout(() => {
-                        button.textContent = '📋';
+                        button.textContent = 'Copy';
                         button.title = 'Copy code';
                     }, 2000);
                 }

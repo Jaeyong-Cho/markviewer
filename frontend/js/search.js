@@ -243,12 +243,12 @@ class SearchComponent extends Utils.EventEmitter {
      */
     createSnippetElement(snippet) {
         const snippetClass = snippet.isFilename ? 'search-snippet filename-match' : 'search-snippet';
-        const icon = snippet.isFilename ? '📁' : '📄';
+        const label = snippet.isFilename ? 'FILE' : 'CONTENT';
         
         return `
             <div class="${snippetClass}">
                 <div class="search-snippet-content">
-                    <span class="search-snippet-icon">${icon}</span>
+                    <span class="search-snippet-label">${label}</span>
                     ${snippet.content}
                 </div>
                 <div class="search-snippet-context">${snippet.context}</div>

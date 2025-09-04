@@ -5,13 +5,13 @@ This tutorial will guide you through setting up and using MarkViewer to view you
 ## What You'll Learn
 
 By the end of this tutorial, you'll be able to:
-- ✅ Install and run MarkViewer on your system
-- ✅ Load and navigate a directory of markdown files
-- ✅ Use the recursive directory explorer effectively
-- ✅ Create links between markdown files
-- ✅ Render PlantUML and Mermaid diagrams
-- ✅ Search across all your markdown files
-- ✅ Use keyboard shortcuts for efficient navigation
+- Install and run MarkViewer on your system
+- Load and navigate a directory of markdown files
+- Use the recursive directory explorer effectively
+- Create links between markdown files
+- Render PlantUML and Mermaid diagrams
+- Search across all your markdown files
+- Use keyboard shortcuts for efficient navigation
 
 ## Prerequisites Check
 
@@ -182,25 +182,25 @@ graph TD
 Once loaded, you'll see the sidebar with your directory structure:
 
 ```
-📁 my-docs/
-├── 📄 README.md
-├── 📁 getting-started/
-│   ├── 📄 introduction.md
-│   └── 📄 setup.md
-├── 📁 guides/
-│   ├── 📄 user-guide.md
-│   └── 📁 advanced/
-│       ├── 📄 diagrams.md
-│       └── 📄 linking.md
-└── 📁 examples/
-    ├── 📄 plantuml-example.md
-    └── 📄 mermaid-example.md
+my-docs/
+├── README.md
+├── getting-started/
+│   ├── introduction.md
+│   └── setup.md
+├── guides/
+│   ├── user-guide.md
+│   └── advanced/
+│       ├── diagrams.md
+│       └── linking.md
+└── examples/
+    ├── plantuml-example.md
+    └── mermaid-example.md
 ```
 
 ### Navigation Features
 
 **Expanding/Collapsing Directories:**
-- Click the **folder icon** or **folder name** to expand/collapse
+- Click the **folder label** or **folder name** to expand/collapse
 - **Arrow keys** to navigate up/down
 - **Right arrow** to expand, **Left arrow** to collapse
 

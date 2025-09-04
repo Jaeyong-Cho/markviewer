@@ -477,7 +477,7 @@ class MarkViewerApp extends Utils.EventEmitter {
         const relativePath = filePath.replace(this.state.rootDirectory, '');
         const parts = relativePath.split('/').filter(part => part);
         
-        let breadcrumbHtml = `<a href="#" data-path="${this.state.rootDirectory}">📁 Root</a>`;
+        let breadcrumbHtml = `<a href="#" data-path="${this.state.rootDirectory}">Root</a>`;
         
         let currentPath = this.state.rootDirectory;
         for (let i = 0; i < parts.length - 1; i++) {

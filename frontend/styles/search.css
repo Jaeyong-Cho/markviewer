@@ -217,9 +217,14 @@
     gap: var(--spacing-xs);
 }
 
-.search-snippet-icon {
-    font-size: 14px;
-    opacity: 0.7;
+.search-snippet-label {
+    font-size: 10px;
+    font-weight: bold;
+    color: var(--text-muted);
+    background-color: var(--surface-color);
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
 }
 
 .search-snippet-context {

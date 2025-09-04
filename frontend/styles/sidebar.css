@@ -152,25 +152,31 @@
 
 /* File type indicators using CSS pseudo-elements */
 .tree-item-icon.file::before {
-    content: '📄';
+    content: 'FILE';
+    font-size: 10px;
+    font-weight: bold;
+    color: var(--text-muted);
 }
 
 .tree-item-icon.folder::before {
-    content: '📁';
+    content: 'DIR';
+    font-size: 10px;
+    font-weight: bold;
+    color: var(--text-muted);
 }
 
 .tree-item-icon.folder.open::before {
-    content: '📂';
+    content: 'DIR';
 }
 
 /* Specific file type icons */
 .tree-item[data-extension=".md"] .tree-item-icon.file::before,
 .tree-item[data-extension=".markdown"] .tree-item-icon.file::before {
-    content: '📝';
+    content: 'MD';
 }
 
 .tree-item[data-extension=".txt"] .tree-item-icon.file::before {
-    content: '📄';
+    content: 'TXT';
 }
 
 /* Loading state for tree items */
