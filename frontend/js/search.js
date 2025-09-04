@@ -204,9 +204,16 @@ class SearchComponent extends Utils.EventEmitter {
             </div>
             <div class="search-result-meta">
                 <span class="search-result-matches">${matchText} match${result.matches !== 1 ? 'es' : ''}</span>
-                <button class="search-result-preview-btn" onclick="event.stopPropagation(); this.closest('.search-result').classList.toggle('show-preview')">
-                    Preview
-                </button>
+                <div class="search-result-actions">
+                    <button class="search-result-preview-btn" onclick="event.stopPropagation(); this.closest('.search-result').classList.toggle('show-preview')">
+                        Preview
+                    </button>
+                    ${result.preview ? `
+                        <button class="search-result-expand-btn" onclick="event.stopPropagation(); window.searchComponent.expandPreview('${Utils.escapeHtml(result.file)}')">
+                            Expand
+                        </button>
+                    ` : ''}
+                </div>
             </div>
             <div class="search-result-snippets">
                 ${result.snippets.map(snippet => this.createSnippetElement(snippet)).join('')}
@@ -440,6 +447,18 @@ class SearchComponent extends Utils.EventEmitter {
      */
     isActive() {
         return this.currentQuery.length > 0 || !this.searchResults.classList.contains('hidden');
+    }
+
+    /**
+     * Expand preview in a modal or full view
+     * @param {string} filePath - Path to the file to expand
+     */
+    expandPreview(filePath) {
+        // Emit event to open file in main content area
+        this.emit('openFile', filePath);
+        
+        // Optionally close search results to give more space
+        // this.clear();
     }
 
     /**

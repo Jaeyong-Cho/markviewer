@@ -185,6 +185,10 @@ class MarkViewerApp extends Utils.EventEmitter {
             this.hideSearchResults();
         });
         this.search.on('resultSelect', this.handleFileSelect);
+        this.search.on('openFile', this.handleFileSelect);
+
+        // Make search component globally accessible for inline event handlers
+        window.searchComponent = this.search;
 
         // Renderer events
         this.renderer.on('linkClick', this.handleInternalLink.bind(this));
