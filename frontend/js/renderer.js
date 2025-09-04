@@ -475,6 +475,19 @@ class MarkdownRenderer extends Utils.EventEmitter {
         if (tocSidebar) {
             tocSidebar.classList.remove('visible');
         }
+        
+        // Clean up scroll spy when hiding ToC
+        this.cleanupScrollSpy();
+    }
+
+    /**
+     * Clean up scroll spy event listener
+     */
+    cleanupScrollSpy() {
+        if (this.scrollSpyHandler) {
+            window.removeEventListener('scroll', this.scrollSpyHandler);
+            this.scrollSpyHandler = null;
+        }
     }
 
     /**
@@ -488,11 +501,163 @@ class MarkdownRenderer extends Utils.EventEmitter {
                 const targetId = link.getAttribute('href').substring(1);
                 const target = document.getElementById(targetId);
                 if (target) {
+                    // Remove active class from all ToC links
+                    tocLinks.forEach(l => l.classList.remove('active'));
+                    // Add active class to clicked link
+                    link.classList.add('active');
+                    
                     // Scroll to position the target heading at the top of the viewport
                     Utils.scrollToElement(target, 'smooth', 'start');
+                    
+                    // Scroll ToC to show active item
+                    this.scrollTocToActiveItem(link);
                 }
             });
         });
+        
+        // Setup scroll spy to highlight current section
+        this.setupScrollSpy();
+        
+        // Setup keyboard navigation
+        this.setupTocKeyboardNavigation();
+    }
+
+    /**
+     * Setup keyboard navigation for ToC
+     */
+    setupTocKeyboardNavigation() {
+        const tocSidebar = document.getElementById('toc-sidebar');
+        if (!tocSidebar) return;
+        
+        tocSidebar.addEventListener('keydown', (event) => {
+            const tocLinks = Array.from(document.querySelectorAll('#toc-sidebar .toc-link'));
+            const activeElement = document.activeElement;
+            const currentIndex = tocLinks.indexOf(activeElement);
+            
+            let targetIndex = -1;
+            
+            switch (event.key) {
+                case 'ArrowDown':
+                    event.preventDefault();
+                    targetIndex = currentIndex < tocLinks.length - 1 ? currentIndex + 1 : 0;
+                    break;
+                case 'ArrowUp':
+                    event.preventDefault();
+                    targetIndex = currentIndex > 0 ? currentIndex - 1 : tocLinks.length - 1;
+                    break;
+                case 'Home':
+                    event.preventDefault();
+                    targetIndex = 0;
+                    break;
+                case 'End':
+                    event.preventDefault();
+                    targetIndex = tocLinks.length - 1;
+                    break;
+                case 'Enter':
+                case ' ':
+                    event.preventDefault();
+                    if (currentIndex >= 0) {
+                        tocLinks[currentIndex].click();
+                    }
+                    return;
+            }
+            
+            if (targetIndex >= 0 && tocLinks[targetIndex]) {
+                tocLinks[targetIndex].focus();
+                this.scrollTocToActiveItem(tocLinks[targetIndex]);
+            }
+        });
+        
+        // Make ToC links focusable
+        const tocLinks = document.querySelectorAll('#toc-sidebar .toc-link');
+        tocLinks.forEach((link, index) => {
+            link.setAttribute('tabindex', index === 0 ? '0' : '-1');
+            link.setAttribute('role', 'menuitem');
+        });
+        
+        // Set role for ToC list
+        const tocList = document.querySelector('#toc-sidebar .toc-list');
+        if (tocList) {
+            tocList.setAttribute('role', 'menu');
+            tocList.setAttribute('aria-label', 'Table of Contents');
+        }
+    }
+
+    /**
+     * Scroll ToC sidebar to show the active item
+     * @param {HTMLElement} activeLink - The active ToC link element
+     */
+    scrollTocToActiveItem(activeLink) {
+        const tocContent = document.querySelector('#toc-sidebar .toc-content');
+        if (!tocContent || !activeLink) return;
+        
+        const tocRect = tocContent.getBoundingClientRect();
+        const linkRect = activeLink.getBoundingClientRect();
+        
+        // Calculate if the active link is outside the visible area
+        const linkTop = linkRect.top - tocRect.top + tocContent.scrollTop;
+        const linkBottom = linkTop + linkRect.height;
+        const visibleTop = tocContent.scrollTop;
+        const visibleBottom = visibleTop + tocContent.clientHeight;
+        
+        // Scroll to center the active item in the ToC
+        if (linkTop < visibleTop || linkBottom > visibleBottom) {
+            const scrollTo = linkTop - (tocContent.clientHeight / 2) + (linkRect.height / 2);
+            tocContent.scrollTo({
+                top: Math.max(0, scrollTo),
+                behavior: 'smooth'
+            });
+        }
+    }
+
+    /**
+     * Setup scroll spy to highlight current section in ToC
+     */
+    setupScrollSpy() {
+        let ticking = false;
+        
+        const updateActiveSection = () => {
+            const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            const tocLinks = document.querySelectorAll('#toc-sidebar .toc-link');
+            
+            if (headings.length === 0 || tocLinks.length === 0) return;
+            
+            // Find the current section based on scroll position
+            let currentHeading = null;
+            const scrollPos = window.scrollY + 100; // Offset for better detection
+            
+            for (let i = headings.length - 1; i >= 0; i--) {
+                const heading = headings[i];
+                if (heading.offsetTop <= scrollPos) {
+                    currentHeading = heading;
+                    break;
+                }
+            }
+            
+            // Update active state in ToC
+            tocLinks.forEach(link => {
+                link.classList.remove('active');
+                if (currentHeading && link.getAttribute('href') === `#${currentHeading.id}`) {
+                    link.classList.add('active');
+                }
+            });
+            
+            ticking = false;
+        };
+        
+        const onScroll = () => {
+            if (!ticking) {
+                requestAnimationFrame(updateActiveSection);
+                ticking = true;
+            }
+        };
+        
+        // Remove existing scroll listener if any
+        window.removeEventListener('scroll', this.scrollSpyHandler);
+        
+        // Add new scroll listener
+        this.scrollSpyHandler = onScroll;
+        window.addEventListener('scroll', this.scrollSpyHandler, { passive: true });
     }
 
     /**
