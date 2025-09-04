@@ -116,6 +116,8 @@ class SearchComponent extends Utils.EventEmitter {
     async executeSearch(query) {
         if (!query || this.isSearching) return;
         
+        console.log('Search executing:', { query, rootDirectory: this.app.state.rootDirectory });
+        
         // Check if root directory is selected
         if (!this.app.state.rootDirectory) {
             Utils.showNotification('Please select a root directory first', 'error');
@@ -127,6 +129,8 @@ class SearchComponent extends Utils.EventEmitter {
             
             // Execute search via API
             const results = await window.api.searchFiles(query, this.app.state.rootDirectory);
+            
+            console.log('Search API response:', results);
             
             this.currentResults = results;
             this.emit('searchResults', results);
@@ -183,17 +187,37 @@ class SearchComponent extends Utils.EventEmitter {
         resultDiv.setAttribute('tabindex', '0');
         resultDiv.setAttribute('role', 'button');
         
+        // Create match details
+        const matchDetails = [];
+        if (result.filenameMatches > 0) {
+            matchDetails.push(`${result.filenameMatches} filename`);
+        }
+        if (result.contentMatches > 0) {
+            matchDetails.push(`${result.contentMatches} content`);
+        }
+        const matchText = matchDetails.length > 0 ? matchDetails.join(', ') : `${result.matches}`;
+        
         resultDiv.innerHTML = `
             <div class="search-result-header">
                 <h3 class="search-result-title">${Utils.escapeHtml(result.title)}</h3>
                 <span class="search-result-path">${Utils.escapeHtml(result.relativePath)}</span>
             </div>
             <div class="search-result-meta">
-                <span class="search-result-matches">${result.matches} match${result.matches !== 1 ? 'es' : ''}</span>
+                <span class="search-result-matches">${matchText} match${result.matches !== 1 ? 'es' : ''}</span>
+                <button class="search-result-preview-btn" onclick="event.stopPropagation(); this.closest('.search-result').classList.toggle('show-preview')">
+                    Preview
+                </button>
             </div>
             <div class="search-result-snippets">
                 ${result.snippets.map(snippet => this.createSnippetElement(snippet)).join('')}
             </div>
+            ${result.preview ? `
+                <div class="search-result-preview">
+                    <div class="search-result-preview-content">
+                        ${Utils.escapeHtml(result.preview)}
+                    </div>
+                </div>
+            ` : ''}
         `;
         
         // Add click handler
@@ -218,9 +242,15 @@ class SearchComponent extends Utils.EventEmitter {
      * @returns {string} Snippet HTML
      */
     createSnippetElement(snippet) {
+        const snippetClass = snippet.isFilename ? 'search-snippet filename-match' : 'search-snippet';
+        const icon = snippet.isFilename ? '📁' : '📄';
+        
         return `
-            <div class="search-snippet">
-                <div class="search-snippet-content">${snippet.content}</div>
+            <div class="${snippetClass}">
+                <div class="search-snippet-content">
+                    <span class="search-snippet-icon">${icon}</span>
+                    ${snippet.content}
+                </div>
                 <div class="search-snippet-context">${snippet.context}</div>
             </div>
         `;

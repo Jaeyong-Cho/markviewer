@@ -123,6 +123,7 @@ class MarkViewerServer {
         this.app.get('/api/search', async (req, res) => {
             try {
                 const { query, path } = req.query;
+                
                 if (!query) {
                     return res.status(400).json({ error: 'Search query is required' });
                 }
@@ -130,8 +131,10 @@ class MarkViewerServer {
                     return res.status(400).json({ error: 'Search path is required' });
                 }
 
-                const results = await searchService.searchFiles(path, query);
-                res.json({ results, query, totalResults: results.length });
+                const searchResults = await searchService.searchFiles(query, path);
+                console.log('Search service response:', JSON.stringify(searchResults, null, 2));
+                
+                res.json(searchResults);
             } catch (error) {
                 console.error('Search error:', error);
                 res.status(500).json({ error: error.message });

@@ -88,12 +88,27 @@ class SearchService {
 
         let matches = 0;
         let snippets = [];
+        let filenameMatches = 0;
         
         try {
+            // Search in file content
             if (isRegex) {
                 matches = this.searchWithRegex(content, query, snippets);
             } else {
                 matches = this.searchWithString(content, query, snippets);
+            }
+
+            // Search in filename and add filename match if found
+            filenameMatches = this.searchInFilename(fileName, query, isRegex);
+            if (filenameMatches > 0) {
+                matches += filenameMatches;
+                // Add filename match snippet
+                snippets.unshift({
+                    content: fileName,
+                    lineNumber: 0,
+                    context: 'Filename match',
+                    isFilename: true
+                });
             }
 
             // Extract title from markdown (first heading)
@@ -104,7 +119,10 @@ class SearchService {
                 relativePath: relativePath,
                 title: title,
                 matches: matches,
-                snippets: snippets.slice(0, 3) // Limit to 3 snippets per file
+                filenameMatches: filenameMatches,
+                contentMatches: matches - filenameMatches,
+                snippets: snippets.slice(0, 4), // Limit to 4 snippets per file (including filename)
+                preview: this.generatePreview(content, 300) // Add preview text
             };
         } catch (error) {
             console.warn(`Search error in file ${filePath}: ${error.message}`);
@@ -113,7 +131,10 @@ class SearchService {
                 relativePath: relativePath,
                 title: fileName,
                 matches: 0,
-                snippets: []
+                filenameMatches: 0,
+                contentMatches: 0,
+                snippets: [],
+                preview: ''
             };
         }
     }
@@ -275,6 +296,69 @@ class SearchService {
         }
         
         return null;
+    }
+
+    /**
+     * Search for query in filename
+     * @param {string} filename - Filename to search
+     * @param {string} query - Search query
+     * @param {boolean} isRegex - Whether to treat query as regex
+     * @returns {number} Number of matches in filename
+     */
+    searchInFilename(filename, query, isRegex = false) {
+        try {
+            if (isRegex) {
+                const regex = new RegExp(query, 'gi');
+                const matches = filename.match(regex);
+                return matches ? matches.length : 0;
+            } else {
+                const queryLower = query.toLowerCase();
+                const filenameLower = filename.toLowerCase();
+                return filenameLower.includes(queryLower) ? 1 : 0;
+            }
+        } catch (error) {
+            console.warn(`Error searching filename ${filename}: ${error.message}`);
+            return 0;
+        }
+    }
+
+    /**
+     * Generate a preview of the file content
+     * @param {string} content - Full file content
+     * @param {number} maxLength - Maximum length of preview
+     * @returns {string} Preview text
+     */
+    generatePreview(content, maxLength = 300) {
+        if (!content || content.trim().length === 0) {
+            return '';
+        }
+
+        // Remove markdown syntax for cleaner preview
+        let preview = content
+            .replace(/^#{1,6}\s+/gm, '') // Remove headers
+            .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
+            .replace(/\*(.*?)\*/g, '$1') // Remove italic
+            .replace(/`{1,3}[^`]*`{1,3}/g, '') // Remove code blocks
+            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove links, keep text
+            .replace(/!\[[^\]]*\]\([^)]+\)/g, '') // Remove images
+            .replace(/^\s*[-*+]\s+/gm, '') // Remove list markers
+            .replace(/^\s*\d+\.\s+/gm, '') // Remove numbered list markers
+            .replace(/^\s*>\s*/gm, '') // Remove blockquotes
+            .replace(/\n{3,}/g, '\n\n') // Collapse multiple newlines
+            .trim();
+
+        // Truncate to max length
+        if (preview.length > maxLength) {
+            preview = preview.substring(0, maxLength);
+            // Try to end at a word boundary
+            const lastSpace = preview.lastIndexOf(' ');
+            if (lastSpace > maxLength * 0.8) {
+                preview = preview.substring(0, lastSpace);
+            }
+            preview += '...';
+        }
+
+        return preview;
     }
 
     /**

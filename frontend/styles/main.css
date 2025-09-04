@@ -2,11 +2,14 @@
 :root {
     /* Color scheme */
     --primary-color: #0366d6;
+    --accent-color: #28a745;
+    --accent-color-rgb: 40, 167, 69;
     --secondary-color: #586069;
     --background-color: #ffffff;
     --background-secondary: #f6f8fa;
     --background-hover: rgba(0, 0, 0, 0.05);
     --surface-color: #f6f8fa;
+    --surface-light: #fafbfc;
     --border-color: #e1e4e8;
     --text-primary: #24292e;
     --text-secondary: #586069;

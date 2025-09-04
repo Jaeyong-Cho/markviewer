@@ -3,6 +3,9 @@
  * Handles all communication with the Express server
  */
 
+/**
+ * Low-level API client for direct HTTP requests
+ */
 class ApiClient {
     constructor() {
         this.baseUrl = 'http://localhost:3001/api';
@@ -92,7 +95,7 @@ class ApiClient {
      * @returns {Promise<Object>} Search results
      */
     async searchFiles(query, rootPath) {
-        const url = `${this.baseUrl}/search?${new URLSearchParams({ q: query, path: rootPath })}`;
+        const url = `${this.baseUrl}/search?${new URLSearchParams({ query: query, path: rootPath })}`;
         return await this.request(url);
     }
 
