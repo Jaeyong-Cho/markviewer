@@ -412,36 +412,76 @@ class MarkdownRenderer extends Utils.EventEmitter {
     generateTableOfContents() {
         const headings = this.container.querySelectorAll('h1, h2, h3, h4, h5, h6');
         
-        if (headings.length < 2) return; // Don't show TOC for single heading
+        if (headings.length < 2) {
+            this.hideTocSidebar();
+            return; // Don't show TOC for single heading
+        }
         
-        let tocHtml = '<div class="markdown-toc"><h3>Table of Contents</h3><ul>';
+        // Add IDs to headings for linking
+        headings.forEach((heading, index) => {
+            heading.id = `heading-${index}`;
+        });
+        
+        // Generate TOC data and update sidebar
+        this.updateTocSidebar(headings);
+    }
+
+    /**
+     * Update the TOC sidebar with heading data
+     * @param {NodeList} headings - List of heading elements
+     */
+    updateTocSidebar(headings) {
+        let tocHtml = '<div class="toc-content"><h3>Table of Contents</h3><ul class="toc-list">';
         
         headings.forEach((heading, index) => {
             const level = parseInt(heading.tagName.charAt(1));
             const text = heading.textContent;
             const id = `heading-${index}`;
             
-            // Add ID to heading for linking
-            heading.id = id;
+            // Calculate indentation based on header level (h1=0, h2=1, h3=2, etc.)
+            const indentLevel = Math.max(0, level - 1);
             
-            // Add to TOC
-            tocHtml += `<li class="toc-level-${level}">
-                <a href="#${id}">${text}</a>
+            tocHtml += `<li class="toc-item toc-level-${level}" style="margin-left: ${indentLevel * 16}px;">
+                <a href="#${id}" class="toc-link">${text}</a>
             </li>`;
         });
         
         tocHtml += '</ul></div>';
         
-        // Insert TOC after first paragraph or at the beginning
-        const firstParagraph = this.container.querySelector('p');
-        if (firstParagraph) {
-            firstParagraph.insertAdjacentHTML('afterend', tocHtml);
-        } else {
-            this.container.insertAdjacentHTML('afterbegin', tocHtml);
+        // Update TOC sidebar content
+        const tocSidebar = document.getElementById('toc-sidebar');
+        if (tocSidebar) {
+            tocSidebar.innerHTML = tocHtml;
+            this.showTocSidebar();
+            this.setupTocLinks();
         }
-        
-        // Add click handlers for TOC links
-        const tocLinks = this.container.querySelectorAll('.markdown-toc a');
+    }
+
+    /**
+     * Show the TOC sidebar
+     */
+    showTocSidebar() {
+        const tocSidebar = document.getElementById('toc-sidebar');
+        if (tocSidebar) {
+            tocSidebar.classList.add('visible');
+        }
+    }
+
+    /**
+     * Hide the TOC sidebar
+     */
+    hideTocSidebar() {
+        const tocSidebar = document.getElementById('toc-sidebar');
+        if (tocSidebar) {
+            tocSidebar.classList.remove('visible');
+        }
+    }
+
+    /**
+     * Setup click handlers for TOC links
+     */
+    setupTocLinks() {
+        const tocLinks = document.querySelectorAll('#toc-sidebar .toc-link');
         tocLinks.forEach(link => {
             link.addEventListener('click', (event) => {
                 event.preventDefault();

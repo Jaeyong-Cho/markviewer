@@ -392,40 +392,111 @@
     text-decoration: underline;
 }
 
-/* Table of contents */
+/* Table of contents - removed from main content */
 .markdown-toc {
+    display: none;
+}
+
+/* TOC Hover Sidebar */
+.toc-sidebar {
+    position: fixed;
+    top: 50%;
+    right: -300px;
+    transform: translateY(-50%);
+    width: 280px;
+    max-height: 70vh;
     background-color: var(--surface-color);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
-    padding: 16px;
-    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: right 0.3s ease-in-out;
+    z-index: 1000;
+    overflow: hidden;
 }
 
-.markdown-toc h3 {
+.toc-sidebar.visible {
+    right: 16px;
+}
+
+/* TOC hover trigger area */
+.toc-hover-trigger {
+    position: fixed;
+    top: 20%;
+    right: 0;
+    width: 20px;
+    height: 60%;
+    background: transparent;
+    z-index: 999;
+    cursor: pointer;
+}
+
+.toc-hover-trigger:hover + .toc-sidebar,
+.toc-sidebar:hover {
+    right: 16px;
+}
+
+.toc-content {
+    padding: 16px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.toc-content h3 {
     margin-top: 0;
     margin-bottom: 12px;
     font-size: 14px;
     font-weight: 600;
     color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
 }
 
-.markdown-toc ul {
+.toc-list {
     margin: 0;
-    padding-left: 20px;
+    padding: 0;
+    list-style: none;
 }
 
-.markdown-toc li {
+.toc-item {
     margin-bottom: 4px;
+    position: relative;
 }
 
-.markdown-toc a {
+.toc-link {
+    display: block;
     color: var(--primary-color);
     text-decoration: none;
     font-size: 13px;
+    line-height: 1.4;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
 }
 
-.markdown-toc a:hover {
-    text-decoration: underline;
+.toc-link:hover {
+    background-color: rgba(3, 102, 214, 0.1);
+    text-decoration: none;
+}
+
+.toc-link:active {
+    background-color: rgba(3, 102, 214, 0.2);
+}
+
+/* Responsive TOC sidebar */
+@media (max-width: 768px) {
+    .toc-sidebar {
+        width: 240px;
+        right: -260px;
+    }
+    
+    .toc-hover-trigger:hover + .toc-sidebar,
+    .toc-sidebar:hover {
+        right: 8px;
+    }
+    
+    .toc-hover-trigger {
+        width: 15px;
+    }
 }
 
 /* Print styles */
