@@ -488,7 +488,8 @@ class MarkdownRenderer extends Utils.EventEmitter {
                 const targetId = link.getAttribute('href').substring(1);
                 const target = document.getElementById(targetId);
                 if (target) {
-                    Utils.scrollToElement(target);
+                    // Scroll to position the target heading at the top of the viewport
+                    Utils.scrollToElement(target, 'smooth', 'start');
                 }
             });
         });

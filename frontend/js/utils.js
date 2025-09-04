@@ -272,11 +272,12 @@ function isElementInViewport(element) {
  * Scroll element into view smoothly
  * @param {Element} element - Element to scroll to
  * @param {string} behavior - Scroll behavior (smooth, auto)
+ * @param {string} block - Vertical alignment (start, center, end, nearest)
  */
-function scrollToElement(element, behavior = 'smooth') {
+function scrollToElement(element, behavior = 'smooth', block = 'nearest') {
     element.scrollIntoView({
         behavior: behavior,
-        block: 'nearest',
+        block: block,
         inline: 'nearest'
     });
 }
