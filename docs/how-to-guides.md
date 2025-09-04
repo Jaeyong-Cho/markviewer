@@ -275,7 +275,6 @@ java -jar tools/plantuml.jar -version
 Create diagrams using fenced code blocks with `plantuml`:
 
 **Sequence Diagram:**
-```markdown
 ```plantuml
 @startuml
 participant User
@@ -291,10 +290,8 @@ Backend -> Frontend: Send file tree
 Frontend -> User: Display sidebar
 @enduml
 ```
-```
 
 **Class Diagram:**
-```markdown
 ```plantuml
 @startuml
 class MarkViewer {
@@ -319,12 +316,10 @@ MarkViewer --> FileHandler
 MarkViewer --> Renderer
 @enduml
 ```
-```
 
 **3. Flowcharts and Process Diagrams**
 
 **Decision Flow:**
-```markdown
 ```plantuml
 @startuml
 start
@@ -346,12 +341,10 @@ endif
 stop
 @enduml
 ```
-```
 
 **4. System Architecture Diagrams**
 
 **Component Diagram:**
-```markdown
 ```plantuml
 @startuml
 package "Frontend" as frontend {
@@ -384,12 +377,10 @@ package "External Tools" as tools {
 [File Handler] --> [File System]
 @enduml
 ```
-```
 
 **5. Advanced PlantUML Features**
 
 **Styling and Colors:**
-```markdown
 ```plantuml
 @startuml
 !theme vibrant
@@ -410,21 +401,18 @@ fs -> app: Return file list
 app -> user: Display tree
 @enduml
 ```
-```
 
 **6. Troubleshooting PlantUML**
 
 **Common Issues and Solutions:**
 
 **Problem: Diagrams not rendering**
-```markdown
 <!-- Check your PlantUML syntax -->
 ```plantuml
 @startuml
 ' Make sure to include @startuml and @enduml
 A -> B: Message
 @enduml
-```
 ```
 
 **Problem: Java not found**
@@ -453,7 +441,6 @@ Use fenced code blocks with `mermaid`:
 **2. Flowcharts**
 
 **Basic Flowchart:**
-```markdown
 ```mermaid
 graph TD
     A[User opens MarkViewer] --> B{Directory selected?}
@@ -468,10 +455,8 @@ graph TD
     H -->|No| J[Display content]
     I --> J
 ```
-```
 
 **Left-to-Right Flow:**
-```markdown
 ```mermaid
 graph LR
     A[Load Files] --> B[Parse Markdown]
@@ -483,12 +468,10 @@ graph LR
     F --> G
     B --> G
 ```
-```
 
 **3. Sequence Diagrams**
 
 **User Interaction Flow:**
-```markdown
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -510,37 +493,10 @@ sequenceDiagram
     B-->>F: Send file content
     F-->>U: Render and display
 ```
-```
-
-**4. Git Workflows**
-
-**Branching Strategy:**
-```markdown
-```mermaid
-gitgraph
-    commit id: "Initial commit"
-    branch feature-search
-    checkout feature-search
-    commit id: "Add search API"
-    commit id: "Add search UI"
-    checkout main
-    commit id: "Bug fix"
-    merge feature-search
-    commit id: "Release v1.1"
-    branch feature-diagrams
-    checkout feature-diagrams
-    commit id: "Add PlantUML"
-    commit id: "Add Mermaid"
-    checkout main
-    merge feature-diagrams
-    commit id: "Release v1.2"
-```
-```
 
 **5. State Diagrams**
 
 **Application State:**
-```markdown
 ```mermaid
 stateDiagram-v2
     [*] --> Loading
@@ -559,12 +515,10 @@ stateDiagram-v2
     FileViewer --> [*]: App closed
     FileExplorer --> [*]: App closed
 ```
-```
 
 **6. Entity Relationship Diagrams**
 
 **Data Structure:**
-```markdown
 ```mermaid
 erDiagram
     DIRECTORY ||--o{ FILE : contains
@@ -605,13 +559,11 @@ erDiagram
         string type
     }
 ```
-```
 
 **7. Combining Diagrams in Documentation**
 
 **Create comprehensive documentation with multiple diagram types:**
 
-```markdown
 # System Architecture Documentation
 
 ## Overview Flow
@@ -657,7 +609,6 @@ stateDiagram-v2
     Loading --> Error: Failure
     Loaded --> Idle: Reset
     Error --> Idle: Retry
-```
 ```
 
 ---

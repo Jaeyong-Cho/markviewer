@@ -171,10 +171,11 @@ class MarkdownRenderer extends Utils.EventEmitter {
             // Set the HTML content
             this.container.innerHTML = html;
             
-            // Process special content types
-            await this.processPlantUMLBlocks();
-            await this.processMermaidBlocks();
+            // Process special content types (non-blocking for diagrams)
             this.processImages();
+            
+            // Process diagrams asynchronously in parallel
+            this.processDiagramsAsync();
             this.processInternalLinks();
             this.addCodeCopyButtons();
             this.generateTableOfContents();
@@ -195,7 +196,18 @@ class MarkdownRenderer extends Utils.EventEmitter {
     createPlantUMLBlock(code) {
         const id = Utils.generateId();
         // Store the source in a script tag to avoid data attribute limitations
-        return `<div class="plantuml-block" data-id="${id}"><script type="application/plantuml" class="plantuml-source">${Utils.escapeHtml(code)}</script><div class="plantuml-loading"><div class="spinner"></div><p>Rendering PlantUML diagram...</p></div></div>`;
+        return `<div class="plantuml-block" data-id="${id}">
+            <script type="application/plantuml" class="plantuml-source">${Utils.escapeHtml(code)}</script>
+            <div class="plantuml-loading">
+                <div class="diagram-loading-container">
+                    <div class="spinner"></div>
+                    <p class="loading-text">준비 중...</p>
+                    <div class="loading-progress">
+                        <div class="progress-bar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
     }
 
     /**
@@ -206,7 +218,18 @@ class MarkdownRenderer extends Utils.EventEmitter {
     createMermaidBlock(code) {
         const id = Utils.generateId();
         // Store the source in a script tag to avoid data attribute limitations
-        return `<div class="mermaid-block" data-id="${id}"><script type="application/mermaid" class="mermaid-source">${Utils.escapeHtml(code)}</script><div class="mermaid-loading"><div class="spinner"></div><p>Rendering Mermaid diagram...</p></div></div>`;
+        return `<div class="mermaid-block" data-id="${id}">
+            <script type="application/mermaid" class="mermaid-source">${Utils.escapeHtml(code)}</script>
+            <div class="mermaid-loading">
+                <div class="diagram-loading-container">
+                    <div class="spinner"></div>
+                    <p class="loading-text">준비 중...</p>
+                    <div class="loading-progress">
+                        <div class="progress-bar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
     }
 
     /**
@@ -254,95 +277,173 @@ class MarkdownRenderer extends Utils.EventEmitter {
     }
 
     /**
-     * Process PlantUML blocks in the rendered content
+     * Process diagrams asynchronously and in parallel
      */
-    async processPlantUMLBlocks() {
-        const plantumlBlocks = this.container.querySelectorAll('.plantuml-block');
-        
-        for (const block of plantumlBlocks) {
-            try {
-                // Get source from script tag instead of data attribute
-                const sourceScript = block.querySelector('.plantuml-source');
-                if (!sourceScript) {
-                    console.warn('PlantUML block missing source script');
-                    continue;
-                }
-                
-                // Decode HTML entities from the script content
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = sourceScript.textContent;
-                const source = tempDiv.textContent || tempDiv.innerText;
-                const id = block.dataset.id;
-                
-                console.log('Processing PlantUML block with source:', source.substring(0, 50) + '...');
-                
-                // Show loading state
-                const loadingDiv = block.querySelector('.plantuml-loading');
-                if (loadingDiv) {
-                    loadingDiv.innerHTML = `<div class="spinner"></div><p>Rendering PlantUML diagram...</p>`;
-                }
-                
-                // Render PlantUML
-                const result = await window.api.renderPlantUML(source);
-                
-                // Check if result is a string (SVG directly) or object with svg property
-                let svg;
-                if (typeof result === 'string') {
-                    svg = result;
-                } else if (result && result.svg) {
-                    svg = result.svg;
-                } else {
-                    throw new Error('PlantUML service returned invalid response');
-                }
-                
-                // Display SVG result
-                block.innerHTML = `<div class="plantuml-diagram" id="plantuml-${id}">${svg}</div>`;
-                
-            } catch (error) {
-                console.error('PlantUML rendering failed:', error);
-                this.showPlantUMLError(block, error, block.dataset.source);
-            }
+    async processDiagramsAsync() {
+        try {
+            // Start both diagram types processing in parallel
+            const plantumlPromise = this.processPlantUMLBlocksAsync();
+            const mermaidPromise = this.processMermaidBlocksAsync();
+            
+            // Wait for both to complete (but don't block the main render)
+            await Promise.allSettled([plantumlPromise, mermaidPromise]);
+        } catch (error) {
+            console.error('Error processing diagrams:', error);
         }
     }
 
     /**
-     * Process Mermaid blocks in the rendered content
+     * Process PlantUML blocks asynchronously
      */
-    async processMermaidBlocks() {
+    async processPlantUMLBlocksAsync() {
+        const plantumlBlocks = this.container.querySelectorAll('.plantuml-block');
+        
+        if (plantumlBlocks.length === 0) return;
+        
+        // Process all PlantUML blocks in parallel
+        const processingPromises = Array.from(plantumlBlocks).map(block => 
+            this.processSinglePlantUMLBlock(block)
+        );
+        
+        await Promise.allSettled(processingPromises);
+    }
+
+    /**
+     * Process a single PlantUML block
+     * @param {HTMLElement} block - PlantUML block element
+     */
+    async processSinglePlantUMLBlock(block) {
+        try {
+            // Get source from script tag instead of data attribute
+            const sourceScript = block.querySelector('.plantuml-source');
+            if (!sourceScript) {
+                console.warn('PlantUML block missing source script');
+                return;
+            }
+            
+            // Decode HTML entities from the script content
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = sourceScript.textContent;
+            const source = tempDiv.textContent || tempDiv.innerText;
+            const id = block.dataset.id;
+            
+            console.log('Processing PlantUML block with source:', source.substring(0, 50) + '...');
+            
+            // Enhanced loading state with Korean support
+            const loadingDiv = block.querySelector('.plantuml-loading');
+            if (loadingDiv) {
+                loadingDiv.innerHTML = `
+                    <div class="diagram-loading-container">
+                        <div class="spinner"></div>
+                        <p class="loading-text">PlantUML 다이어그램 렌더링 중...</p>
+                        <div class="loading-progress">
+                            <div class="progress-bar"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Create timeout for rendering
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('PlantUML rendering timeout')), 30000);
+            });
+            
+            // Render PlantUML with timeout
+            const renderPromise = window.api.renderPlantUML(source);
+            const result = await Promise.race([renderPromise, timeoutPromise]);
+            
+            // Check if result is a string (SVG directly) or object with svg property
+            let svg;
+            if (typeof result === 'string') {
+                svg = result;
+            } else if (result && result.svg) {
+                svg = result.svg;
+            } else {
+                throw new Error('PlantUML service returned invalid response');
+            }
+            
+            // Display SVG result with fade-in animation
+            const diagramHtml = `<div class="plantuml-diagram fade-in" id="plantuml-${id}">${svg}</div>`;
+            block.innerHTML = diagramHtml;
+            
+        } catch (error) {
+            console.error('PlantUML rendering failed:', error);
+            this.showPlantUMLError(block, error, source || 'Unknown source');
+        }
+    }
+
+    /**
+     * Process Mermaid blocks asynchronously
+     */
+    async processMermaidBlocksAsync() {
         const mermaidBlocks = this.container.querySelectorAll('.mermaid-block');
         
-        for (const block of mermaidBlocks) {
-            try {
-                // Get source from script tag instead of data attribute
-                const sourceScript = block.querySelector('.mermaid-source');
-                if (!sourceScript) {
-                    console.warn('Mermaid block missing source script');
-                    continue;
-                }
-                
-                // Decode HTML entities from the script content
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = sourceScript.textContent;
-                const source = tempDiv.textContent || tempDiv.innerText;
-                const id = block.dataset.id;
-                
-                // Create container for Mermaid diagram
-                const diagramContainer = document.createElement('div');
-                diagramContainer.className = 'mermaid-diagram';
-                diagramContainer.id = `mermaid-${id}`;
-                
-                // Render Mermaid diagram
-                const { svg } = await mermaid.render(`mermaid-svg-${id}`, source);
-                diagramContainer.innerHTML = svg;
-                
-                // Replace loading block with diagram
-                block.innerHTML = '';
-                block.appendChild(diagramContainer);
-                
-            } catch (error) {
-                console.error('Mermaid rendering failed:', error);
-                this.showMermaidError(block, error, source || 'Unknown source');
+        if (mermaidBlocks.length === 0) return;
+        
+        // Process all Mermaid blocks in parallel
+        const processingPromises = Array.from(mermaidBlocks).map(block => 
+            this.processSingleMermaidBlock(block)
+        );
+        
+        await Promise.allSettled(processingPromises);
+    }
+
+    /**
+     * Process a single Mermaid block
+     * @param {HTMLElement} block - Mermaid block element
+     */
+    async processSingleMermaidBlock(block) {
+        try {
+            // Get source from script tag instead of data attribute
+            const sourceScript = block.querySelector('.mermaid-source');
+            if (!sourceScript) {
+                console.warn('Mermaid block missing source script');
+                return;
             }
+            
+            // Decode HTML entities from the script content
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = sourceScript.textContent;
+            const source = tempDiv.textContent || tempDiv.innerText;
+            const id = block.dataset.id;
+            
+            // Enhanced loading state with Korean support
+            const loadingDiv = block.querySelector('.mermaid-loading');
+            if (loadingDiv) {
+                loadingDiv.innerHTML = `
+                    <div class="diagram-loading-container">
+                        <div class="spinner"></div>
+                        <p class="loading-text">Mermaid 다이어그램 렌더링 중...</p>
+                        <div class="loading-progress">
+                            <div class="progress-bar"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Create container for Mermaid diagram
+            const diagramContainer = document.createElement('div');
+            diagramContainer.className = 'mermaid-diagram fade-in';
+            diagramContainer.id = `mermaid-${id}`;
+            
+            // Create timeout for rendering
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Mermaid rendering timeout')), 15000);
+            });
+            
+            // Render Mermaid diagram with timeout
+            const renderPromise = mermaid.render(`mermaid-svg-${id}`, source);
+            const { svg } = await Promise.race([renderPromise, timeoutPromise]);
+            
+            diagramContainer.innerHTML = svg;
+            
+            // Replace loading block with diagram
+            block.innerHTML = '';
+            block.appendChild(diagramContainer);
+            
+        } catch (error) {
+            console.error('Mermaid rendering failed:', error);
+            this.showMermaidError(block, error, source || 'Unknown source');
         }
     }
 
