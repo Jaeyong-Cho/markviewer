@@ -279,9 +279,8 @@ class MarkViewerApp extends Utils.EventEmitter {
      */
     async handleRootSelection() {
         try {
-            // In a real application, this would open a directory picker dialog
-            // For now, we'll prompt the user for a directory path
-            const path = prompt('Enter the path to your markdown directory:');
+            // Show custom directory input modal
+            const path = await this.showDirectoryInputModal();
             
             if (!path) return;
 
@@ -404,7 +403,7 @@ class MarkViewerApp extends Utils.EventEmitter {
      */
     async handleSearch(query) {
         if (!this.state.rootDirectory) {
-            Utils.showNotification('Please select a root directory first', 'error');
+            Utils.showNotification('Please select a workspace directory first', 'error');
             return;
         }
 
@@ -560,6 +559,71 @@ class MarkViewerApp extends Utils.EventEmitter {
                 this.handleSidebarToggle();
             }
         }
+    }
+
+    /**
+     * Show custom directory input modal
+     * @returns {Promise<string|null>} Directory path or null if cancelled
+     */
+    showDirectoryInputModal() {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('directory-modal');
+            const input = document.getElementById('directory-input');
+            const confirmBtn = document.getElementById('directory-confirm');
+            const cancelBtn = document.getElementById('directory-cancel');
+            const closeBtn = document.getElementById('modal-close');
+            const overlay = modal.querySelector('.modal-overlay');
+
+            // Show modal
+            modal.classList.remove('hidden');
+            input.value = '';
+            input.focus();
+
+            // Handle confirm
+            const handleConfirm = () => {
+                const path = input.value.trim();
+                if (path) {
+                    hideModal();
+                    resolve(path);
+                } else {
+                    input.focus();
+                }
+            };
+
+            // Handle cancel/close
+            const handleCancel = () => {
+                hideModal();
+                resolve(null);
+            };
+
+            // Hide modal and cleanup
+            const hideModal = () => {
+                modal.classList.add('hidden');
+                confirmBtn.removeEventListener('click', handleConfirm);
+                cancelBtn.removeEventListener('click', handleCancel);
+                closeBtn.removeEventListener('click', handleCancel);
+                overlay.removeEventListener('click', handleCancel);
+                input.removeEventListener('keydown', handleKeydown);
+            };
+
+            // Handle keyboard events
+            const handleKeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleConfirm();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    handleCancel();
+                }
+            };
+
+            // Add event listeners
+            confirmBtn.addEventListener('click', handleConfirm);
+            cancelBtn.addEventListener('click', handleCancel);
+            closeBtn.addEventListener('click', handleCancel);
+            overlay.addEventListener('click', handleCancel);
+            input.addEventListener('keydown', handleKeydown);
+        });
     }
 
     /**

@@ -45,7 +45,7 @@ echo "   Or click the browser tab that just opened."
 
 echo
 echo "📖 Demo Instructions:"
-echo "   1. Click 'Select Root Directory'"
+echo "   1. Click 'Select Workspace Directory'"
 echo "   2. Enter: /Users/jaeyong/workspace/markviewer/test-content"
 echo "   3. Browse the files in the sidebar"
 echo "   4. Try searching for 'PlantUML' or 'API'"

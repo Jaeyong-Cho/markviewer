@@ -120,7 +120,7 @@ class SearchComponent extends Utils.EventEmitter {
         
         // Check if root directory is selected
         if (!this.app.state.rootDirectory) {
-            Utils.showNotification('Please select a root directory first', 'error');
+            Utils.showNotification('Please select a workspace directory first', 'error');
             return;
         }
         

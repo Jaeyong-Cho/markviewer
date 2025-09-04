@@ -169,7 +169,7 @@ graph TD
 
 ### Load Your Directory
 
-1. **In MarkViewer browser window**, click **"Select Root Directory"**
+1. **In MarkViewer browser window**, click **"Select Workspace Directory"**
 2. **Enter the full path** to your `my-docs` folder:
    - Windows: `C:\Users\YourName\my-docs`
    - Mac/Linux: `/Users/YourName/my-docs`

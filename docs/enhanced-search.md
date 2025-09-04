@@ -1,7 +1,7 @@
 # Enhanced Search Functionality
 
 ## Overview
-The search functionality has been enhanced to provide comprehensive search capabilities across markdown files in the selected root directory.
+The search functionality has been enhanced to provide comprehensive search capabilities across markdown files in the selected workspace directory.
 
 ## Features
 
@@ -24,7 +24,7 @@ The search functionality has been enhanced to provide comprehensive search capab
 
 ## Usage
 
-1. **Select Root Directory**: Choose the directory containing markdown files
+1. **Select Workspace Directory**: Choose the directory containing markdown files
 2. **Enter Search Query**: Type your search term in the search box
 3. **View Results**: See files matching your query with:
    - File title and path

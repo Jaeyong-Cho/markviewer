@@ -82,10 +82,10 @@ project-documentation/
         └── diagrams/
 ```
 
-**2. Load the Root Directory**
+**2. Load the Workspace Directory**
 
 In MarkViewer:
-1. Click "Select Root Directory"
+1. Click "Select Workspace Directory"
 2. Enter the path to your `project-documentation` folder
 3. Click "Load Directory"
 

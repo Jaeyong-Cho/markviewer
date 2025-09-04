@@ -47,7 +47,7 @@ This starts:
 ### 3. Open in Browser
 
 Navigate to `http://localhost:8080` and:
-1. Click "Select Root Directory"
+1. Click "Select Workspace Directory"
 2. Enter the path to your markdown files directory
 3. Start browsing and searching your markdown files!
 
