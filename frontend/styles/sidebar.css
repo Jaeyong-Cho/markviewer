@@ -1,0 +1,304 @@
+/* Sidebar navigation styles */
+.sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--sidebar-background);
+    border-right: 1px solid var(--sidebar-border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform var(--transition-normal);
+}
+
+.sidebar-content {
+    flex: 1;
+    overflow: auto;
+    padding: var(--spacing-md);
+}
+
+.sidebar-footer {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+    background-color: var(--surface-color);
+}
+
+.file-count {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* Directory tree styles */
+.directory-tree {
+    font-size: 13px;
+}
+
+.tree-placeholder {
+    padding: var(--spacing-lg);
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.tree-placeholder p {
+    margin: 0;
+}
+
+.tree-node {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tree-item {
+    position: relative;
+    margin: 0;
+}
+
+.tree-item-content {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    transition: background-color var(--transition-fast);
+    user-select: none;
+}
+
+.tree-item-content:hover {
+    background-color: rgba(3, 102, 214, 0.1);
+}
+
+.tree-item-content.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.tree-item-content.active .tree-item-icon {
+    color: white;
+}
+
+/* Tree item icons */
+.tree-item-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: var(--spacing-xs);
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.tree-item-icon.folder {
+    color: #79b8ff;
+}
+
+.tree-item-icon.folder.open {
+    color: #79b8ff;
+}
+
+.tree-item-icon.file {
+    color: var(--text-muted);
+}
+
+/* Tree item text */
+.tree-item-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Tree expand/collapse button */
+.tree-expand-btn {
+    width: 16px;
+    height: 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: var(--spacing-xs);
+    color: var(--text-secondary);
+    font-size: 10px;
+    border-radius: 2px;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.tree-expand-btn:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.tree-expand-btn.expanded {
+    transform: rotate(90deg);
+}
+
+.tree-expand-btn:empty {
+    visibility: hidden;
+}
+
+/* Nested tree items */
+.tree-children {
+    margin-left: var(--spacing-md);
+    border-left: 1px solid var(--border-color);
+    padding-left: var(--spacing-sm);
+}
+
+.tree-children.collapsed {
+    display: none;
+}
+
+/* File type indicators using CSS pseudo-elements */
+.tree-item-icon.file::before {
+    content: '📄';
+}
+
+.tree-item-icon.folder::before {
+    content: '📁';
+}
+
+.tree-item-icon.folder.open::before {
+    content: '📂';
+}
+
+/* Specific file type icons */
+.tree-item[data-extension=".md"] .tree-item-icon.file::before,
+.tree-item[data-extension=".markdown"] .tree-item-icon.file::before {
+    content: '📝';
+}
+
+.tree-item[data-extension=".txt"] .tree-item-icon.file::before {
+    content: '📄';
+}
+
+/* Loading state for tree items */
+.tree-item.loading .tree-item-content {
+    opacity: 0.6;
+}
+
+.tree-item.loading .tree-expand-btn {
+    animation: spin 1s linear infinite;
+}
+
+/* Empty directory indicator */
+.tree-empty {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 12px;
+}
+
+/* Drag and drop visual feedback */
+.tree-item-content.drag-over {
+    background-color: rgba(3, 102, 214, 0.2);
+    border: 2px dashed var(--primary-color);
+}
+
+/* Search highlighting in sidebar */
+.tree-item-text mark {
+    background-color: #fff3cd;
+    padding: 1px 2px;
+    border-radius: 2px;
+}
+
+/* Responsive sidebar */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        top: var(--header-height);
+        left: 0;
+        bottom: 0;
+        z-index: 1500;
+        transform: translateX(-100%);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    
+    .sidebar-overlay {
+        position: fixed;
+        top: var(--header-height);
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1400;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--transition-normal);
+    }
+    
+    .sidebar-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .sidebar {
+        width: 100vw;
+        max-width: 300px;
+    }
+    
+    .tree-children {
+        margin-left: var(--spacing-sm);
+        padding-left: var(--spacing-xs);
+    }
+    
+    .tree-item-content {
+        padding: var(--spacing-sm);
+    }
+}
+
+/* Accessibility improvements */
+.tree-item-content:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: -2px;
+}
+
+.tree-expand-btn:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 1px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .tree-item-content {
+        border: 1px solid transparent;
+    }
+    
+    .tree-item-content:hover {
+        border-color: var(--primary-color);
+        background-color: transparent;
+    }
+    
+    .tree-item-content.active {
+        border-color: var(--primary-color);
+        background-color: var(--primary-color);
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .sidebar,
+    .tree-expand-btn,
+    .tree-item-content {
+        transition: none;
+    }
+    
+    .tree-expand-btn.expanded {
+        transform: none;
+    }
+    
+    .tree-expand-btn.expanded::before {
+        content: '▼';
+    }
+    
+    .tree-expand-btn:not(.expanded)::before {
+        content: '▶';
+    }
+}

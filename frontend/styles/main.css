@@ -1,0 +1,466 @@
+/* Main application styles */
+:root {
+    /* Color scheme */
+    --primary-color: #0366d6;
+    --secondary-color: #586069;
+    --background-color: #ffffff;
+    --background-secondary: #f6f8fa;
+    --background-hover: rgba(0, 0, 0, 0.05);
+    --surface-color: #f6f8fa;
+    --border-color: #e1e4e8;
+    --text-primary: #24292e;
+    --text-secondary: #586069;
+    --text-muted: #6a737d;
+    
+    /* Sidebar */
+    --sidebar-width: 280px;
+    --sidebar-background: #f6f8fa;
+    --sidebar-border: #e1e4e8;
+    
+    /* Header */
+    --header-height: 60px;
+    --header-background: #24292e;
+    --header-text: #ffffff;
+    
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    
+    /* Border radius */
+    --border-radius: 6px;
+    --border-radius-lg: 12px;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    
+    /* Transitions */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.3s ease;
+}
+
+/* Reset and base styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    background-color: var(--background-color);
+    overflow: hidden;
+}
+
+/* Application layout */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* Header styles */
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--header-height);
+    background-color: var(--header-background);
+    color: var(--header-text);
+    padding: 0 var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    z-index: 1000;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.header-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+.app-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Sidebar toggle button */
+.sidebar-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--header-text);
+    padding: var(--spacing-sm);
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    transition: background-color var(--transition-fast);
+}
+
+.sidebar-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.hamburger {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background-color: currentColor;
+    position: relative;
+}
+
+.hamburger::before,
+.hamburger::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background-color: currentColor;
+    transition: transform var(--transition-fast);
+}
+
+.hamburger::before {
+    top: -6px;
+}
+
+.hamburger::after {
+    top: 6px;
+}
+
+/* Root directory selector */
+.root-directory-selector {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.select-root-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color var(--transition-fast);
+}
+
+.select-root-btn:hover {
+    background-color: #0256c2;
+}
+
+.current-root-path {
+    font-size: 13px;
+    color: var(--text-muted);
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Main content area */
+.app-main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Content area */
+.content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: var(--background-color);
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--surface-color);
+}
+
+.breadcrumb {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.breadcrumb a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.file-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--spacing-xs);
+}
+
+.current-file-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.file-modified {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.content-body {
+    flex: 1;
+    overflow: auto;
+    padding: var(--spacing-lg);
+}
+
+/* Welcome content styles */
+.welcome-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.welcome-content h1 {
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-lg);
+}
+
+.welcome-content h2 {
+    color: var(--text-primary);
+    margin: var(--spacing-xl) 0 var(--spacing-md) 0;
+}
+
+.welcome-content h3 {
+    color: var(--text-primary);
+    margin: var(--spacing-lg) 0 var(--spacing-md) 0;
+}
+
+.welcome-content ul,
+.welcome-content ol {
+    margin: var(--spacing-md) 0;
+    padding-left: var(--spacing-xl);
+}
+
+.welcome-content li {
+    margin: var(--spacing-sm) 0;
+}
+
+.feature-demo {
+    background-color: var(--surface-color);
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius);
+    margin: var(--spacing-lg) 0;
+}
+
+/* Loading overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.loading-spinner {
+    text-align: center;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color);
+    border-left: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto var(--spacing-md) auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+/* Notification styles */
+.notification {
+    position: fixed;
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    min-width: 300px;
+    max-width: 500px;
+    z-index: 3000;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md);
+}
+
+.notification-message {
+    flex: 1;
+    color: var(--text-primary);
+    font-size: 13px;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0;
+    margin-left: var(--spacing-md);
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notification-close:hover {
+    color: var(--text-primary);
+}
+
+/* Error notification */
+.notification.error {
+    border-left: 4px solid #d73a49;
+}
+
+.notification.error .notification-message {
+    color: #d73a49;
+}
+
+/* Success notification */
+.notification.success {
+    border-left: 4px solid #28a745;
+}
+
+.notification.success .notification-message {
+    color: #28a745;
+}
+
+/* Utility classes */
+.hidden {
+    display: none !important;
+}
+
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .sidebar-toggle {
+        display: block;
+    }
+    
+    .app-header {
+        padding: 0 var(--spacing-sm);
+    }
+    
+    .header-center {
+        display: none;
+    }
+    
+    .current-root-path {
+        max-width: 150px;
+    }
+    
+    .content-body {
+        padding: var(--spacing-md);
+    }
+    
+    .content-header {
+        padding: var(--spacing-sm);
+    }
+    
+    .file-info {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .app-title {
+        font-size: 16px;
+    }
+    
+    .select-root-btn {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 12px;
+    }
+    
+    .notification {
+        top: var(--spacing-sm);
+        right: var(--spacing-sm);
+        left: var(--spacing-sm);
+        min-width: auto;
+    }
+}

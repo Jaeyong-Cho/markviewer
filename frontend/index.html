@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarkViewer - Markdown Viewer</title>
+    
+    <!-- External libraries from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.2/marked.min.js"></script>
+    <!-- Use the official CDN with fallback -->
+    <script>
+        // Load highlight.js with proper fallback
+        (function() {
+            var script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js';
+            script.onload = function() {
+                console.log('highlight.js loaded from cdnjs');
+                window.hljsLoaded = true;
+            };
+            script.onerror = function() {
+                console.warn('CDN failed, loading local highlight.js');
+                var fallback = document.createElement('script');
+                fallback.src = 'libs/highlight.min.js';
+                fallback.onload = function() {
+                    console.log('highlight.js loaded from local fallback');
+                    window.hljsLoaded = true;
+                };
+                fallback.onerror = function() {
+                    console.error('All highlight.js sources failed');
+                    window.hljsLoaded = false;
+                };
+                document.head.appendChild(fallback);
+            };
+            document.head.appendChild(script);
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    
+    <!-- Library loading verification -->
+    <script>
+        window.libraryLoadStatus = {
+            marked: false,
+            hljs: false,
+            mermaid: false
+        };
+        
+        // Check library loading status
+        function checkLibraryLoading() {
+            window.libraryLoadStatus.marked = typeof marked !== 'undefined';
+            window.libraryLoadStatus.hljs = typeof hljs !== 'undefined';
+            window.libraryLoadStatus.mermaid = typeof mermaid !== 'undefined';
+            
+            const missing = Object.entries(window.libraryLoadStatus)
+                .filter(([lib, loaded]) => !loaded)
+                .map(([lib]) => lib);
+                
+            if (missing.length > 0) {
+                console.warn('Some libraries failed to load:', missing);
+                // Show user-friendly error message
+                if (missing.includes('hljs')) {
+                    console.warn('Syntax highlighting will be disabled. Code blocks will appear without highlighting.');
+                }
+                if (missing.includes('mermaid')) {
+                    console.warn('Mermaid diagrams will not render. Diagram blocks will show as code.');
+                }
+                if (missing.includes('marked')) {
+                    console.error('Critical: Markdown parsing library failed to load. Application may not function properly.');
+                }
+            } else {
+                console.log('All external libraries loaded successfully');
+                console.log('highlight.js version:', typeof hljs !== 'undefined' ? hljs.versionString : 'undefined');
+            }
+            
+            return missing.length === 0;
+        }
+        
+        // Wait for highlight.js to load asynchronously
+        function waitForHighlightJS(callback, maxAttempts = 50) {
+            let attempts = 0;
+            const checkInterval = setInterval(() => {
+                attempts++;
+                if (typeof hljs !== 'undefined') {
+                    clearInterval(checkInterval);
+                    console.log('highlight.js detected after', attempts * 100, 'ms');
+                    callback();
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(checkInterval);
+                    console.warn('highlight.js failed to load after', attempts * 100, 'ms');
+                    callback();
+                }
+            }, 100);
+        }
+        
+        // Check on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            waitForHighlightJS(() => {
+                checkLibraryLoading();
+            });
+        });
+    </script>
+    
+    <!-- GitHub style for highlight.js with local fallback -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css" 
+          onerror="this.onerror=null; this.href='libs/github.min.css';">
+    
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="styles/main.css">
+    
+    <!-- Additional styles for components -->
+    <link rel="stylesheet" href="styles/sidebar.css">
+    <link rel="stylesheet" href="styles/content.css">
+    <link rel="stylesheet" href="styles/search.css">
+</head>
+<body>
+    <!-- Main application container -->
+    <div id="app" class="app-container">
+        
+        <!-- Header section -->
+        <header class="app-header">
+            <div class="header-left">
+                <h1 class="app-title">MarkViewer</h1>
+                <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle sidebar">
+                    <span class="hamburger"></span>
+                </button>
+            </div>
+            
+            <div class="header-center">
+                <div class="root-directory-selector">
+                    <button id="select-root-btn" class="select-root-btn">
+                        Select Root Directory
+                    </button>
+                    <span id="current-root" class="current-root-path">No directory selected</span>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <div class="search-container">
+                    <input type="text" 
+                           id="search-input" 
+                           class="search-input" 
+                           placeholder="Search markdown files..."
+                           autocomplete="off">
+                    <button id="search-clear" class="search-clear" aria-label="Clear search">
+                        ×
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main content area -->
+        <main class="app-main">
+            
+            <!-- Sidebar for navigation -->
+            <aside id="sidebar" class="sidebar">
+                <div class="sidebar-content">
+                    <div class="directory-tree" id="directory-tree">
+                        <div class="tree-placeholder">
+                            <p>Select a root directory to browse markdown files</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sidebar footer with status -->
+                <div class="sidebar-footer">
+                    <div id="file-count" class="file-count">0 files</div>
+                </div>
+            </aside>
+
+            <!-- Content area -->
+            <section class="content-area">
+                
+                <!-- Search results (hidden by default) -->
+                <div id="search-results" class="search-results hidden">
+                    <div class="search-results-header">
+                        <h2>Search Results</h2>
+                        <span id="search-query" class="search-query"></span>
+                        <span id="search-count" class="search-count"></span>
+                    </div>
+                    <div id="search-results-list" class="search-results-list">
+                        <!-- Search results will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Main content display -->
+                <div id="main-content" class="main-content">
+                    <div class="content-header">
+                        <nav class="breadcrumb" id="breadcrumb">
+                            <!-- Breadcrumb navigation will be populated here -->
+                        </nav>
+                        <div class="file-info">
+                            <span id="current-file" class="current-file-name">Welcome</span>
+                            <span id="file-modified" class="file-modified"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="content-body">
+                        <article id="markdown-content" class="markdown-content">
+                            <div class="welcome-content">
+                                <h1>Welcome to MarkViewer</h1>
+                                <p>A powerful markdown viewer with PlantUML, Mermaid, and search capabilities.</p>
+                                
+                                <h2>Features</h2>
+                                <ul>
+                                    <li>📝 Render markdown with JavaScript</li>
+                                    <li>🎨 PlantUML diagrams using local plantuml.jar (SVG format)</li>
+                                    <li>📊 Mermaid diagram rendering</li>
+                                    <li>🗂️ Recursive directory sidebar navigation</li>
+                                    <li>🔍 Full-text search functionality</li>
+                                    <li>💻 GitHub-style code highlighting</li>
+                                </ul>
+                                
+                                <h2>Getting Started</h2>
+                                <ol>
+                                    <li>Click "Select Root Directory" to choose your markdown folder</li>
+                                    <li>Browse files using the sidebar navigation</li>
+                                    <li>Use the search box to find content across all files</li>
+                                    <li>View rendered markdown with diagrams and highlighted code</li>
+                                </ol>
+                                
+                                <div class="feature-demo">
+                                    <h3>Code Highlighting Example</h3>
+                                    <pre><code class="language-javascript">
+// Example JavaScript code with syntax highlighting
+function renderMarkdown(content) {
+    const renderer = new marked.Renderer();
+    return marked.parse(content, { renderer });
+}
+                                    </code></pre>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Loading overlay -->
+        <div id="loading-overlay" class="loading-overlay hidden">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p class="loading-text">Loading...</p>
+            </div>
+        </div>
+
+        <!-- Error notifications -->
+        <div id="notification" class="notification hidden">
+            <div class="notification-content">
+                <span class="notification-message"></span>
+                <button class="notification-close">&times;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/search.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

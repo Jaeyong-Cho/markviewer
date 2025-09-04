@@ -1,0 +1,18 @@
+{
+  "name": "markviewer",
+  "version": "1.0.0",
+  "description": "Web-based markdown viewer with PlantUML, Mermaid, and search capabilities",
+  "scripts": {
+    "install-all": "cd backend && npm install && cd ../frontend && npm install",
+    "start": "concurrently \"cd backend && npm start\" \"cd frontend && npm run serve\"",
+    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run serve\"",
+    "setup": "npm run download-plantuml && npm run install-all",
+    "download-plantuml": "node scripts/download-plantuml.js"
+  },
+  "keywords": ["markdown", "viewer", "plantuml", "mermaid", "search"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

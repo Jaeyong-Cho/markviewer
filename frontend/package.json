@@ -1,0 +1,18 @@
+{
+  "name": "markviewer-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for markdown viewer application",
+  "main": "index.html",
+  "scripts": {
+    "serve": "python3 -m http.server 8080",
+    "build": "echo 'No build process needed for vanilla JS'"
+  },
+  "keywords": ["markdown", "viewer", "frontend"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "marked": "^9.1.2",
+    "highlight.js": "^11.9.0",
+    "mermaid": "^10.6.1"
+  }
+}
