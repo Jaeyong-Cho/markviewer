@@ -61,9 +61,15 @@ function sanitizeHtml(html) {
     const temp = document.createElement('div');
     temp.innerHTML = html;
 
-    // Remove script tags and event handlers
+    // Remove dangerous script tags but preserve safe ones for PlantUML and Mermaid
     const scripts = temp.querySelectorAll('script');
-    scripts.forEach(script => script.remove());
+    scripts.forEach(script => {
+        const type = script.getAttribute('type');
+        // Keep scripts with safe types that are used for diagram source storage
+        if (type !== 'application/plantuml' && type !== 'application/mermaid') {
+            script.remove();
+        }
+    });
 
     // Remove dangerous attributes
     const dangerousAttrs = ['onload', 'onerror', 'onclick', 'onmouseover', 'onfocus', 'onblur'];

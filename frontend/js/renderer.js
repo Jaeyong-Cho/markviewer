@@ -264,7 +264,10 @@ class MarkdownRenderer extends Utils.EventEmitter {
                     continue;
                 }
                 
-                const source = sourceScript.textContent;
+                // Decode HTML entities from the script content
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = sourceScript.textContent;
+                const source = tempDiv.textContent || tempDiv.innerText;
                 const id = block.dataset.id;
                 
                 console.log('Processing PlantUML block with source:', source.substring(0, 50) + '...');
@@ -278,8 +281,18 @@ class MarkdownRenderer extends Utils.EventEmitter {
                 // Render PlantUML
                 const result = await window.api.renderPlantUML(source);
                 
+                // Check if result is a string (SVG directly) or object with svg property
+                let svg;
+                if (typeof result === 'string') {
+                    svg = result;
+                } else if (result && result.svg) {
+                    svg = result.svg;
+                } else {
+                    throw new Error('PlantUML service returned invalid response');
+                }
+                
                 // Display SVG result
-                block.innerHTML = `<div class="plantuml-diagram" id="plantuml-${id}">${result.svg}</div>`;
+                block.innerHTML = `<div class="plantuml-diagram" id="plantuml-${id}">${svg}</div>`;
                 
             } catch (error) {
                 console.error('PlantUML rendering failed:', error);
@@ -303,7 +316,10 @@ class MarkdownRenderer extends Utils.EventEmitter {
                     continue;
                 }
                 
-                const source = sourceScript.textContent;
+                // Decode HTML entities from the script content
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = sourceScript.textContent;
+                const source = tempDiv.textContent || tempDiv.innerText;
                 const id = block.dataset.id;
                 
                 // Create container for Mermaid diagram

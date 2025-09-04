@@ -108,8 +108,8 @@ class MarkViewerServer {
                     return res.status(400).json({ error: 'PlantUML source is required' });
                 }
 
-                const result = await plantumlService.renderToSVG(source);
-                res.json(result);
+                const svg = await plantumlService.renderToSVG(source);
+                res.json({ svg });
             } catch (error) {
                 console.error('PlantUML rendering error:', error);
                 res.status(500).json({ 
