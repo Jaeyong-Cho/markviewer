@@ -7,8 +7,11 @@ class MarkdownRenderer extends Utils.EventEmitter {
         super();
         this.container = container;
         this.app = app;
+        this.scrollSpyHandler = null;
+        this.tocEnabled = this.getTocEnabledState();
         this.setupMarked();
         this.setupMermaid();
+        this.setupTocToggle();
     }
 
     /**
@@ -574,9 +577,22 @@ class MarkdownRenderer extends Utils.EventEmitter {
     generateTableOfContents() {
         const headings = this.container.querySelectorAll('h1, h2, h3, h4, h5, h6');
         
+        // Update toggle button visibility first
+        this.updateTocToggleButton();
+        
         if (headings.length < 2) {
             this.hideTocSidebar();
             return; // Don't show TOC for single heading
+        }
+        
+        // If ToC is disabled, don't generate it but still add IDs for direct linking
+        if (!this.tocEnabled) {
+            // Add IDs to headings for direct linking
+            headings.forEach((heading, index) => {
+                heading.id = `heading-${index}`;
+            });
+            this.hideTocSidebar();
+            return;
         }
         
         // Add IDs to headings for linking
@@ -586,6 +602,7 @@ class MarkdownRenderer extends Utils.EventEmitter {
         
         // Generate TOC data and update sidebar
         this.updateTocSidebar(headings);
+        this.updateTocVisibility();
     }
 
     /**
@@ -649,6 +666,142 @@ class MarkdownRenderer extends Utils.EventEmitter {
         if (this.scrollSpyHandler) {
             window.removeEventListener('scroll', this.scrollSpyHandler);
             this.scrollSpyHandler = null;
+        }
+    }
+
+    /**
+     * Setup ToC toggle functionality
+     */
+    setupTocToggle() {
+        const tocShowBtn = document.getElementById('toc-show-btn');
+        const tocHideBtn = document.getElementById('toc-hide-btn');
+        
+        if (tocShowBtn) {
+            tocShowBtn.addEventListener('click', () => {
+                this.showToc();
+            });
+            
+            tocShowBtn.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    this.showToc();
+                }
+            });
+        }
+        
+        if (tocHideBtn) {
+            tocHideBtn.addEventListener('click', () => {
+                this.hideToc();
+            });
+            
+            tocHideBtn.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    this.hideToc();
+                }
+            });
+        }
+        
+        this.updateTocToggleButton();
+    }
+
+    /**
+     * Get ToC enabled state from localStorage
+     * @returns {boolean} Whether ToC is enabled
+     */
+    getTocEnabledState() {
+        try {
+            const stored = localStorage.getItem('tocEnabled');
+            return stored !== null ? JSON.parse(stored) : true; // Default to enabled
+        } catch (error) {
+            console.warn('Failed to get ToC state from localStorage:', error);
+            return true;
+        }
+    }
+
+    /**
+     * Set ToC enabled state in localStorage
+     * @param {boolean} enabled - Whether ToC should be enabled
+     */
+    setTocEnabledState(enabled) {
+        try {
+            localStorage.setItem('tocEnabled', JSON.stringify(enabled));
+            this.tocEnabled = enabled;
+        } catch (error) {
+            console.warn('Failed to save ToC state to localStorage:', error);
+        }
+    }
+
+    /**
+     * Toggle ToC visibility
+     */
+    toggleToc() {
+        this.setTocEnabledState(!this.tocEnabled);
+        this.updateTocToggleButton();
+        this.updateTocVisibility();
+    }
+
+    /**
+     * Show ToC
+     */
+    showToc() {
+        this.setTocEnabledState(true);
+        this.updateTocToggleButton();
+        this.updateTocVisibility();
+        
+        // Regenerate ToC if content is already loaded
+        const headings = this.container.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        if (headings.length >= 2) {
+            this.generateTableOfContents();
+        }
+    }
+
+    /**
+     * Hide ToC
+     */
+    hideToc() {
+        this.setTocEnabledState(false);
+        this.updateTocToggleButton();
+        this.updateTocVisibility();
+    }
+
+    /**
+     * Update ToC toggle buttons appearance
+     */
+    updateTocToggleButton() {
+        const tocShowBtn = document.getElementById('toc-show-btn');
+        const tocHideBtn = document.getElementById('toc-hide-btn');
+        
+        if (!tocShowBtn || !tocHideBtn) return;
+
+        const headings = this.container.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        
+        // Hide buttons if content has fewer than 2 headings
+        if (headings.length < 2) {
+            tocShowBtn.style.display = 'none';
+            tocHideBtn.style.display = 'none';
+            return;
+        }
+        
+        tocShowBtn.style.display = 'flex';
+        tocHideBtn.style.display = 'flex';
+        
+        // The CSS handles the visibility and positioning based on ToC state
+        // No need for additional logic here as CSS classes handle the states
+    }
+
+    /**
+     * Update ToC visibility based on current state
+     */
+    updateTocVisibility() {
+        const contentSection = document.querySelector('.content-area');
+        if (!contentSection) return;
+
+        if (this.tocEnabled) {
+            contentSection.classList.remove('toc-disabled');
+        } else {
+            contentSection.classList.add('toc-disabled');
+            this.hideTocSidebar();
         }
     }
 

@@ -538,6 +538,86 @@
     right: 16px;
 }
 
+/* ToC disabled state */
+.toc-disabled .toc-sidebar {
+    display: none !important;
+}
+
+.toc-disabled .toc-hover-trigger {
+    display: none !important;
+}
+
+.toc-disabled .toc-hide-btn {
+    display: none !important;
+}
+
+/* ToC Edge Toggle Buttons */
+.toc-edge-toggle {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 60px;
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.toc-edge-toggle:hover {
+    background-color: var(--background-hover);
+    color: var(--primary-color);
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+}
+
+.toc-edge-toggle:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.toc-show-btn {
+    right: 0;
+    border-radius: 12px 0 0 12px;
+    border-right: none;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%) translateX(0);
+}
+
+.toc-disabled .toc-show-btn {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* Hide show button when ToC is visible */
+.toc-sidebar.visible ~ .toc-show-btn {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-50%) translateX(100%);
+}
+
+.toc-hide-btn {
+    right: 296px; /* Position next to visible ToC */
+    border-radius: 12px 0 0 12px;
+    border-right: none;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-50%) translateX(100%);
+}
+
+.toc-sidebar.visible ~ .toc-show-btn + .toc-hide-btn {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%) translateX(0);
+}
+
 .toc-content {
     padding: 16px;
     flex: 1;

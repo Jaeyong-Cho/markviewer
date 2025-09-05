@@ -100,6 +100,57 @@ body {
 .header-right {
     display: flex;
     align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/* ToC Toggle Button */
+.toc-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--header-text);
+    padding: var(--spacing-sm);
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    transition: all var(--transition-fast);
+    width: 36px;
+    height: 36px;
+}
+
+.toc-toggle:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--primary-color);
+}
+
+.toc-toggle:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.toc-toggle.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.toc-toggle.disabled:hover {
+    background-color: transparent;
+    color: var(--header-text);
+}
+
+.toc-toggle.hidden {
+    display: none;
+}
+
+.toc-icon {
+    transition: opacity var(--transition-fast);
 }
 
 .app-title {
