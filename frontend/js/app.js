@@ -27,7 +27,7 @@ class MarkViewerApp extends Utils.EventEmitter {
         this.elements = {};
         
         // Bind methods
-        this.handleRootSelection = this.handleRootSelection.bind(this);
+        this.handleWorkspaceInput = this.handleWorkspaceInput.bind(this);
         this.handleFileSelect = this.handleFileSelect.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
         this.handleSidebarToggle = this.handleSidebarToggle.bind(this);
@@ -126,8 +126,8 @@ class MarkViewerApp extends Utils.EventEmitter {
      */
     cacheElements() {
         this.elements = {
-            selectRootBtn: document.getElementById('select-root-btn'),
-            currentRootPath: document.getElementById('current-root'),
+            workspaceInput: document.getElementById('workspace-input'),
+            currentWorkspacePath: document.getElementById('current-workspace'),
             sidebarToggle: document.getElementById('sidebar-toggle'),
             sidebar: document.getElementById('sidebar'),
             searchInput: document.getElementById('search-input'),
@@ -198,8 +198,8 @@ class MarkViewerApp extends Utils.EventEmitter {
      * Setup DOM event listeners
      */
     setupEventListeners() {
-        // Root directory selection
-        this.elements.selectRootBtn.addEventListener('click', this.handleRootSelection);
+        // Workspace directory input
+        this.elements.workspaceInput.addEventListener('keydown', this.handleWorkspaceInput);
 
         // Sidebar toggle
         this.elements.sidebarToggle.addEventListener('click', this.handleSidebarToggle);
@@ -223,7 +223,9 @@ class MarkViewerApp extends Utils.EventEmitter {
         
         if (savedState.rootDirectory) {
             this.updateState({ rootDirectory: savedState.rootDirectory });
-            this.elements.currentRootPath.textContent = savedState.rootDirectory;
+            this.elements.workspaceInput.value = savedState.rootDirectory;
+            this.elements.currentWorkspacePath.textContent = savedState.rootDirectory;
+            this.elements.currentWorkspacePath.classList.add('selected');
             
             // Load directory tree
             this.loadDirectoryTree(savedState.rootDirectory);
@@ -279,25 +281,30 @@ class MarkViewerApp extends Utils.EventEmitter {
     }
 
     /**
-     * Handle root directory selection
+     * Handle workspace input (Enter key to set directory)
      */
-    async handleRootSelection() {
-        try {
-            // Show custom directory input modal
-            const path = await this.showDirectoryInputModal();
+    async handleWorkspaceInput(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            const path = this.elements.workspaceInput.value.trim();
             
-            if (!path) return;
+            if (!path) {
+                Utils.showNotification('Please enter a directory path', 'warning');
+                return;
+            }
 
-            Utils.showLoading('Loading directory...');
-            
-            await this.setRootDirectory(path);
-            
-            Utils.hideLoading();
-            Utils.showNotification('Directory loaded successfully', 'success');
-        } catch (error) {
-            Utils.hideLoading();
-            console.error('Failed to set root directory:', error);
-            Utils.showNotification('Failed to load directory: ' + error.message, 'error');
+            try {
+                Utils.showLoading('Loading directory...');
+                
+                await this.setRootDirectory(path);
+                
+                Utils.hideLoading();
+                Utils.showNotification('Directory loaded successfully', 'success');
+            } catch (error) {
+                Utils.hideLoading();
+                console.error('Failed to set root directory:', error);
+                Utils.showNotification('Failed to load directory: ' + error.message, 'error');
+            }
         }
     }
 
@@ -307,7 +314,9 @@ class MarkViewerApp extends Utils.EventEmitter {
      */
     async setRootDirectory(path) {
         this.updateState({ rootDirectory: path });
-        this.elements.currentRootPath.textContent = path;
+        this.elements.workspaceInput.value = path;
+        this.elements.currentWorkspacePath.textContent = path;
+        this.elements.currentWorkspacePath.classList.add('selected');
         
         // Clear previous state
         this.updateState({ 
@@ -563,71 +572,6 @@ class MarkViewerApp extends Utils.EventEmitter {
                 this.handleSidebarToggle();
             }
         }
-    }
-
-    /**
-     * Show custom directory input modal
-     * @returns {Promise<string|null>} Directory path or null if cancelled
-     */
-    showDirectoryInputModal() {
-        return new Promise((resolve) => {
-            const modal = document.getElementById('directory-modal');
-            const input = document.getElementById('directory-input');
-            const confirmBtn = document.getElementById('directory-confirm');
-            const cancelBtn = document.getElementById('directory-cancel');
-            const closeBtn = document.getElementById('modal-close');
-            const overlay = modal.querySelector('.modal-overlay');
-
-            // Show modal
-            modal.classList.remove('hidden');
-            input.value = '';
-            input.focus();
-
-            // Handle confirm
-            const handleConfirm = () => {
-                const path = input.value.trim();
-                if (path) {
-                    hideModal();
-                    resolve(path);
-                } else {
-                    input.focus();
-                }
-            };
-
-            // Handle cancel/close
-            const handleCancel = () => {
-                hideModal();
-                resolve(null);
-            };
-
-            // Hide modal and cleanup
-            const hideModal = () => {
-                modal.classList.add('hidden');
-                confirmBtn.removeEventListener('click', handleConfirm);
-                cancelBtn.removeEventListener('click', handleCancel);
-                closeBtn.removeEventListener('click', handleCancel);
-                overlay.removeEventListener('click', handleCancel);
-                input.removeEventListener('keydown', handleKeydown);
-            };
-
-            // Handle keyboard events
-            const handleKeydown = (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleConfirm();
-                } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    handleCancel();
-                }
-            };
-
-            // Add event listeners
-            confirmBtn.addEventListener('click', handleConfirm);
-            cancelBtn.addEventListener('click', handleCancel);
-            closeBtn.addEventListener('click', handleCancel);
-            overlay.addEventListener('click', handleCancel);
-            input.addEventListener('keydown', handleKeydown);
-        });
     }
 
     /**

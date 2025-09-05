@@ -9,6 +9,60 @@
     transition: transform var(--transition-normal);
 }
 
+/* Workspace selector at top of sidebar */
+.workspace-selector {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--surface-color);
+}
+
+.workspace-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.workspace-input {
+    width: 100%;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 13px;
+    font-family: inherit;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.workspace-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(3, 102, 214, 0.1);
+}
+
+.workspace-input::placeholder {
+    color: var(--text-muted);
+}
+
+.workspace-status {
+    display: flex;
+    align-items: center;
+    min-height: 20px;
+}
+
+.current-workspace-path {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    word-break: break-all;
+    line-height: 1.3;
+}
+
+.current-workspace-path.selected {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
 .sidebar-content {
     flex: 1;
     overflow: auto;

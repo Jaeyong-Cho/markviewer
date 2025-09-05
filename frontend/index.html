@@ -19,28 +19,6 @@
     <!-- External libraries from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/marked@9.1.2/marked.min.js"></script>
     <!-- Use the official CDN with fallback -->
-            
-        <!-- Directory Selection Modal -->
-        <div id="directory-modal" class="modal hidden">
-            <div class="modal-overlay"></div>
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Select Workspace Directory</h3>
-                    <button id="modal-close" class="modal-close">×</button>
-                </div>
-                <div class="modal-body">
-                    <p>Enter the path to your markdown workspace directory:</p>
-                    <input type="text" id="directory-input" class="directory-input" placeholder="/path/to/your/markdown/files" autocomplete="off">
-                    <div class="modal-hint">
-                        <small>Example: /Users/username/Documents/markdown-files</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="directory-cancel" class="btn btn-secondary">Cancel</button>
-                    <button id="directory-confirm" class="btn btn-primary">Select Directory</button>
-                </div>
-            </div>
-        </div>
 
     <script>
         // Log when scripts start loading
@@ -159,12 +137,7 @@
             </div>
             
             <div class="header-center">
-                <div class="root-directory-selector">
-                    <button id="select-root-btn" class="select-root-btn">
-                        Select Workspace Directory
-                    </button>
-                    <span id="current-root" class="current-root-path">No directory selected</span>
-                </div>
+                <!-- Removed workspace directory selector from header -->
             </div>
             
             <div class="header-right">
@@ -186,10 +159,24 @@
             
             <!-- Sidebar for navigation -->
             <aside id="sidebar" class="sidebar">
+                <!-- Workspace directory input at top of sidebar -->
+                <div class="workspace-selector">
+                    <div class="workspace-input-container">
+                        <input type="text" 
+                               id="workspace-input" 
+                               class="workspace-input" 
+                               placeholder="Enter workspace directory path..."
+                               autocomplete="off">
+                        <div class="workspace-status">
+                            <span id="current-workspace" class="current-workspace-path">No directory selected</span>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="sidebar-content">
                     <div class="directory-tree" id="directory-tree">
                         <div class="tree-placeholder">
-                            <p>Select a workspace directory to browse markdown files</p>
+                            <p>Enter a workspace directory path above to browse markdown files</p>
                         </div>
                     </div>
                 </div>
@@ -245,8 +232,8 @@
                                 
                                 <h2>Getting Started</h2>
                                 <ol>
-                                    <li>Click "Select Workspace Directory" to choose your markdown folder</li>
-                                    <li>Browse files using the sidebar navigation</li>
+                                    <li>Enter a workspace directory path in the input field at the top of the sidebar</li>
+                                    <li>Press Enter to load the directory and browse files</li>
                                     <li>Use the search box to find content across all files</li>
                                     <li>View rendered markdown with diagrams and highlighted code</li>
                                 </ol>
