@@ -1,12 +1,56 @@
 /* Sidebar navigation styles */
 .sidebar {
     width: var(--sidebar-width);
+    min-width: 200px;
+    max-width: 50vw;
     background-color: var(--sidebar-background);
     border-right: 1px solid var(--sidebar-border);
     display: flex;
     flex-direction: column;
     overflow: hidden;
     transition: transform var(--transition-normal);
+    position: relative;
+}
+
+/* Sidebar resizer */
+.sidebar-resizer {
+    width: 4px;
+    background-color: transparent;
+    cursor: col-resize;
+    position: relative;
+    border-right: 1px solid var(--sidebar-border);
+    transition: background-color var(--transition-fast);
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.sidebar-resizer:hover {
+    background-color: var(--primary-color);
+}
+
+.sidebar-resizer:active,
+.sidebar-resizer.resizing {
+    background-color: var(--primary-color);
+}
+
+.sidebar-resizer::after {
+    content: '';
+    position: absolute;
+    left: -2px;
+    top: 0;
+    right: -2px;
+    bottom: 0;
+    cursor: col-resize;
+}
+
+/* Visual feedback during resizing */
+body.resizing {
+    cursor: col-resize !important;
+    user-select: none !important;
+}
+
+body.resizing * {
+    cursor: col-resize !important;
 }
 
 /* Workspace selector at top of sidebar */
@@ -67,6 +111,7 @@
     flex: 1;
     overflow: auto;
     padding: var(--spacing-md);
+    min-width: 0; /* Allow content to shrink */
 }
 
 .sidebar-footer {
@@ -84,6 +129,39 @@
 /* Directory tree styles */
 .directory-tree {
     font-size: 13px;
+    overflow-x: auto; /* Enable horizontal scrolling */
+    overflow-y: auto;
+    white-space: nowrap; /* Prevent text wrapping initially */
+    min-width: 0;
+}
+
+.directory-tree::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+
+.directory-tree::-webkit-scrollbar-track {
+    background: var(--background-secondary);
+    border-radius: 4px;
+}
+
+.directory-tree::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.directory-tree::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+.directory-tree ul {
+    white-space: nowrap; /* Keep tree structure on one line when needed */
+    min-width: fit-content;
+}
+
+.directory-tree li {
+    white-space: nowrap;
+    min-width: fit-content;
 }
 
 .tree-placeholder {
@@ -115,6 +193,8 @@
     border-radius: var(--border-radius);
     transition: background-color var(--transition-fast);
     user-select: none;
+    white-space: nowrap; /* Prevent text wrapping */
+    min-width: fit-content; /* Allow content to determine width */
 }
 
 .tree-item-content:hover {
@@ -157,10 +237,11 @@
 
 /* Tree item text */
 .tree-item-text {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    flex: 0 0 auto; /* Don't shrink, use natural width */
+    white-space: nowrap; /* Prevent text wrapping */
+    overflow: visible; /* Allow text to extend beyond container */
+    text-overflow: initial; /* Don't truncate text */
+    min-width: fit-content; /* Use content width */
 }
 
 /* Tree expand/collapse button */
@@ -198,10 +279,17 @@
     margin-left: var(--spacing-md);
     border-left: 1px solid var(--border-color);
     padding-left: var(--spacing-sm);
+    white-space: nowrap;
+    min-width: fit-content;
 }
 
 .tree-children.collapsed {
     display: none;
+}
+
+.tree-children li {
+    white-space: nowrap;
+    min-width: fit-content;
 }
 
 /* File type indicators using CSS pseudo-elements */
