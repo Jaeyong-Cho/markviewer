@@ -17,7 +17,7 @@
     margin-bottom: 16px;
     font-weight: 600;
     line-height: 1.25;
-    color: #a50034;
+    color: var(--text-header);
 }
 
 .markdown-content h1 {

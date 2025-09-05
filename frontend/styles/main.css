@@ -12,6 +12,7 @@
     --surface-light: #fafbfc;
     --border-color: #e1e4e8;
     --text-primary: #24292e;
+    --text-header: #a50034;
     --text-secondary: #586069;
     --text-muted: #6a737d;
     
@@ -22,8 +23,8 @@
     
     /* Header */
     --header-height: 60px;
-    --header-background: #24292e;
-    --header-text: #ffffff;
+    --header-background: #ffffff;
+    --header-text: #a50034;
     
     /* Spacing */
     --spacing-xs: 4px;
