@@ -207,6 +207,78 @@
     color: var(--border-color);
 }
 
+/* Graph Settings Panel */
+.graph-settings-panel {
+    background: var(--background-secondary);
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: var(--spacing-md);
+    flex-shrink: 0;
+}
+
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.settings-header h4 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.setting-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.setting-label {
+    font-size: 12px;
+    color: var(--text-primary);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.setting-select {
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-primary);
+    font-size: 11px;
+    padding: 4px 6px;
+    outline: none;
+    cursor: pointer;
+    width: 100%;
+}
+
+.setting-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(3, 102, 214, 0.1);
+}
+
+.setting-actions {
+    flex-direction: row !important;
+    gap: var(--spacing-xs);
+}
+
+.setting-actions .graph-btn {
+    flex: 1;
+    font-size: 11px;
+    padding: 6px 8px;
+}
+
 /* Node Information Panel */
 .graph-node-info {
     background: var(--surface-light);

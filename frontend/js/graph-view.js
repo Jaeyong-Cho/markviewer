@@ -14,8 +14,12 @@ class GraphView extends Utils.EventEmitter {
         
         if (!this.container) {
             console.error('Graph view container not found:', containerSelector);
-            return;
+            // Set a flag to indicate failed initialization
+            this.initialized = false;
+            return null;
         }
+        
+        this.initialized = true;
         
         this.graphData = null;
         this.isVisible = false;
@@ -151,35 +155,59 @@ class GraphView extends Utils.EventEmitter {
                 <div class="graph-header">
                     <h3>Document Graph</h3>
                     <div class="graph-header-controls">
-                        <button class="graph-btn graph-btn-small" id="graph-refresh" title="Refresh Graph">
-                            Refresh
+                        <button class="graph-btn graph-btn-small" id="graph-settings" title="Graph Settings">
+                            Settings
                         </button>
-                        <button class="graph-btn graph-btn-small" id="graph-center-current" title="Focus Current File">
-                            Focus
-                        </button>
-                        <button class="graph-btn graph-btn-small" id="graph-fit-view" title="Fit to View">
-                            Fit
-                        </button>
-                        <button class="graph-btn graph-btn-small" id="graph-auto-focus" title="Toggle Auto Focus">
-                            Auto Focus
-                        </button>
-                        <select id="graph-depth-select" class="graph-layout-select" title="Focus Depth">
-                            <option value="1">Depth 1</option>
-                            <option value="2" selected>Depth 2</option>
-                            <option value="3">Depth 3</option>
-                            <option value="4">Depth 4</option>
-                            <option value="all">All</option>
-                        </select>
-                        <select id="graph-layout-select" class="graph-layout-select" title="Graph Layout">
-                            <option value="cose">Force</option>
-                            <option value="circle">Circle</option>
-                            <option value="grid">Grid</option>
-                            <option value="breadthfirst">Tree</option>
-                            <option value="concentric">Concentric</option>
-                        </select>
                         <button class="graph-btn graph-btn-small graph-close" id="graph-close" title="Close Graph">
                             Close
                         </button>
+                    </div>
+                </div>
+                <div class="graph-settings-panel" id="graph-settings-panel" style="display: none;">
+                    <div class="settings-header">
+                        <h4>Graph Settings</h4>
+                        <button class="graph-btn graph-btn-small" id="close-settings" title="Close Settings">×</button>
+                    </div>
+                    <div class="settings-content">
+                        <div class="setting-group">
+                            <label class="setting-label">
+                                <input type="checkbox" id="auto-focus-setting"> 
+                                Auto Focus on File Selection
+                            </label>
+                        </div>
+                        <div class="setting-group">
+                            <label class="setting-label">Focus Depth:</label>
+                            <select id="depth-setting" class="setting-select">
+                                <option value="1">1 Level</option>
+                                <option value="2" selected>2 Levels</option>
+                                <option value="3">3 Levels</option>
+                                <option value="4">4 Levels</option>
+                                <option value="all">All Connections</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <label class="setting-label">Graph Layout:</label>
+                            <select id="layout-setting" class="setting-select">
+                                <option value="cose">Force Directed</option>
+                                <option value="circle">Circle</option>
+                                <option value="grid">Grid</option>
+                                <option value="breadthfirst">Tree</option>
+                                <option value="concentric">Concentric</option>
+                            </select>
+                        </div>
+                        <div class="setting-group setting-actions">
+                            <button class="graph-btn" id="refresh-graph-btn" title="Refresh Graph Data">
+                                Refresh Graph
+                            </button>
+                            <button class="graph-btn" id="fit-view-btn" title="Fit Graph to View">
+                                Fit to View
+                            </button>
+                        </div>
+                        <div class="setting-group">
+                            <button class="graph-btn" id="clear-focus-btn" title="Clear Current Focus">
+                                Clear Focus
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="graph-search-bar">
@@ -225,18 +253,23 @@ class GraphView extends Utils.EventEmitter {
      */
     createControls() {
         this.controls = {
-            refreshBtn: this.container.querySelector('#graph-refresh'),
-            centerCurrentBtn: this.container.querySelector('#graph-center-current'),
-            fitView: this.container.querySelector('#graph-fit-view'),
-            autoFocusBtn: this.container.querySelector('#graph-auto-focus'),
-            depthSelect: this.container.querySelector('#graph-depth-select'),
             searchInput: this.container.querySelector('#graph-search-input'),
             clearSearch: this.container.querySelector('#graph-clear-search'),
-            layoutSelect: this.container.querySelector('#graph-layout-select'),
             closeGraph: this.container.querySelector('#graph-close'),
             statsFiles: this.container.querySelector('#graph-stats-files'),
             statsLinks: this.container.querySelector('#graph-stats-links'),
-            statsOrphans: this.container.querySelector('#graph-stats-orphans')
+            statsOrphans: this.container.querySelector('#graph-stats-orphans'),
+            
+            // Settings panel elements
+            settingsBtn: this.container.querySelector('#graph-settings'),
+            settingsPanel: this.container.querySelector('#graph-settings-panel'),
+            closeSettings: this.container.querySelector('#close-settings'),
+            autoFocusSetting: this.container.querySelector('#auto-focus-setting'),
+            depthSetting: this.container.querySelector('#depth-setting'),
+            layoutSetting: this.container.querySelector('#layout-setting'),
+            clearFocusBtn: this.container.querySelector('#clear-focus-btn'),
+            refreshBtn: this.container.querySelector('#refresh-graph-btn'),
+            fitViewBtn: this.container.querySelector('#fit-view-btn')
         };
     }
 
@@ -244,42 +277,57 @@ class GraphView extends Utils.EventEmitter {
      * Setup event listeners for controls
      */
     setupEventListeners() {
-        // Control buttons - with null checks
+        // Settings button
+        if (this.controls.settingsBtn) {
+            this.controls.settingsBtn.addEventListener('click', () => this.toggleSettings());
+        }
+        
+        // Close settings
+        if (this.controls.closeSettings) {
+            this.controls.closeSettings.addEventListener('click', () => this.toggleSettings());
+        }
+        
+        // Control buttons in settings panel
         if (this.controls.refreshBtn) {
             this.controls.refreshBtn.addEventListener('click', () => this.refreshGraph());
         }
         
-        if (this.controls.centerCurrentBtn) {
-            this.controls.centerCurrentBtn.addEventListener('click', () => this.focusCurrentFile());
-        }
-        
-        if (this.controls.fitView) {
-            this.controls.fitView.addEventListener('click', () => this.fitToView());
-        }
-        
-        if (this.controls.autoFocusBtn) {
-            this.controls.autoFocusBtn.addEventListener('click', () => this.toggleAutoFocus());
-        }
-        
-        if (this.controls.depthSelect) {
-            this.controls.depthSelect.addEventListener('change', (e) => {
-                this.setFocusDepth(e.target.value);
-            });
-        }
-        
-        if (this.controls.clearSearch) {
-            this.controls.clearSearch.addEventListener('click', () => this.clearSearch());
+        if (this.controls.fitViewBtn) {
+            this.controls.fitViewBtn.addEventListener('click', () => this.fitToView());
         }
         
         if (this.controls.closeGraph) {
             this.controls.closeGraph.addEventListener('click', () => this.hide());
         }
         
-        // Layout selector
-        if (this.controls.layoutSelect) {
-            this.controls.layoutSelect.addEventListener('change', (e) => {
+        if (this.controls.clearSearch) {
+            this.controls.clearSearch.addEventListener('click', () => this.clearSearch());
+        }
+        
+        // Settings panel event listeners
+        if (this.controls.autoFocusSetting) {
+            this.controls.autoFocusSetting.addEventListener('change', (e) => {
+                this.autoFocus = e.target.checked;
+                if (typeof Utils !== 'undefined' && Utils.showNotification) {
+                    Utils.showNotification(`Auto focus ${this.autoFocus ? 'enabled' : 'disabled'}`, 'info');
+                }
+            });
+        }
+        
+        if (this.controls.depthSetting) {
+            this.controls.depthSetting.addEventListener('change', (e) => {
+                this.setFocusDepth(e.target.value);
+            });
+        }
+        
+        if (this.controls.layoutSetting) {
+            this.controls.layoutSetting.addEventListener('change', (e) => {
                 this.changeLayout(e.target.value);
             });
+        }
+        
+        if (this.controls.clearFocusBtn) {
+            this.controls.clearFocusBtn.addEventListener('click', () => this.clearFocus());
         }
         
         // Search functionality
@@ -1091,25 +1139,43 @@ class GraphView extends Utils.EventEmitter {
     }
 
     /**
-     * Toggle auto focus mode
+     * Toggle settings panel visibility
      */
-    toggleAutoFocus() {
-        this.autoFocus = !this.autoFocus;
-        
-        // Update button appearance
-        if (this.controls.autoFocusBtn) {
-            if (this.autoFocus) {
-                this.controls.autoFocusBtn.classList.add('active');
-                this.controls.autoFocusBtn.style.backgroundColor = 'var(--primary-color)';
-                this.controls.autoFocusBtn.style.color = 'white';
-            } else {
-                this.controls.autoFocusBtn.classList.remove('active');
-                this.controls.autoFocusBtn.style.backgroundColor = '';
-                this.controls.autoFocusBtn.style.color = '';
-            }
+    toggleSettings() {
+        if (this.controls.settingsPanel.style.display === 'none') {
+            this.showSettings();
+        } else {
+            this.hideSettings();
         }
+    }
+
+    /**
+     * Show settings panel
+     */
+    showSettings() {
+        if (!this.controls.settingsPanel) return;
         
-        Utils.showNotification(`Auto focus ${this.autoFocus ? 'enabled' : 'disabled'}`, 'info');
+        this.controls.settingsPanel.style.display = 'block';
+        
+        // Sync current settings with UI
+        if (this.controls.autoFocusSetting) {
+            this.controls.autoFocusSetting.checked = this.autoFocus;
+        }
+        if (this.controls.depthSetting) {
+            this.controls.depthSetting.value = this.focusDepth === 'all' ? 'all' : this.focusDepth.toString();
+        }
+        if (this.controls.layoutSetting && this.controls.layoutSelect) {
+            this.controls.layoutSetting.value = this.controls.layoutSelect.value;
+        }
+    }
+
+    /**
+     * Hide settings panel
+     */
+    hideSettings() {
+        if (this.controls.settingsPanel) {
+            this.controls.settingsPanel.style.display = 'none';
+        }
     }
 
     /**
@@ -1123,7 +1189,9 @@ class GraphView extends Utils.EventEmitter {
             this.focusOnNodeWithDepth(this.currentFocusNode, this.focusDepth);
         }
         
-        Utils.showNotification(`Focus depth set to ${depth}`, 'info');
+        if (typeof Utils !== 'undefined' && Utils.showNotification) {
+            Utils.showNotification(`Focus depth set to ${depth}`, 'info');
+        }
     }
 
     /**

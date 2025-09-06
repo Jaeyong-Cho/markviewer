@@ -211,16 +211,29 @@ class MarkViewerApp extends Utils.EventEmitter {
             
             // Initialize graph view
             if (typeof GraphView !== 'undefined') {
-                this.graphView = new GraphView('#graph-view-container');
-                
-                // Setup graph view event listeners
-                if (this.graphView) {
+                try {
+                    this.graphView = new GraphView('#graph-view-container');
+                    
+                    // Check if graph view was properly initialized
+                    if (!this.graphView || !this.graphView.container) {
+                        console.warn('Graph view container not found, graph view will be unavailable');
+                        this.graphView = null;
+                        return;
+                    }
+                    
+                    // Setup graph view event listeners
                     this.graphView.on('fileSelect', (filePath) => {
                         this.handleFileSelect(filePath);
                     });
+                    
+                    console.log('Graph view initialized successfully');
+                } catch (error) {
+                    console.error('Failed to initialize graph view:', error);
+                    this.graphView = null;
                 }
             } else {
-                console.warn('GraphView not available');
+                console.warn('GraphView class not available');
+                this.graphView = null;
             }
             
             // Initialize WebSocket client (with error handling)
@@ -575,10 +588,7 @@ class MarkViewerApp extends Utils.EventEmitter {
                 this.search.clear();
             }
             
-            // Auto focus in graph view if enabled
-            if (this.graphView && this.graphView.autoFocus && this.graphView.isVisible) {
-                this.graphView.focusOnFile(filePath);
-            }
+            // Note: Auto focus is handled in handleTabActivated only
             
         } catch (error) {
             console.error('Failed to open file:', error);
