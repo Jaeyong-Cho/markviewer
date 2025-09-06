@@ -30,6 +30,9 @@ class MarkViewerApp extends Utils.EventEmitter {
         this.splitManager = null;
         this.graphView = null;
 
+        // Flags
+        this.skipNextAutoFocus = false;
+
         // DOM elements
         this.elements = {};
         
@@ -223,6 +226,7 @@ class MarkViewerApp extends Utils.EventEmitter {
                     
                     // Setup graph view event listeners
                     this.graphView.on('fileSelect', (filePath) => {
+                        this.skipNextAutoFocus = true; // Skip auto focus when file is selected from graph
                         this.handleFileSelect(filePath);
                     });
                     
@@ -567,7 +571,9 @@ class MarkViewerApp extends Utils.EventEmitter {
      * @param {string} filePath - Selected file path
      */
     async handleFileSelect(filePath) {
-        if (!filePath) return;
+        if (!filePath) {
+            return;
+        }
 
         try {
             // Check if in split mode
@@ -622,10 +628,13 @@ class MarkViewerApp extends Utils.EventEmitter {
             if (this.graphView && this.graphView.isVisible) {
                 this.graphView.highlightCurrentFile();
                 
-                // Auto focus if enabled
-                if (this.graphView.autoFocus) {
+                // Auto focus if enabled and not skipped
+                if (this.graphView.autoFocus && !this.skipNextAutoFocus) {
                     this.graphView.focusOnFile(tab.filePath);
                 }
+                
+                // Reset the skip flag
+                this.skipNextAutoFocus = false;
             }
             
         } catch (error) {

@@ -344,7 +344,8 @@ class GraphView extends Utils.EventEmitter {
         if (openFileBtn) {
             openFileBtn.addEventListener('click', () => {
                 if (this.selectedNode) {
-                    this.emit('fileSelect', this.selectedNode.data.path);
+                    const filePath = this.selectedNode.data('path') || this.selectedNode.data().path;
+                    this.emit('fileSelect', filePath);
                 }
             });
         }
@@ -612,10 +613,17 @@ class GraphView extends Utils.EventEmitter {
             }
         });
 
-        // Double click to focus
+        // Double click to open file or focus
         this.cy.on('dbltap', 'node', (event) => {
             const node = event.target;
-            this.focusOnNodeWithDepth(node, this.focusDepth);
+            
+            // If auto focus is enabled, focus on the node, otherwise open the file
+            if (this.autoFocus) {
+                this.focusOnNodeWithDepth(node, this.focusDepth);
+            } else {
+                const filePath = node.data('path') || node.data().path;
+                this.emit('fileSelect', filePath);
+            }
         });
         
         // Double click background to clear focus
