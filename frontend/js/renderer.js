@@ -1185,7 +1185,6 @@ class MarkdownRenderer extends Utils.EventEmitter {
      * Setup auto-hide functionality for ToC
      */
     setupAutoHide() {
-        console.log('Setting up auto-hide functionality');
         this.setupActivityDetection();
         this.resetInactivityTimer();
     }
@@ -1194,11 +1193,9 @@ class MarkdownRenderer extends Utils.EventEmitter {
      * Setup activity detection for auto-hide
      */
     setupActivityDetection() {
-        console.log('Setting up activity detection for auto-hide');
         const events = ['mousedown', 'mousemove', 'keypress', 'touchstart', 'click'];
         
         const resetTimer = () => {
-            console.log('Activity detected, resetting timer');
             this.resetInactivityTimer();
         };
 
@@ -1223,28 +1220,20 @@ class MarkdownRenderer extends Utils.EventEmitter {
         
         // Test scroll detection with direct event listeners
         const testScrollHandler = (e) => {
-            console.log('Direct scroll detected on:', e.target === document ? 'document' : e.target === window ? 'window' : e.target.id || e.target.className || e.target.tagName);
             throttledReset();
         };
         
         scrollTargets.forEach(target => {
             if (target) {
-                const targetName = target === document ? 'document' : target === window ? 'window' : target.id || target.className || target.tagName;
-                console.log('Adding scroll listener to:', targetName);
                 target.addEventListener('scroll', testScrollHandler, { passive: true });
             }
         });
-        
-        console.log('Activity detection setup complete for events:', events);
-        console.log('Scroll detection setup for targets:', scrollTargets.filter(t => t).length, 'targets');
     }
 
     /**
      * Reset the inactivity timer
      */
     resetInactivityTimer() {
-        console.log('Resetting inactivity timer, timeout:', this.autoHideTimeout);
-        
         // Clear existing timer
         if (this.inactivityTimer) {
             clearTimeout(this.inactivityTimer);
@@ -1252,13 +1241,11 @@ class MarkdownRenderer extends Utils.EventEmitter {
 
         // Restore ToC opacity if it's currently transparent
         if (this.isAutoTransparent) {
-            console.log('Restoring ToC opacity');
             this.restoreTocOpacity();
         }
 
         // Set new timer
         this.inactivityTimer = setTimeout(() => {
-            console.log('Inactivity timer expired, making ToC transparent');
             this.makeTocTransparent();
         }, this.autoHideTimeout);
     }
@@ -1267,34 +1254,9 @@ class MarkdownRenderer extends Utils.EventEmitter {
      * Make ToC transparent due to inactivity
      */
     makeTocTransparent() {
-        console.log('Making ToC transparent');
         const tocSidebar = document.getElementById('toc-sidebar');
         const tocShowBtn = document.getElementById('toc-show-btn');
         const tocHideBtn = document.getElementById('toc-hide-btn');
-
-        console.log('ToC elements found:', {
-            tocSidebar: !!tocSidebar,
-            tocShowBtn: !!tocShowBtn,
-            tocHideBtn: !!tocHideBtn
-        });
-
-        if (tocSidebar) {
-            console.log('ToC sidebar classes:', Array.from(tocSidebar.classList));
-            console.log('ToC sidebar style display:', tocSidebar.style.display);
-            console.log('ToC sidebar computed display:', window.getComputedStyle(tocSidebar).display);
-        }
-
-        if (tocShowBtn) {
-            console.log('Show button classes:', Array.from(tocShowBtn.classList));
-            console.log('Show button style display:', tocShowBtn.style.display);
-            console.log('Show button computed display:', window.getComputedStyle(tocShowBtn).display);
-        }
-
-        if (tocHideBtn) {
-            console.log('Hide button classes:', Array.from(tocHideBtn.classList));
-            console.log('Hide button style display:', tocHideBtn.style.display);
-            console.log('Hide button computed display:', window.getComputedStyle(tocHideBtn).display);
-        }
 
         // Check if ToC is currently visible - use multiple indicators
         const isTocVisible = tocSidebar && (
@@ -1302,32 +1264,23 @@ class MarkdownRenderer extends Utils.EventEmitter {
             !tocSidebar.classList.contains('hidden') ||
             this.tocEnabled
         );
-        console.log('ToC is visible (has visible class):', isTocVisible);
-
-        // Also check toc enabled state
-        console.log('ToC enabled state:', this.tocEnabled);
 
         if (isTocVisible && this.tocEnabled) {
             // ToC is open - make ToC sidebar and hide button transparent
-            console.log('ToC is open - making sidebar and hide button transparent');
             tocSidebar.classList.add('auto-transparent');
             
             // Only hide button should be transparent when ToC is open
             if (tocHideBtn && window.getComputedStyle(tocHideBtn).display !== 'none') {
-                console.log('Adding auto-transparent class to hide button');
                 tocHideBtn.classList.add('auto-transparent');
             }
             
             this.isAutoTransparent = true;
         } else {
             // ToC is hidden - only make show button slightly transparent (to hint it's there)
-            console.log('ToC is hidden - making only show button transparent');
             if (tocShowBtn && window.getComputedStyle(tocShowBtn).display !== 'none') {
-                console.log('Adding auto-transparent class to show button only');
                 tocShowBtn.classList.add('auto-transparent');
                 this.isAutoTransparent = true;
             } else {
-                console.log('Show button not visible, skipping auto-hide');
                 this.isAutoTransparent = false;
             }
             // Don't touch hide button when ToC is hidden
@@ -1338,24 +1291,20 @@ class MarkdownRenderer extends Utils.EventEmitter {
      * Restore ToC opacity after activity
      */
     restoreTocOpacity() {
-        console.log('Restoring ToC opacity');
         const tocSidebar = document.getElementById('toc-sidebar');
         const tocShowBtn = document.getElementById('toc-show-btn');
         const tocHideBtn = document.getElementById('toc-hide-btn');
 
         if (tocSidebar) {
-            console.log('Removing auto-transparent class from ToC sidebar');
             tocSidebar.classList.remove('auto-transparent');
         }
 
         // Always restore toggle buttons opacity when activity is detected
         if (tocShowBtn) {
-            console.log('Removing auto-transparent class from show button');
             tocShowBtn.classList.remove('auto-transparent');
         }
         
         if (tocHideBtn) {
-            console.log('Removing auto-transparent class from hide button');
             tocHideBtn.classList.remove('auto-transparent');
         }
 
@@ -1369,10 +1318,10 @@ class MarkdownRenderer extends Utils.EventEmitter {
     getAutoHideTimeout() {
         try {
             const stored = localStorage.getItem('tocAutoHideTimeout');
-            return stored !== null ? parseInt(stored, 10) : 2000; // Default 2 seconds for testing
+            return stored !== null ? parseInt(stored, 10) : 3000; // Default 3 seconds
         } catch (error) {
             console.warn('Failed to get auto-hide timeout from localStorage:', error);
-            return 2000;
+            return 3000;
         }
     }
 
