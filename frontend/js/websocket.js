@@ -39,8 +39,8 @@ class WebSocketClient extends Utils.EventEmitter {
         try {
             console.log('Connecting to WebSocket server...');
             
-            // Connect to backend server (assume it's running on port 3001)
-            const serverUrl = `${window.location.protocol}//${window.location.hostname}:3001`;
+            // Connect to backend server using current page's host and port
+            const serverUrl = `${window.location.protocol}//${window.location.host}`;
             
             this.socket = io(serverUrl, {
                 transports: ['websocket', 'polling'],

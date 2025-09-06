@@ -54,6 +54,11 @@ class MarkViewerServer {
                    process.env.BACKEND_PORT || 
                    3001;
         
+        // Host configuration with fallback
+        this.host = options.host || 
+                   process.env.HOST || 
+                   '127.0.0.1';
+        
         // Convert to number if it's a string
         this.port = parseInt(this.port, 10);
         
@@ -333,13 +338,18 @@ class MarkViewerServer {
      * Start the server
      */
     start() {
-        this.server.listen(this.port, '0.0.0.0', () => {
-            const url = `http://localhost:${this.port}`;
-            console.log(`🚀 MarkViewer server running on http://0.0.0.0:${this.port}`);
+        this.server.listen(this.port, this.host, () => {
+            const displayHost = this.host === '0.0.0.0' ? 'localhost' : this.host;
+            const url = `http://${displayHost}:${this.port}`;
+            console.log(`🚀 MarkViewer server running on http://${this.host}:${this.port}`);
             console.log(`📱 Frontend available at ${url}`);
-            console.log(`🔧 API available at http://0.0.0.0:${this.port}/api`);
+            console.log(`🔧 API available at http://${this.host}:${this.port}/api`);
             console.log(`🔄 WebSocket available for real-time updates`);
-            console.log(`🌍 External access: http://<your-ip>:${this.port}`);
+            
+            if (this.host === '0.0.0.0') {
+                console.log(`🌍 External access: http://<your-ip>:${this.port}`);
+            }
+            
             console.log('');
             console.log('✅ Server ready!');
             console.log(`   Please open your browser and navigate to: ${url}`);
@@ -373,7 +383,7 @@ class MarkViewerServer {
 // Create and start server
 const options = {};
 
-// Check for command line arguments
+// Check for command line arguments or environment variables
 const args = process.argv.slice(2);
 if (args.length > 0) {
     const port = parseInt(args[0], 10);
@@ -382,6 +392,11 @@ if (args.length > 0) {
     } else {
         console.error('Invalid port number. Using default port.');
     }
+}
+
+// Check for environment variables
+if (process.env.HOST) {
+    options.host = process.env.HOST;
 }
 
 const server = new MarkViewerServer(options);

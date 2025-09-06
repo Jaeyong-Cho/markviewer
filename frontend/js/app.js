@@ -346,8 +346,9 @@ class MarkViewerApp extends Utils.EventEmitter {
             console.log('Server connection established');
         } catch (error) {
             console.warn('Server connection failed:', error);
+            const currentPort = window.location.port || '80';
             Utils.showNotification(
-                'Cannot connect to server. Please ensure the backend is running on port 3000.',
+                `Cannot connect to server. Please ensure the backend is running on port ${currentPort}.`,
                 'error',
                 0 // Persistent notification
             );

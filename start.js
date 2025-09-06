@@ -21,6 +21,86 @@ class MarkViewerStarter {
         this.noBrowser = process.argv.includes('--no-browser');
         this.isPackaged = this.checkIfPackaged();
         this.appDir = this.getAppDirectory();
+        
+        // Parse command line arguments for host and port
+        this.cliOptions = this.parseArguments();
+        
+        // Override default ports/host with CLI options
+        if (this.cliOptions.port) {
+            this.backendPort = this.cliOptions.port;
+        }
+        this.host = this.cliOptions.host;
+    }
+
+    /**
+     * Parse command line arguments
+     */
+    parseArguments() {
+        const args = process.argv.slice(2);
+        const options = {
+            host: '127.0.0.1', // Default to localhost
+            port: null         // Will use auto-detection if not specified
+        };
+        
+        for (let i = 0; i < args.length; i++) {
+            const arg = args[i];
+            
+            if (arg === '-i' || arg === '--interface') {
+                if (i + 1 < args.length && !args[i + 1].startsWith('-')) {
+                    options.host = args[i + 1];
+                    i++; // Skip next argument as it's the value
+                } else {
+                    console.error('❌ Error: -i option requires a host value');
+                    process.exit(1);
+                }
+            } else if (arg === '-p' || arg === '--port') {
+                if (i + 1 < args.length && !args[i + 1].startsWith('-')) {
+                    const portValue = parseInt(args[i + 1], 10);
+                    if (isNaN(portValue) || portValue < 1 || portValue > 65535) {
+                        console.error('❌ Error: Invalid port number. Must be between 1 and 65535');
+                        process.exit(1);
+                    }
+                    options.port = portValue;
+                    i++; // Skip next argument as it's the value
+                } else {
+                    console.error('❌ Error: -p option requires a port number');
+                    process.exit(1);
+                }
+            } else if (arg === '-h' || arg === '--help') {
+                this.showHelp();
+                process.exit(0);
+            } else if (arg !== '--test' && arg !== '--no-browser') {
+                // Ignore known options, show error for unknown ones
+                console.error(`❌ Error: Unknown option '${arg}'`);
+                console.error('Use -h or --help for usage information');
+                process.exit(1);
+            }
+        }
+        
+        return options;
+    }
+
+    /**
+     * Show help message
+     */
+    showHelp() {
+        console.log('MarkViewer - A web-based markdown viewer');
+        console.log('');
+        console.log('Usage:');
+        console.log('  markviewer [options]');
+        console.log('');
+        console.log('Options:');
+        console.log('  -i, --interface <host>  Interface to bind to (default: 127.0.0.1)');
+        console.log('  -p, --port <port>       Port to listen on (default: auto-detect starting from 3001)');
+        console.log('  --no-browser            Don\'t open browser automatically');
+        console.log('  --test                  Test mode (start and immediately shutdown)');
+        console.log('  -h, --help              Show this help message');
+        console.log('');
+        console.log('Examples:');
+        console.log('  markviewer                     # Start on localhost with auto-detected port');
+        console.log('  markviewer -i 0.0.0.0          # Listen on all interfaces');
+        console.log('  markviewer -p 8080             # Use specific port');
+        console.log('  markviewer -i 0.0.0.0 -p 2345  # Custom interface and port');
     }
 
     /**
@@ -48,6 +128,12 @@ class MarkViewerStarter {
      */
     async start() {
         console.log('🚀 Starting MarkViewer...');
+        console.log(`📡 Interface: ${this.host}`);
+        if (this.cliOptions.port) {
+            console.log(`🔌 Port: ${this.cliOptions.port}`);
+        } else {
+            console.log(`🔌 Port: auto-detect (starting from 3001)`);
+        }
         console.log('');
 
         try {
@@ -79,7 +165,9 @@ class MarkViewerStarter {
             
             console.log('✅ MarkViewer is ready!');
             console.log('');
-            console.log(`🌐 Web interface: http://localhost:${this.backendPort}`);
+            
+            const displayHost = this.host === '0.0.0.0' ? 'localhost' : this.host;
+            console.log(`🌐 Web interface: http://${displayHost}:${this.backendPort}`);
             console.log('');
             
             // Open browser if not disabled
@@ -103,7 +191,8 @@ class MarkViewerStarter {
      * Open browser automatically
      */
     async openBrowser() {
-        const url = `http://localhost:${this.backendPort}`;
+        const displayHost = this.host === '0.0.0.0' ? 'localhost' : this.host;
+        const url = `http://${displayHost}:${this.backendPort}`;
         const { exec } = require('child_process');
         
         let command;
@@ -211,10 +300,20 @@ class MarkViewerStarter {
     async findAvailablePorts() {
         console.log('🔍 Finding available ports...');
         
-        this.backendPort = await this.findAvailablePort(3001);
-        this.frontendPort = await this.findAvailablePort(8080);
+        // If port is specified via CLI, use it directly or check if available
+        if (this.cliOptions.port) {
+            if (await this.isPortFree(this.cliOptions.port)) {
+                this.backendPort = this.cliOptions.port;
+                console.log(`✓ Using specified port: ${this.backendPort}`);
+            } else {
+                throw new Error(`Specified port ${this.cliOptions.port} is already in use`);
+            }
+        } else {
+            this.backendPort = await this.findAvailablePort(3001);
+            console.log(`✓ Backend will use port: ${this.backendPort}`);
+        }
         
-        console.log(`✓ Backend will use port: ${this.backendPort}`);
+        this.frontendPort = await this.findAvailablePort(8080);
         console.log(`✓ Frontend will use port: ${this.frontendPort}`);
     }
 
@@ -262,6 +361,7 @@ class MarkViewerStarter {
             const env = { 
                 ...process.env, 
                 PORT: this.backendPort.toString(),
+                HOST: this.host,
                 MARKVIEWER_APP_DIR: this.appDir
             };
             

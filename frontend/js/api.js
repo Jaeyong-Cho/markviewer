@@ -8,22 +8,11 @@
  */
 class ApiClient {
     constructor() {
-        // Auto-detect API base URL
-        // If running from same host, use same host for API
-        // Otherwise, default to localhost for development
-        const currentHost = window.location.hostname;
-        const currentPort = window.location.port;
-        
-        // Determine API port based on current location
-        let apiPort = '3001';
-        if (currentPort && currentPort !== '80' && currentPort !== '443') {
-            // If we're on a non-standard port, assume backend is on 3001
-            apiPort = '3001';
-        }
-        
-        // Use current protocol and hostname for external access
+        // Auto-detect API base URL using current page's host and port
         const protocol = window.location.protocol;
-        this.baseUrl = `${protocol}//${currentHost}:${apiPort}/api`;
+        const host = window.location.host; // includes port if present
+        
+        this.baseUrl = `${protocol}//${host}/api`;
         this.timeout = 30000; // 30 seconds
     }
 
