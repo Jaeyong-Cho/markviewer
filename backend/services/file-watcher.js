@@ -32,23 +32,43 @@ class FileWatcher {
      * @param {string} rootPath - Root directory path to watch
      */
     startWatching(rootPath) {
-        if (this.watchers.has(rootPath)) {
-            console.log(`Already watching directory: ${rootPath}`);
+        // Normalize the root path to handle Unicode directory names
+        const normalizedRootPath = this.normalizeFilePath(rootPath);
+        
+        if (this.watchers.has(normalizedRootPath)) {
+            console.log(`Already watching directory: ${normalizedRootPath}`);
             return;
         }
 
-        console.log(`Starting file watcher for: ${rootPath}`);
+        console.log(`Starting file watcher for: ${normalizedRootPath}`);
+        console.log(`[DEBUG] Original path: ${rootPath}, Normalized: ${normalizedRootPath}`);
 
-        const watcher = chokidar.watch(rootPath, {
-            ignored: [
-                '**/.git/**',
-                '**/node_modules/**',
-                '**/.DS_Store',
-                '**/Thumbs.db',
-                '**/*.tmp',
-                '**/*.temp',
-                '**/.*' // Hidden files except markdown
-            ],
+        const watcher = chokidar.watch(normalizedRootPath, {
+            ignored: (path, stats) => {
+                const normalizedPath = this.normalizeFilePath(path);
+                
+                // Ignore git directories
+                if (normalizedPath.includes('/.git/') || normalizedPath.endsWith('/.git')) return true;
+                
+                // Ignore node_modules
+                if (normalizedPath.includes('/node_modules/') || normalizedPath.endsWith('/node_modules')) return true;
+                
+                // Ignore system files
+                if (normalizedPath.includes('/.DS_Store') || normalizedPath.includes('/Thumbs.db')) return true;
+                
+                // Ignore temporary files
+                if (normalizedPath.endsWith('.tmp') || normalizedPath.endsWith('.temp')) return true;
+                
+                // Ignore hidden files/directories (but allow markdown files)
+                const basename = path.basename(normalizedPath);
+                if (basename.startsWith('.')) {
+                    const ext = path.extname(normalizedPath).toLowerCase();
+                    const isMarkdown = ['.md', '.markdown', '.mdown', '.mkd', '.mkdn'].includes(ext);
+                    return !isMarkdown; // Don't ignore markdown files even if they start with dot
+                }
+                
+                return false; // Don't ignore anything else
+            },
             persistent: true,
             ignoreInitial: true,
             followSymlinks: false,
@@ -56,43 +76,68 @@ class FileWatcher {
             awaitWriteFinish: {
                 stabilityThreshold: 100,
                 pollInterval: 50
-            }
+            },
+            // Ensure proper UTF-8 handling for non-ASCII filenames and directories
+            usePolling: false,
+            atomic: true,
+            // Disable globbing to better handle Unicode paths
+            disableGlobbing: true,
+            // Enable case sensitivity for better Unicode handling
+            alwaysStat: true,
+            // Improve Unicode path handling
+            encoding: 'utf8'
         });
 
         // File added
         watcher.on('add', (filePath) => {
-            if (this.isMarkdownFile(filePath)) {
-                console.log(`File added: ${filePath}`);
-                this.notifySubscribers('fileAdded', filePath);
+            const normalizedPath = this.normalizeFilePath(filePath);
+            console.log(`[DEBUG] File added - Original: ${filePath}, Normalized: ${normalizedPath}`);
+            if (this.isMarkdownFile(normalizedPath)) {
+                console.log(`File added: ${normalizedPath}`);
+                this.notifySubscribers('fileAdded', normalizedPath);
+            } else {
+                console.log(`[DEBUG] File ignored (not markdown): ${normalizedPath}`);
             }
         });
 
         // File changed
         watcher.on('change', (filePath) => {
-            if (this.isMarkdownFile(filePath)) {
-                console.log(`File changed: ${filePath}`);
-                this.notifySubscribers('fileChanged', filePath);
+            const normalizedPath = this.normalizeFilePath(filePath);
+            console.log(`[DEBUG] File changed - Original: ${filePath}, Normalized: ${normalizedPath}`);
+            if (this.isMarkdownFile(normalizedPath)) {
+                console.log(`File changed: ${normalizedPath}`);
+                this.notifySubscribers('fileChanged', normalizedPath);
+            } else {
+                console.log(`[DEBUG] File change ignored (not markdown): ${normalizedPath}`);
             }
         });
 
         // File removed
         watcher.on('unlink', (filePath) => {
-            if (this.isMarkdownFile(filePath)) {
-                console.log(`File removed: ${filePath}`);
-                this.notifySubscribers('fileRemoved', filePath);
+            const normalizedPath = this.normalizeFilePath(filePath);
+            console.log(`[DEBUG] File removed - Original: ${filePath}, Normalized: ${normalizedPath}`);
+            if (this.isMarkdownFile(normalizedPath)) {
+                console.log(`File removed: ${normalizedPath}`);
+                this.notifySubscribers('fileRemoved', normalizedPath);
+            } else {
+                console.log(`[DEBUG] File removal ignored (not markdown): ${normalizedPath}`);
             }
         });
 
         // Directory added
         watcher.on('addDir', (dirPath) => {
-            console.log(`Directory added: ${dirPath}`);
-            this.notifySubscribers('directoryAdded', dirPath);
+            const normalizedPath = this.normalizeFilePath(dirPath);
+            console.log(`[DEBUG] Directory added - Original: ${dirPath}, Normalized: ${normalizedPath}`);
+            console.log(`Directory added: ${normalizedPath}`);
+            this.notifySubscribers('directoryAdded', normalizedPath);
         });
 
         // Directory removed
         watcher.on('unlinkDir', (dirPath) => {
-            console.log(`Directory removed: ${dirPath}`);
-            this.notifySubscribers('directoryRemoved', dirPath);
+            const normalizedPath = this.normalizeFilePath(dirPath);
+            console.log(`[DEBUG] Directory removed - Original: ${dirPath}, Normalized: ${normalizedPath}`);
+            console.log(`Directory removed: ${normalizedPath}`);
+            this.notifySubscribers('directoryRemoved', normalizedPath);
         });
 
         // Error handling
@@ -103,11 +148,11 @@ class FileWatcher {
 
         // Ready event
         watcher.on('ready', () => {
-            console.log(`File watcher ready for: ${rootPath}`);
-            this.notifySubscribers('watcherReady', rootPath);
+            console.log(`File watcher ready for: ${normalizedRootPath}`);
+            this.notifySubscribers('watcherReady', normalizedRootPath);
         });
 
-        this.watchers.set(rootPath, watcher);
+        this.watchers.set(normalizedRootPath, watcher);
     }
 
     /**
@@ -115,12 +160,15 @@ class FileWatcher {
      * @param {string} rootPath - Root directory path to stop watching
      */
     async stopWatching(rootPath) {
-        const watcher = this.watchers.get(rootPath);
+        // Normalize the path to match the key used in startWatching
+        const normalizedRootPath = this.normalizeFilePath(rootPath);
+        
+        const watcher = this.watchers.get(normalizedRootPath);
         if (watcher) {
-            console.log(`Stopping file watcher for: ${rootPath}`);
+            console.log(`Stopping file watcher for: ${normalizedRootPath}`);
             await watcher.close();
-            this.watchers.delete(rootPath);
-            this.notifySubscribers('watcherStopped', rootPath);
+            this.watchers.delete(normalizedRootPath);
+            this.notifySubscribers('watcherStopped', normalizedRootPath);
         }
     }
 
@@ -142,12 +190,13 @@ class FileWatcher {
      */
     async getFileContent(filePath) {
         try {
-            const content = await fs.readFile(filePath, 'utf8');
-            const stats = await fs.stat(filePath);
+            const normalizedPath = this.normalizeFilePath(filePath);
+            const content = await fs.readFile(normalizedPath, 'utf8');
+            const stats = await fs.stat(normalizedPath);
             
             return {
                 content,
-                path: filePath,
+                path: normalizedPath,
                 modified: stats.mtime.toISOString(),
                 size: stats.size
             };
@@ -196,12 +245,30 @@ class FileWatcher {
     }
 
     /**
+     * Normalize file path for proper Unicode handling
+     * Handles macOS NFD normalization issues with Korean characters
+     * @param {string} filePath - File path to normalize
+     * @returns {string} Normalized file path
+     */
+    normalizeFilePath(filePath) {
+        // Normalize Unicode to NFC (Normalization Form Composed)
+        // This is important for Korean characters on macOS
+        let normalized = filePath.normalize('NFC');
+        
+        // Additional normalization for path separators
+        normalized = path.normalize(normalized);
+        
+        return normalized;
+    }
+
+    /**
      * Check if a file is a markdown file
      * @param {string} filePath - File path to check
      * @returns {boolean} True if markdown file
      */
     isMarkdownFile(filePath) {
-        const ext = path.extname(filePath).toLowerCase();
+        const normalizedPath = this.normalizeFilePath(filePath);
+        const ext = path.extname(normalizedPath).toLowerCase();
         return ['.md', '.markdown', '.mdown', '.mkd', '.mkdn'].includes(ext);
     }
 
