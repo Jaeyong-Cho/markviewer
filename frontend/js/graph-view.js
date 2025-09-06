@@ -422,6 +422,11 @@ class GraphView extends Utils.EventEmitter {
             }, 100);
         }
         
+        // Update ToC position for graph view
+        setTimeout(() => {
+            this.updateToCPosition();
+        }, 150);
+        
         this.isVisible = true;
         this.emit('show');
         console.log('Graph view shown successfully');
@@ -440,6 +445,9 @@ class GraphView extends Utils.EventEmitter {
         if (appMain) {
             appMain.classList.remove('graph-view-active');
         }
+        
+        // Reset ToC position when hiding graph view
+        this.resetToCPosition();
         
         this.isVisible = false;
         this.clearSelection();
@@ -1069,6 +1077,28 @@ class GraphView extends Utils.EventEmitter {
                 appMain.querySelector('.content-area').style.width = contentWidth + 'px';
             }
             
+            // Update ToC position in real-time during resize
+            const tocSidebar = document.querySelector('.toc-sidebar');
+            const tocHoverTrigger = document.querySelector('.toc-hover-trigger');
+            const tocShowBtn = document.querySelector('.toc-show-btn');
+            const tocHideBtn = document.querySelector('.toc-hide-btn');
+            
+            if (tocSidebar && tocSidebar.classList.contains('visible')) {
+                tocSidebar.style.right = `${newWidth + 16}px`;
+            }
+            
+            if (tocHoverTrigger) {
+                tocHoverTrigger.style.right = `${newWidth}px`;
+            }
+            
+            if (tocShowBtn) {
+                tocShowBtn.style.right = `${newWidth}px`;
+            }
+            
+            if (tocHideBtn) {
+                tocHideBtn.style.right = `${newWidth + 280 + 16}px`;
+            }
+            
             // Debounced graph resize for better performance
             if (this.cy) {
                 clearTimeout(this.resizeTimer);
@@ -1090,6 +1120,9 @@ class GraphView extends Utils.EventEmitter {
                     clearTimeout(this.resizeTimer);
                     this.resizeAndAdjustGraph();
                 }
+                
+                // Update ToC position after resizing
+                this.updateToCPosition();
             }
         });
     }
@@ -1181,6 +1214,77 @@ class GraphView extends Utils.EventEmitter {
         
         // Update graph statistics after resize
         this.updateStats();
+        
+        // Update ToC position based on current graph panel width
+        this.updateToCPosition();
+    }
+
+    /**
+     * Update ToC position based on graph panel width
+     */
+    updateToCPosition() {
+        if (!this.isVisible) return;
+        
+        const graphPanel = this.graphPanel;
+        if (!graphPanel) return;
+        
+        const graphWidth = graphPanel.offsetWidth;
+        const tocSidebar = document.querySelector('.toc-sidebar');
+        const tocHoverTrigger = document.querySelector('.toc-hover-trigger');
+        const tocShowBtn = document.querySelector('.toc-show-btn');
+        const tocHideBtn = document.querySelector('.toc-hide-btn');
+        
+        // Update CSS custom property for dynamic positioning
+        document.documentElement.style.setProperty('--graph-panel-width', `${graphWidth}px`);
+        
+        if (tocSidebar) {
+            // Force update visible ToC position
+            if (tocSidebar.classList.contains('visible')) {
+                tocSidebar.style.right = `${graphWidth + 16}px`;
+            }
+        }
+        
+        if (tocHoverTrigger) {
+            tocHoverTrigger.style.right = `${graphWidth}px`;
+        }
+        
+        if (tocShowBtn) {
+            tocShowBtn.style.right = `${graphWidth}px`;
+        }
+        
+        if (tocHideBtn) {
+            tocHideBtn.style.right = `${graphWidth + 280 + 16}px`;
+        }
+    }
+
+    /**
+     * Reset ToC position when graph view is hidden
+     */
+    resetToCPosition() {
+        const tocSidebar = document.querySelector('.toc-sidebar');
+        const tocHoverTrigger = document.querySelector('.toc-hover-trigger');
+        const tocShowBtn = document.querySelector('.toc-show-btn');
+        const tocHideBtn = document.querySelector('.toc-hide-btn');
+        
+        // Remove custom styles to fall back to CSS defaults
+        if (tocSidebar) {
+            tocSidebar.style.right = '';
+        }
+        
+        if (tocHoverTrigger) {
+            tocHoverTrigger.style.right = '';
+        }
+        
+        if (tocShowBtn) {
+            tocShowBtn.style.right = '';
+        }
+        
+        if (tocHideBtn) {
+            tocHideBtn.style.right = '';
+        }
+        
+        // Clear CSS custom property
+        document.documentElement.style.removeProperty('--graph-panel-width');
     }
 
     /**

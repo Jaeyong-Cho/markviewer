@@ -601,11 +601,11 @@
 
 /* Adjust ToC position when graph panel is visible */
 .graph-view-active .toc-sidebar.visible {
-    right: calc(40vw + 16px); /* Graph panel width + margin */
+    right: calc(var(--graph-panel-width, 40vw) + 16px); /* Use CSS variable or fallback to 40vw */
 }
 
 .graph-view-active .toc-hover-trigger {
-    right: 40vw; /* Graph panel width */
+    right: var(--graph-panel-width, 40vw); /* Use CSS variable or fallback to 40vw */
 }
 
 /* Auto-hide transparency states */
@@ -638,7 +638,7 @@
 /* When graph panel is open, adjust hover positioning */
 .graph-view-active .toc-hover-trigger:hover + .toc-sidebar,
 .graph-view-active .toc-sidebar:hover {
-    right: calc(40vw + 16px); /* Graph panel width + margin */
+    right: calc(var(--graph-panel-width, 40vw) + 16px); /* Use CSS variable or fallback to 40vw */
 }
 
 /* ToC disabled state */
@@ -719,7 +719,7 @@
 
 /* Adjust show button position when graph panel is open */
 .graph-view-active .toc-show-btn {
-    right: 40vw; /* Graph panel width */
+    right: var(--graph-panel-width, 40vw); /* Use CSS variable or fallback to 40vw */
 }
 
 .toc-disabled .toc-show-btn {
@@ -746,7 +746,7 @@
 
 /* Adjust hide button position when graph panel is open */
 .graph-view-active .toc-hide-btn {
-    right: calc(40vw + 280px + 16px); /* Graph panel width + ToC width + margin */
+    right: calc(var(--graph-panel-width, 40vw) + 280px + 16px); /* Use CSS variable or fallback to 40vw */
 }
 
 .toc-sidebar.visible ~ .toc-show-btn + .toc-hide-btn {
