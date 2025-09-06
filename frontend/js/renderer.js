@@ -620,7 +620,7 @@ class MarkdownRenderer extends Utils.EventEmitter {
             // Calculate indentation based on header level (h1=0, h2=1, h3=2, etc.)
             const indentLevel = Math.max(0, level - 1);
             
-            tocHtml += `<li class="toc-item toc-level-${level}" style="margin-left: ${indentLevel * 16}px;">
+            tocHtml += `<li class="toc-item toc-level-${level}" style="margin-left: ${indentLevel * 12}px;">
                 <a href="#${id}" class="toc-link">${text}</a>
             </li>`;
         });
@@ -932,30 +932,60 @@ class MarkdownRenderer extends Utils.EventEmitter {
         let ticking = false;
         
         const updateActiveSection = () => {
-            const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            const headings = document.querySelectorAll('#markdown-content h1, #markdown-content h2, #markdown-content h3, #markdown-content h4, #markdown-content h5, #markdown-content h6');
             const tocLinks = document.querySelectorAll('#toc-sidebar .toc-link');
             
             if (headings.length === 0 || tocLinks.length === 0) return;
             
+            // Get the scrollable container
+            const scrollContainer = document.querySelector('.content-body');
+            if (!scrollContainer) return;
+            
             // Find the current section based on scroll position
             let currentHeading = null;
-            const scrollPos = window.scrollY + 100; // Offset for better detection
+            const scrollPos = scrollContainer.scrollTop + 120; // Offset for better detection
             
-            for (let i = headings.length - 1; i >= 0; i--) {
-                const heading = headings[i];
-                if (heading.offsetTop <= scrollPos) {
-                    currentHeading = heading;
-                    break;
+            // Check if we're at the bottom of the container
+            const isAtBottom = scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 50;
+            
+            if (isAtBottom) {
+                // If at bottom, highlight the last heading
+                currentHeading = headings[headings.length - 1];
+            } else if (scrollContainer.scrollTop < 100) {
+                // If near the top, always select the first heading
+                currentHeading = headings[0];
+            } else {
+                // Find the current heading based on scroll position
+                for (let i = headings.length - 1; i >= 0; i--) {
+                    const heading = headings[i];
+                    // Get heading position relative to the scroll container
+                    const headingTop = heading.offsetTop - scrollContainer.offsetTop;
+                    if (headingTop <= scrollPos) {
+                        currentHeading = heading;
+                        break;
+                    }
+                }
+                
+                // Fallback: if still no heading found, use the first one
+                if (!currentHeading && headings.length > 0) {
+                    currentHeading = headings[0];
                 }
             }
             
             // Update active state in ToC
+            let activeLink = null;
             tocLinks.forEach(link => {
                 link.classList.remove('active');
                 if (currentHeading && link.getAttribute('href') === `#${currentHeading.id}`) {
                     link.classList.add('active');
+                    activeLink = link;
                 }
             });
+            
+            // Auto-scroll ToC to show active item
+            if (activeLink) {
+                this.scrollTocToActiveItem(activeLink);
+            }
             
             ticking = false;
         };
@@ -967,12 +997,21 @@ class MarkdownRenderer extends Utils.EventEmitter {
             }
         };
         
-        // Remove existing scroll listener if any
-        window.removeEventListener('scroll', this.scrollSpyHandler);
+        // Get the scrollable container
+        const scrollContainer = document.querySelector('.content-body');
+        if (!scrollContainer) return;
         
-        // Add new scroll listener
+        // Remove existing scroll listener if any
+        if (this.scrollSpyHandler) {
+            scrollContainer.removeEventListener('scroll', this.scrollSpyHandler);
+        }
+        
+        // Add new scroll listener to the container
         this.scrollSpyHandler = onScroll;
-        window.addEventListener('scroll', this.scrollSpyHandler, { passive: true });
+        scrollContainer.addEventListener('scroll', this.scrollSpyHandler, { passive: true });
+        
+        // Trigger initial update
+        updateActiveSection();
     }
 
     /**
