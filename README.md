@@ -1,4 +1,4 @@
-# MarkViewer
+# MarkViewer 
 
 A powerful web-based markdown viewer with PlantUML, Mermaid, and search capabilities.
 
@@ -249,6 +249,8 @@ The backend provides these REST endpoints:
 - `GET /api/file?path=<path>` - Get file content
 - `POST /api/plantuml` - Render PlantUML to SVG
 - `GET /api/search?q=<query>&path=<path>` - Search files
+- `GET /api/graph?path=<path>` - Get link relationship graph data
+- `POST /api/graph/analyze` - Analyze and rebuild link relationships
 
 ## Development
 

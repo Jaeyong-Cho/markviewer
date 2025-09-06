@@ -149,6 +149,46 @@ body {
     display: none;
 }
 
+/* Split Screen and Graph View Toggle Buttons */
+.split-toggle,
+.graph-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--header-text);
+    padding: var(--spacing-sm);
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    transition: all var(--transition-fast);
+    width: 36px;
+    height: 36px;
+}
+
+.split-toggle:hover,
+.graph-toggle:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--primary-color);
+}
+
+.split-toggle:focus,
+.graph-toggle:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.split-toggle.active,
+.graph-toggle.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.split-toggle.active:hover,
+.graph-toggle.active:hover {
+    background-color: #0356cc;
+}
+
 .toc-icon {
     transition: opacity var(--transition-fast);
 }

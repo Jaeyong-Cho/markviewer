@@ -10,7 +10,7 @@ class ApiClient {
     constructor() {
         // Auto-detect API base URL using current page's host and port
         const protocol = window.location.protocol;
-        const host = window.location.host; // includes port if present
+        const host = window.location.host;
         
         this.baseUrl = `${protocol}//${host}/api`;
         this.timeout = 30000; // 30 seconds
@@ -162,6 +162,33 @@ class ApiClient {
     async getDirectorySuggestions(partialPath) {
         const url = `${this.baseUrl}/workspace/suggestions?${new URLSearchParams({ path: partialPath })}`;
         return await this.request(url);
+    }
+
+    /**
+     * Get graph data for a directory
+     * @param {string} rootPath - Root directory path
+     * @returns {Promise<Object>} Graph data with nodes and edges
+     */
+    async getGraphData(rootPath) {
+        const url = `${this.baseUrl}/graph?${new URLSearchParams({ path: rootPath })}`;
+        return await this.request(url);
+    }
+
+    /**
+     * Analyze and rebuild graph relationships
+     * @param {string} rootPath - Root directory path
+     * @param {boolean} forceRefresh - Force refresh of analysis
+     * @returns {Promise<Object>} Analysis result with graph data
+     */
+    async analyzeGraphRelationships(rootPath, forceRefresh = false) {
+        const url = `${this.baseUrl}/graph/analyze`;
+        return await this.request(url, {
+            method: 'POST',
+            body: JSON.stringify({ 
+                path: rootPath, 
+                forceRefresh: forceRefresh 
+            })
+        });
     }
 }
 
@@ -343,6 +370,36 @@ class ApiService {
     }
 
     /**
+     * Get graph data for visualization (with caching)
+     * @param {string} rootPath - Root directory path
+     * @returns {Promise<Object>} Graph data with nodes and edges
+     */
+    async getGraphData(rootPath) {
+        return await this.cachedRequest('getGraphData', this.client.getGraphData, rootPath);
+    }
+
+    /**
+     * Analyze graph relationships (no caching for fresh analysis)
+     * @param {string} rootPath - Root directory path
+     * @param {boolean} forceRefresh - Force refresh of analysis
+     * @returns {Promise<Object>} Analysis result
+     */
+    async analyzeGraphRelationships(rootPath, forceRefresh = false) {
+        try {
+            // Clear cache for this path when force refreshing
+            if (forceRefresh) {
+                const cacheKey = this.getCacheKey('getGraphData', rootPath);
+                this.cache.delete(cacheKey);
+            }
+            
+            return await this.client.analyzeGraphRelationships(rootPath, forceRefresh);
+        } catch (error) {
+            console.error('Graph analysis API error:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Clear all cached data
      */
     clearCache(filePath = null) {
@@ -426,7 +483,10 @@ class ApiService {
 
 // Create global API service instance
 window.API = {
-    ApiService: ApiService
+    ApiService: ApiService,
+    // Convenience methods
+    getGraphData: (rootPath) => window.api.getGraphData(rootPath),
+    analyzeGraphRelationships: (rootPath, forceRefresh) => window.api.analyzeGraphRelationships(rootPath, forceRefresh)
 };
 window.api = new ApiService(); // Export instance
 

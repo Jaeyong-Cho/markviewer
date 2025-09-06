@@ -10,6 +10,7 @@ const plantumlService = require('./services/plantuml-service');
 const searchService = require('./services/search-service');
 const fileWatcher = require('./services/file-watcher');
 const WorkspaceScanner = require('./services/workspace-scanner');
+const LinkAnalysisService = require('./services/link-analysis-service');
 
 /**
  * Browser opening functionality has been removed
@@ -27,6 +28,7 @@ class MarkViewerServer {
         
         // Initialize services
         this.workspaceScanner = new WorkspaceScanner();
+        this.linkAnalysisService = new LinkAnalysisService();
         
         // Initialize Socket.IO
         this.io = new Server(this.server, {
@@ -374,6 +376,56 @@ class MarkViewerServer {
             } catch (error) {
                 console.error('Error getting directory suggestions:', error);
                 res.status(500).json({ error: error.message });
+            }
+        });
+
+        // Graph analysis endpoints
+        this.app.get('/api/graph', async (req, res) => {
+            try {
+                const rootPath = req.query.path;
+                if (!rootPath) {
+                    return res.status(400).json({ error: 'Path parameter is required' });
+                }
+
+                const graphData = await this.linkAnalysisService.analyzeDirectory(rootPath);
+                
+                res.json({
+                    success: true,
+                    data: graphData,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (error) {
+                console.error('Error generating graph data:', error);
+                res.status(500).json({ 
+                    error: 'Failed to analyze graph relationships',
+                    message: error.message 
+                });
+            }
+        });
+
+        this.app.post('/api/graph/analyze', async (req, res) => {
+            try {
+                const { path: rootPath, forceRefresh = false } = req.body;
+                if (!rootPath) {
+                    return res.status(400).json({ error: 'Path parameter is required' });
+                }
+
+                const graphData = await this.linkAnalysisService.analyzeDirectory(rootPath);
+                const stats = this.linkAnalysisService.getStats();
+                
+                res.json({
+                    success: true,
+                    data: graphData,
+                    stats: stats,
+                    forceRefresh: forceRefresh,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (error) {
+                console.error('Error analyzing graph:', error);
+                res.status(500).json({ 
+                    error: 'Failed to analyze graph relationships',
+                    message: error.message 
+                });
             }
         });
 

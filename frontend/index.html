@@ -35,6 +35,7 @@
     <!-- External libraries from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/marked@9.1.2/marked.min.js"></script>
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
     <!-- Use the official CDN with fallback -->
 
     <script>
@@ -141,6 +142,7 @@
     <link rel="stylesheet" href="styles/search.css">
     <link rel="stylesheet" href="styles/tabs.css">
     <link rel="stylesheet" href="styles/split.css">
+    <link rel="stylesheet" href="styles/graph-view.css">
     <link rel="stylesheet" href="styles/workspace-recommender.css">
     <link rel="stylesheet" href="styles/workspace-autocomplete.css">
 </head>
@@ -185,6 +187,19 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="8" height="18" rx="1"></rect>
                         <rect x="13" y="3" width="8" height="18" rx="1"></rect>
+                    </svg>
+                </button>
+                
+                <!-- Graph View Toggle Button -->
+                <button id="graph-toggle" class="graph-toggle" aria-label="Toggle graph view" title="Toggle Graph View (Ctrl+Shift+G)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <circle cx="6" cy="6" r="3"></circle>
+                        <circle cx="18" cy="6" r="3"></circle>
+                        <circle cx="6" cy="18" r="3"></circle>
+                        <circle cx="18" cy="18" r="3"></circle>
+                        <path d="M9.09 9.09L14.91 14.91"></path>
+                        <path d="M9.09 14.91L14.91 9.09"></path>
                     </svg>
                 </button>
             </div>
@@ -347,6 +362,9 @@ function renderMarkdown(content) {
             </section>
         </main>
 
+        <!-- Graph View Container -->
+        <div id="graph-view-container"></div>
+
         <!-- Loading overlay -->
         <div id="loading-overlay" class="loading-overlay hidden">
             <div class="loading-spinner">
@@ -404,6 +422,7 @@ function renderMarkdown(content) {
             'js/sidebar-resizer.js',
             'js/tab-manager.js',
             'js/split-manager.js',
+            'js/graph-view.js',
             'js/workspace-recommender.js',
             'js/workspace-autocomplete.js',
             'js/app.js'

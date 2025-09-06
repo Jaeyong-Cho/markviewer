@@ -28,6 +28,7 @@ class MarkViewerApp extends Utils.EventEmitter {
         this.workspaceAutocomplete = null;
         this.tabManager = null;
         this.splitManager = null;
+        this.graphView = null;
 
         // DOM elements
         this.elements = {};
@@ -42,6 +43,7 @@ class MarkViewerApp extends Utils.EventEmitter {
         this.handleKeyboard = this.handleKeyboard.bind(this);
         this.handleResize = this.handleResize.bind(this);
         this.handleSplitToggle = this.handleSplitToggle.bind(this);
+        this.handleGraphToggle = this.handleGraphToggle.bind(this);
 
         // Initialize when DOM is ready
         if (document.readyState === 'loading') {
@@ -142,12 +144,13 @@ class MarkViewerApp extends Utils.EventEmitter {
             fileCount: document.getElementById('file-count'),
             tabArea: document.getElementById('tab-area'),
             splitToggle: document.getElementById('split-toggle'),
+            graphToggle: document.getElementById('graph-toggle'),
             contentArea: document.querySelector('.content-area')
         };
 
         // Verify all elements exist
         const missingElements = Object.entries(this.elements)
-            .filter(([key, element]) => !element)
+            .filter(([key, element]) => !element && key !== 'graphToggle') // graphToggle is optional
             .map(([key]) => key);
 
         if (missingElements.length > 0) {
@@ -204,6 +207,13 @@ class MarkViewerApp extends Utils.EventEmitter {
                 this.workspaceAutocomplete = new WorkspaceAutocomplete(this.elements.workspaceInput, this);
             } else {
                 console.warn('WorkspaceAutocomplete not available');
+            }
+            
+            // Initialize graph view
+            if (typeof GraphView !== 'undefined') {
+                this.graphView = new GraphView('#graph-view-container');
+            } else {
+                console.warn('GraphView not available');
             }
             
             // Initialize WebSocket client (with error handling)
@@ -277,6 +287,24 @@ class MarkViewerApp extends Utils.EventEmitter {
             console.warn('App: SplitManager not initialized, split events disabled');
         }
         
+        // GraphView events
+        if (this.graphView) {
+            this.graphView.on('fileSelect', (filePath) => {
+                this.handleFileSelect(filePath);
+                this.graphView.hide(); // Hide graph view after file selection
+            });
+            
+            this.graphView.on('show', () => {
+                this.updateGraphToggleState();
+            });
+            
+            this.graphView.on('hide', () => {
+                this.updateGraphToggleState();
+            });
+        } else {
+            console.warn('App: GraphView not initialized, graph events disabled');
+        }
+        
         // Sidebar events
         if (this.sidebar) {
             this.sidebar.on('fileSelect', this.handleFileSelect.bind(this));
@@ -338,6 +366,11 @@ class MarkViewerApp extends Utils.EventEmitter {
         
         // Split screen toggle
         this.elements.splitToggle.addEventListener('click', this.handleSplitToggle);
+        
+        // Graph view toggle
+        if (this.elements.graphToggle) {
+            this.elements.graphToggle.addEventListener('click', this.handleGraphToggle);
+        }
         
         // Sidebar edge toggle buttons
         if (this.elements.sidebarShowBtn) {
@@ -912,6 +945,12 @@ function renderMarkdown(content) {
             this.toggleSplitScreen();
         }
         
+        // Ctrl/Cmd + Shift + G: Toggle graph view
+        if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'G') {
+            event.preventDefault();
+            this.toggleGraphView();
+        }
+        
         // Escape: Clear search or close sidebar on mobile
         if (event.key === 'Escape') {
             if (this.state.isSearchMode) {
@@ -1070,6 +1109,81 @@ function renderMarkdown(content) {
         }
         
         return this.webSocket.getConnectionInfo();
+    }
+
+    /**
+     * Handle graph view toggle
+     */
+    handleGraphToggle() {
+        this.toggleGraphView();
+    }
+
+    /**
+     * Toggle graph view
+     */
+    async toggleGraphView() {
+        if (!this.graphView) {
+            Utils.showNotification('Graph view not available', 'error');
+            return;
+        }
+
+        if (this.graphView.isVisible) {
+            this.graphView.hide();
+        } else {
+            await this.showGraphView();
+        }
+    }
+
+    /**
+     * Show graph view with current workspace data
+     */
+    async showGraphView() {
+        if (!this.graphView || !this.state.rootDirectory) {
+            Utils.showNotification('Please select a workspace directory first', 'warning');
+            return;
+        }
+
+        try {
+            // Show loading state
+            Utils.showNotification('Analyzing document relationships...', 'info');
+
+            // Fetch graph data from backend
+            const response = await API.getGraphData(this.state.rootDirectory);
+            
+            if (response.success) {
+                await this.graphView.loadGraphData(response.data);
+                Utils.showNotification('Graph view loaded successfully', 'success');
+            } else {
+                throw new Error(response.message || 'Failed to load graph data');
+            }
+        } catch (error) {
+            console.error('Error loading graph view:', error);
+            Utils.showNotification('Failed to load graph view: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Update graph toggle button state
+     */
+    updateGraphToggleState() {
+        if (!this.elements.graphToggle || !this.graphView) return;
+
+        if (this.graphView.isVisible) {
+            this.elements.graphToggle.classList.add('active');
+            this.elements.graphToggle.setAttribute('aria-pressed', 'true');
+        } else {
+            this.elements.graphToggle.classList.remove('active');
+            this.elements.graphToggle.setAttribute('aria-pressed', 'false');
+        }
+    }
+
+    /**
+     * Refresh graph view if it's currently visible
+     */
+    async refreshGraphView() {
+        if (this.graphView && this.graphView.isVisible && this.state.rootDirectory) {
+            await this.showGraphView();
+        }
     }
 }
 
