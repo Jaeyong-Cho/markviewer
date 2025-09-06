@@ -717,27 +717,8 @@ class MarkdownRenderer extends Utils.EventEmitter {
             return;
         }
         
-        const tocToggleBtn = document.getElementById('toc-toggle');
         const tocShowBtn = document.getElementById('toc-show-btn');
         const tocHideBtn = document.getElementById('toc-hide-btn');
-        
-        // Header ToC toggle button
-        if (tocToggleBtn) {
-            // Remove any existing listeners to avoid duplicates
-            tocToggleBtn.replaceWith(tocToggleBtn.cloneNode(true));
-            const newTocToggleBtn = document.getElementById('toc-toggle');
-            
-            newTocToggleBtn.addEventListener('click', () => {
-                this.toggleToc();
-            });
-            
-            newTocToggleBtn.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    this.toggleToc();
-                }
-            });
-        }
         
         // Edge ToC show button
         if (tocShowBtn) {
@@ -850,34 +831,10 @@ class MarkdownRenderer extends Utils.EventEmitter {
             return;
         }
         
-        const tocToggleBtn = document.getElementById('toc-toggle');
         const tocShowBtn = document.getElementById('toc-show-btn');
         const tocHideBtn = document.getElementById('toc-hide-btn');
         
         const headings = this.container.querySelectorAll('h1, h2, h3, h4, h5, h6');
-        
-        // Update header toggle button
-        if (tocToggleBtn) {
-            // Hide button if content has fewer than 2 headings
-            if (headings.length < 2) {
-                tocToggleBtn.classList.add('hidden');
-                tocToggleBtn.disabled = true;
-            } else {
-                tocToggleBtn.classList.remove('hidden');
-                tocToggleBtn.disabled = false;
-                
-                // Update visual state based on ToC enabled status
-                if (this.tocEnabled) {
-                    tocToggleBtn.classList.remove('disabled');
-                    tocToggleBtn.setAttribute('aria-pressed', 'true');
-                    tocToggleBtn.title = 'Hide Table of Contents';
-                } else {
-                    tocToggleBtn.classList.add('disabled');
-                    tocToggleBtn.setAttribute('aria-pressed', 'false');
-                    tocToggleBtn.title = 'Show Table of Contents';
-                }
-            }
-        }
         
         // Update edge toggle buttons
         if (!tocShowBtn || !tocHideBtn) return;

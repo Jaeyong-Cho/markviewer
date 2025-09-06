@@ -730,8 +730,7 @@ class SplitManager {
         if (tocHideBtn) tocHideBtn.style.display = 'none';
         if (tocHoverTrigger) tocHoverTrigger.style.display = 'none';
         
-        // Note: We do NOT hide the header ToC toggle button (#toc-toggle)
-        // because it should remain functional in split mode for global ToC control
+        // Note: Header ToC toggle button has been removed from the interface
     }
     
     /**
@@ -749,8 +748,7 @@ class SplitManager {
         if (tocHideBtn) tocHideBtn.style.display = '';
         if (tocHoverTrigger) tocHoverTrigger.style.display = '';
         
-        // Note: The header ToC toggle button (#toc-toggle) should already be visible
-        // as we don't hide it when entering split mode
+        // Note: Header ToC toggle button has been removed from the interface
     }
 }
 
