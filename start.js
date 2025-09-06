@@ -18,7 +18,6 @@ class MarkViewerStarter {
         this.backendPort = 3001;
         this.frontendPort = 8080;
         this.testMode = process.argv.includes('--test');
-        this.noAutoOpen = process.argv.includes('--no-browser') || process.env.NO_BROWSER === 'true';
     }
 
     /**
@@ -184,8 +183,7 @@ class MarkViewerStarter {
         return new Promise((resolve, reject) => {
             const env = { 
                 ...process.env, 
-                PORT: this.backendPort.toString(),
-                NO_BROWSER: this.noAutoOpen ? 'true' : 'false'
+                PORT: this.backendPort.toString()
             };
             
             this.backendProcess = spawn('node', ['server.js'], {
