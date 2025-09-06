@@ -599,6 +599,16 @@
     right: 16px;
 }
 
+/* Auto-hide transparency states */
+.toc-sidebar.auto-transparent {
+    opacity: 0.1;
+    transition: right 0.3s ease-in-out, opacity 0.5s ease-in-out;
+}
+
+.toc-sidebar.auto-transparent:hover {
+    opacity: 1;
+}
+
 /* TOC hover trigger area */
 .toc-hover-trigger {
     position: fixed;
@@ -648,6 +658,27 @@
     box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
     font-size: 12px;
     opacity: 0.2;
+}
+
+.toc-edge-toggle.auto-transparent {
+    opacity: 0.05 !important;
+    transition: all 0.3s ease, opacity 0.5s ease-in-out;
+}
+
+/* Special case: show button when ToC is hidden should be more visible */
+.toc-show-btn.auto-transparent {
+    opacity: 0.15 !important;
+    transition: all 0.3s ease, opacity 0.5s ease-in-out;
+}
+
+/* Hide button should become fully transparent when ToC is open */
+.toc-hide-btn.auto-transparent {
+    opacity: 0.05 !important;
+    transition: all 0.3s ease, opacity 0.5s ease-in-out;
+}
+
+.toc-edge-toggle.auto-transparent:hover {
+    opacity: 1;
 }
 
 .toc-edge-toggle:hover {
