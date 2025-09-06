@@ -55,8 +55,6 @@ class MarkViewerApp extends Utils.EventEmitter {
      * Initialize the application
      */
     async init() {
-        console.log('Initializing MarkViewer...');
-
         try {
             // Wait for external libraries to load
             await this.waitForLibraries();
@@ -79,7 +77,6 @@ class MarkViewerApp extends Utils.EventEmitter {
             // Check server connection
             await this.checkServerConnection();
 
-            console.log('MarkViewer initialized successfully');
         } catch (error) {
             console.error('Failed to initialize MarkViewer:', error);
             Utils.showNotification('Failed to initialize application: ' + error.message, 'error');
@@ -105,20 +102,10 @@ class MarkViewerApp extends Utils.EventEmitter {
                 const optionalLibrariesLoaded = hljsLoaded && mermaidLoaded;
                 
                 if (criticalLibrariesLoaded && optionalLibrariesLoaded) {
-                    console.log('All external libraries loaded successfully');
-                    console.log('- marked:', markedLoaded ? '✓' : '✗');
-                    console.log('- highlight.js:', hljsLoaded ? '✓' : '✗');
-                    console.log('- mermaid:', mermaidLoaded ? '✓' : '✗');
                     resolve();
                 } else if (elapsed >= maxWaitTime) {
-                    console.log('Library loading status after timeout:');
-                    console.log('- marked:', markedLoaded ? '✓' : '✗');
-                    console.log('- highlight.js:', hljsLoaded ? '✓' : '✗');
-                    console.log('- mermaid:', mermaidLoaded ? '✓' : '✗');
-                    
                     // For non-critical libraries, continue anyway
                     if (markedLoaded) {
-                        console.log('Critical library (marked) loaded, continuing with available functionality');
                         resolve();
                     } else {
                         reject(new Error(`Critical library 'marked' failed to load. Cannot proceed.`));
@@ -183,18 +170,14 @@ class MarkViewerApp extends Utils.EventEmitter {
             // Initialize API service
             window.api = new window.API.ApiService();
             
-            // Initialize TabManager
+                        // Initialize TabManager
             this.tabManager = new TabManager();
             this.tabManager.init(this.elements.tabArea);
-            console.log('App: TabManager initialized');
             
             // Initialize SplitManager (check if available)
             if (typeof SplitManager !== 'undefined') {
                 this.splitManager = new SplitManager(this);
-                this.splitManager.init(this.elements.contentArea);
-                console.log('App: SplitManager initialized');
             } else {
-                console.warn('SplitManager not available');
                 this.splitManager = null;
             }
             
@@ -211,7 +194,6 @@ class MarkViewerApp extends Utils.EventEmitter {
             if (typeof WorkspaceRecommender !== 'undefined') {
                 this.workspaceRecommender = new WorkspaceRecommender(this);
                 this.workspaceRecommender.init();
-                console.log('Workspace recommender initialized');
             } else {
                 console.warn('WorkspaceRecommender not available');
             }
@@ -219,7 +201,6 @@ class MarkViewerApp extends Utils.EventEmitter {
             // Initialize workspace autocomplete
             if (typeof WorkspaceAutocomplete !== 'undefined') {
                 this.workspaceAutocomplete = new WorkspaceAutocomplete(this.elements.workspaceInput, this);
-                console.log('Workspace autocomplete initialized');
             } else {
                 console.warn('WorkspaceAutocomplete not available');
             }
@@ -246,15 +227,12 @@ class MarkViewerApp extends Utils.EventEmitter {
         // TabManager events
         if (this.tabManager) {
             this.tabManager.on('tabOpened', (tabData) => {
-                console.log('App: Tab opened', tabData.filePath);
                 this.loadFileContent(tabData.filePath);
             });
             this.tabManager.on('tabActivated', (tabData, previousTabId) => {
-                console.log('App: Tab activated', tabData.filePath);
                 this.switchToTab(tabData);
             });
             this.tabManager.on('tabClosed', (tabData) => {
-                console.log('App: Tab closed', tabData.filePath);
                 // Clear content if no tabs are open
                 const activeTab = this.tabManager.getActiveTab();
                 if (!activeTab) {
@@ -262,7 +240,6 @@ class MarkViewerApp extends Utils.EventEmitter {
                 }
             });
             this.tabManager.on('noTabsOpen', () => {
-                console.log('App: No tabs open, showing welcome');
                 this.showWelcomeContent();
             });
         } else {
@@ -271,7 +248,7 @@ class MarkViewerApp extends Utils.EventEmitter {
         
         // TabManager events
         this.tabManager.on('tabOpened', (tab) => {
-            console.log('App: Tab opened:', tab.filePath);
+            // Tab opened
         });
         
         this.tabManager.on('tabActivated', (tab) => {
@@ -279,7 +256,7 @@ class MarkViewerApp extends Utils.EventEmitter {
         });
         
         this.tabManager.on('tabClosed', (tab) => {
-            console.log('App: Tab closed:', tab.filePath);
+            // Tab closed
         });
         
         this.tabManager.on('noTabsOpen', () => {
@@ -450,7 +427,7 @@ class MarkViewerApp extends Utils.EventEmitter {
     async checkServerConnection() {
         try {
             await window.api.checkHealth();
-            console.log('Server connection established');
+            // Server connection established
         } catch (error) {
             console.warn('Server connection failed:', error);
             const currentPort = window.location.port || '80';

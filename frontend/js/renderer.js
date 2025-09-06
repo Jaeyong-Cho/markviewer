@@ -28,10 +28,8 @@ class MarkdownRenderer extends Utils.EventEmitter {
         this.setupMarked();
         this.setupMermaid();
         
-        // Only setup ToC toggle if ToC is enabled
-        if (this.tocEnabled) {
-            this.setupTocToggle();
-        }
+        // Always setup ToC toggle (even if disabled, for enabling later)
+        this.setupTocToggle();
         
         this.setupAutoHide();
     }
@@ -106,17 +104,13 @@ class MarkdownRenderer extends Utils.EventEmitter {
         // Wait for hljs to be available
         const checkHighlightJS = () => {
             if (typeof hljs !== 'undefined') {
-                console.log('Setting up syntax highlighting with hljs version:', hljs.versionString || 'unknown');
-                
                 // Now add the highlight function
                 marked.setOptions({
                     highlight: (code, language) => {
                         try {
                             if (language && hljs.getLanguage(language)) {
-                                console.log('Highlighting code as:', language);
                                 return hljs.highlight(code, { language }).value;
                             } else {
-                                console.log('Auto-highlighting code');
                                 return hljs.highlightAuto(code).value;
                             }
                         } catch (error) {
@@ -130,7 +124,6 @@ class MarkdownRenderer extends Utils.EventEmitter {
                 console.warn('highlight.js not available, syntax highlighting disabled');
                 marked.setOptions({
                     highlight: (code, language) => {
-                        console.log('No highlighting available, using plain code');
                         return Utils.escapeHtml(code);
                     }
                 });
@@ -356,8 +349,6 @@ class MarkdownRenderer extends Utils.EventEmitter {
             tempDiv.innerHTML = sourceScript.textContent;
             const source = tempDiv.textContent || tempDiv.innerText;
             const id = block.dataset.id;
-            
-            console.log('Processing PlantUML block with source:', source.substring(0, 50) + '...');
             
             // Enhanced loading state with Korean support
             const loadingDiv = block.querySelector('.plantuml-loading');
@@ -707,9 +698,25 @@ class MarkdownRenderer extends Utils.EventEmitter {
      * Setup ToC toggle functionality
      */
     setupTocToggle() {
+        const tocToggleBtn = document.getElementById('toc-toggle');
         const tocShowBtn = document.getElementById('toc-show-btn');
         const tocHideBtn = document.getElementById('toc-hide-btn');
         
+        // Header ToC toggle button
+        if (tocToggleBtn) {
+            tocToggleBtn.addEventListener('click', () => {
+                this.toggleToc();
+            });
+            
+            tocToggleBtn.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    this.toggleToc();
+                }
+            });
+        }
+        
+        // Edge ToC show button
         if (tocShowBtn) {
             tocShowBtn.addEventListener('click', () => {
                 this.showToc();
@@ -723,6 +730,7 @@ class MarkdownRenderer extends Utils.EventEmitter {
             });
         }
         
+        // Edge ToC hide button
         if (tocHideBtn) {
             tocHideBtn.addEventListener('click', () => {
                 this.hideToc();
@@ -737,9 +745,7 @@ class MarkdownRenderer extends Utils.EventEmitter {
         }
         
         this.updateTocToggleButton();
-    }
-
-    /**
+    }    /**
      * Get ToC enabled state from localStorage
      * @returns {boolean} Whether ToC is enabled
      */
@@ -813,12 +819,37 @@ class MarkdownRenderer extends Utils.EventEmitter {
      * Update ToC toggle buttons appearance
      */
     updateTocToggleButton() {
+        const tocToggleBtn = document.getElementById('toc-toggle');
         const tocShowBtn = document.getElementById('toc-show-btn');
         const tocHideBtn = document.getElementById('toc-hide-btn');
         
-        if (!tocShowBtn || !tocHideBtn) return;
-
         const headings = this.container.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        
+        // Update header toggle button
+        if (tocToggleBtn) {
+            // Hide button if content has fewer than 2 headings
+            if (headings.length < 2) {
+                tocToggleBtn.classList.add('hidden');
+                tocToggleBtn.disabled = true;
+            } else {
+                tocToggleBtn.classList.remove('hidden');
+                tocToggleBtn.disabled = false;
+                
+                // Update visual state based on ToC enabled status
+                if (this.tocEnabled) {
+                    tocToggleBtn.classList.remove('disabled');
+                    tocToggleBtn.setAttribute('aria-pressed', 'true');
+                    tocToggleBtn.title = 'Hide Table of Contents';
+                } else {
+                    tocToggleBtn.classList.add('disabled');
+                    tocToggleBtn.setAttribute('aria-pressed', 'false');
+                    tocToggleBtn.title = 'Show Table of Contents';
+                }
+            }
+        }
+        
+        // Update edge toggle buttons
+        if (!tocShowBtn || !tocHideBtn) return;
         
         // Hide buttons if content has fewer than 2 headings
         if (headings.length < 2) {

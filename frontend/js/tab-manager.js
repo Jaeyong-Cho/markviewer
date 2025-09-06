@@ -33,8 +33,6 @@ class TabManager {
         
         // Keyboard shortcuts
         this.setupKeyboardShortcuts();
-        
-        console.log('TabManager: Constructor completed');
     }
     
     /**
@@ -46,7 +44,6 @@ class TabManager {
         this.createTabBar();
         this.loadState();
         this.setupEventListeners();
-        console.log('TabManager: Initialized');
     }
     
     /**
@@ -64,8 +61,6 @@ class TabManager {
         
         this.tabBar.appendChild(this.tabContainer);
         this.container.insertBefore(this.tabBar, this.container.firstChild);
-        
-        console.log('TabManager: Tab bar created');
     }
     
     /**
@@ -96,8 +91,6 @@ class TabManager {
                 }
             }
         });
-        
-        console.log('TabManager: Event listeners setup');
     }
     
     /**
@@ -137,7 +130,6 @@ class TabManager {
         // Emit event for app to handle content loading
         this.emit('tabOpened', tabData);
         
-        console.log('TabManager: Opened file in tab', filePath, tabId);
         return tabId;
     }
     
@@ -176,7 +168,6 @@ class TabManager {
         this.saveState();
         
         this.emit('tabClosed', tab);
-        console.log('TabManager: Closed tab', tabId);
     }
     
     /**
@@ -201,8 +192,6 @@ class TabManager {
         
         // Emit event for content loading
         this.emit('tabActivated', tab, previousTabId);
-        
-        console.log('TabManager: Activated tab', tabId);
     }
     
     /**

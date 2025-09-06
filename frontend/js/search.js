@@ -139,8 +139,6 @@ class SearchComponent extends Utils.EventEmitter {
     async executeSearch(query) {
         if (!query || this.isSearching) return;
         
-        console.log('Search executing:', { query, rootDirectory: this.app.state.rootDirectory });
-        
         // Check if root directory is selected
         if (!this.app.state.rootDirectory) {
             Utils.showNotification('Please select a workspace directory first', 'error');
@@ -153,12 +151,9 @@ class SearchComponent extends Utils.EventEmitter {
             // Execute search via API
             const results = await window.api.searchFiles(query, this.app.state.rootDirectory);
             
-            console.log('Search API response:', results);
-            
             this.currentResults = results;
             this.emit('searchResults', results);
             
-            console.log(`Search completed: ${results.total} results for "${query}"`);
         } catch (error) {
             console.error('Search failed:', error);
             Utils.showNotification('Search failed: ' + error.message, 'error');
