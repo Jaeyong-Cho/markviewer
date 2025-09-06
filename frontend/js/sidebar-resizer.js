@@ -128,6 +128,71 @@ class SidebarResizer {
         
         // Update CSS custom property for other components that might need it
         document.documentElement.style.setProperty('--sidebar-width', `${width}px`);
+        
+        // If graph view is active, update its position and resize accordingly
+        this.updateGraphViewLayout();
+        
+        // Update ToC positioning if it exists
+        this.updateToCPosition();
+    }
+
+    /**
+     * Update graph view layout when sidebar is resized
+     */
+    updateGraphViewLayout() {
+        const graphView = window.graphView;
+        if (graphView && graphView.isVisible) {
+            // Get current sidebar width
+            const sidebarWidth = parseInt(document.defaultView.getComputedStyle(this.sidebar).width, 10);
+            
+            // Update graph panel position to account for new sidebar width
+            const graphPanel = document.querySelector('.graph-panel');
+            if (graphPanel) {
+                graphPanel.style.left = `${sidebarWidth}px`;
+                
+                // Trigger graph resize
+                if (graphView.cy) {
+                    setTimeout(() => {
+                        graphView.resizeAndAdjustGraph();
+                    }, 100);
+                }
+            }
+        }
+    }
+
+    /**
+     * Update ToC positioning when sidebar is resized
+     */
+    updateToCPosition() {
+        const toc = document.querySelector('.toc');
+        const content = document.querySelector('.content');
+        
+        if (toc && content) {
+            // Get current sidebar width
+            const sidebarWidth = parseInt(document.defaultView.getComputedStyle(this.sidebar).width, 10);
+            
+            // Check if graph view is active
+            const isGraphActive = document.querySelector('.app-main.graph-view-active');
+            
+            if (isGraphActive) {
+                // When graph view is active, adjust ToC position based on both sidebar and graph widths
+                const graphPanel = document.querySelector('.graph-panel');
+                if (graphPanel) {
+                    const graphWidth = parseInt(document.defaultView.getComputedStyle(graphPanel).width, 10);
+                    const totalOffset = sidebarWidth + graphWidth;
+                    
+                    // Update content area to accommodate both sidebar and graph
+                    content.style.marginLeft = `${totalOffset}px`;
+                    
+                    // Update ToC positioning
+                    toc.style.left = `${totalOffset + 20}px`; // 20px margin from content
+                }
+            } else {
+                // Normal mode, just account for sidebar
+                content.style.marginLeft = `${sidebarWidth}px`;
+                toc.style.left = `${sidebarWidth + 20}px`;
+            }
+        }
     }
 
     /**
@@ -165,11 +230,3 @@ class SidebarResizer {
         localStorage.removeItem('sidebarWidth');
     }
 }
-
-// Auto-initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    window.sidebarResizer = new SidebarResizer();
-    
-    // Restore saved width
-    window.sidebarResizer.restoreWidth();
-});

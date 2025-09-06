@@ -191,6 +191,15 @@ class MarkViewerApp extends Utils.EventEmitter {
             // Initialize sidebar
             this.sidebar = new Sidebar(this.elements.sidebar);
             
+            // Initialize sidebar resizer
+            if (typeof SidebarResizer !== 'undefined') {
+                this.sidebarResizer = new SidebarResizer();
+                // Restore saved width
+                this.sidebarResizer.restoreWidth();
+            } else {
+                console.warn('SidebarResizer not available');
+            }
+            
             // Initialize search (pass app instance for state access)
             this.search = new SearchComponent(this);
             

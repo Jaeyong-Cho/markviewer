@@ -50,11 +50,17 @@ class GraphView extends Utils.EventEmitter {
                 nodeRepulsion: 800000,
                 edgeElasticity: 200,
                 nestingFactor: 10,
-                gravity: 50,
-                numIter: 1500,
-                initialTemp: 300,
-                coolingFactor: 0.95,
-                minTemp: 1.0
+                gravity: 300, // Increased gravity for stronger pull
+                gravityCompound: 1.5,
+                gravityRangeCompound: 2.0,
+                gravityRange: 4.0,
+                numIter: 2000,
+                initialTemp: 500, // Higher initial temp for more movement
+                coolingFactor: 0.90, // Faster cooling but still allowing movement
+                minTemp: 1.0,
+                animate: true,
+                animationDuration: 1500,
+                animationEasing: 'ease-out'
             },
             style: [
                 {
@@ -404,6 +410,11 @@ class GraphView extends Utils.EventEmitter {
             appMain.classList.add('graph-view-active');
         }
         
+        // Update sidebar resizer to account for graph view
+        if (window.sidebarResizer) {
+            window.sidebarResizer.updateGraphViewLayout();
+        }
+        
         // Adjust graph size to fit the panel
         if (this.cy) {
             setTimeout(() => {
@@ -577,16 +588,14 @@ class GraphView extends Utils.EventEmitter {
             this.selectNode(node);
         });
 
-        // Node hover
+        // Node hover for dimming effect
         this.cy.on('mouseover', 'node', (event) => {
             const node = event.target;
-            this.highlightConnections(node, true);
+            this.highlightConnectedNodesOnHover(node);
         });
 
         this.cy.on('mouseout', 'node', (event) => {
-            if (!this.selectedNode) {
-                this.clearHighlight();
-            }
+            this.clearHoverHighlight();
         });
 
         // Background click (deselect)
@@ -596,15 +605,16 @@ class GraphView extends Utils.EventEmitter {
             }
         });
 
-        // Double click to open file or focus
+        // Double click to open file
         this.cy.on('dbltap', 'node', (event) => {
             const node = event.target;
+            const filePath = node.data('path') || node.data().path;
             
-            // If auto focus is enabled, focus on the node, otherwise open the file
-            if (this.autoFocus) {
-                this.focusOnNodeWithDepth(node, this.focusDepth);
-            } else {
-                const filePath = node.data('path') || node.data().path;
+            // Select the node
+            this.selectNode(node);
+            
+            // Open the file when double-clicked
+            if (filePath) {
                 this.emit('fileSelect', filePath);
             }
         });
@@ -694,6 +704,69 @@ class GraphView extends Utils.EventEmitter {
                 this.clearHighlight();
             }
         }
+    }
+
+    /**
+     * Highlight connected nodes on hover and dim others
+     * @param {Object} node - Cytoscape node object
+     */
+    highlightConnectedNodesOnHover(node) {
+        if (!this.cy) return;
+
+        // Get the hovered node and its connected elements
+        const connectedEdges = node.connectedEdges();
+        const connectedNodes = connectedEdges.connectedNodes().union(node);
+        
+        // Get all nodes and edges
+        const allNodes = this.cy.nodes();
+        const allEdges = this.cy.edges();
+        
+        // Dim all nodes and edges first
+        allNodes.style({
+            'opacity': 0.3,
+            'transition-property': 'opacity',
+            'transition-duration': '0.2s'
+        });
+        
+        allEdges.style({
+            'opacity': 0.1,
+            'transition-property': 'opacity',
+            'transition-duration': '0.2s'
+        });
+        
+        // Highlight the hovered node and connected nodes
+        connectedNodes.style({
+            'opacity': 1,
+            'transition-property': 'opacity',
+            'transition-duration': '0.2s'
+        });
+        
+        // Highlight connected edges
+        connectedEdges.style({
+            'opacity': 0.8,
+            'transition-property': 'opacity',
+            'transition-duration': '0.2s'
+        });
+    }
+
+    /**
+     * Clear hover highlight effect
+     */
+    clearHoverHighlight() {
+        if (!this.cy) return;
+        
+        // Reset all nodes and edges to normal opacity
+        this.cy.nodes().style({
+            'opacity': 1,
+            'transition-property': 'opacity',
+            'transition-duration': '0.2s'
+        });
+        
+        this.cy.edges().style({
+            'opacity': 0.7,
+            'transition-property': 'opacity',
+            'transition-duration': '0.2s'
+        });
     }
 
     /**
@@ -913,19 +986,23 @@ class GraphView extends Utils.EventEmitter {
         // Add specific options for certain layouts
         if (layoutName === 'cose') {
             Object.assign(layoutOptions, {
-                idealEdgeLength: 100,
-                nodeOverlap: 20,
-                refresh: 20,
+                idealEdgeLength: 150,
+                nodeOverlap: 30,
+                refresh: 10,
                 randomize: false,
-                componentSpacing: 100,
-                nodeRepulsion: 400000,
-                edgeElasticity: 100,
-                nestingFactor: 5,
-                gravity: 80,
+                componentSpacing: 120,
+                nodeRepulsion: 800000,
+                edgeElasticity: 200,
+                nestingFactor: 10,
+                gravity: 300,
+                gravityCompound: 1.5,
+                gravityRangeCompound: 2.0,
+                gravityRange: 4.0,
                 numIter: 1000,
                 initialTemp: 200,
                 coolingFactor: 0.95,
-                minTemp: 1.0
+                minTemp: 1.0,
+                animate: false // Disable animation for better performance
             });
         } else if (layoutName === 'breadthfirst') {
             Object.assign(layoutOptions, {
@@ -937,7 +1014,7 @@ class GraphView extends Utils.EventEmitter {
         const layout = this.cy.layout(layoutOptions);
         layout.run();
         
-        // Simple fit after layout change without excessive animation
+        // Fit view after layout without animation
         layout.on('layoutstop', () => {
             this.cy.fit(this.cy.elements(), 50);
         });
@@ -1228,16 +1305,9 @@ class GraphView extends Utils.EventEmitter {
             'opacity': 0.7
         });
         
-        // Focus and zoom to the target node with animation
-        this.cy.animate({
-            center: {
-                eles: node
-            },
-            zoom: 1.5
-        }, {
-            duration: 500,
-            easing: 'ease-out'
-        });
+        // Focus and zoom to the target node without animation for better performance
+        this.cy.center(node);
+        this.cy.zoom(1.5);
         
         // Update selected node
         this.selectNode(node);
@@ -1263,16 +1333,8 @@ class GraphView extends Utils.EventEmitter {
             'opacity': 0.7
         });
         
-        // Fit to view
-        this.cy.animate({
-            fit: {
-                eles: this.cy.elements(),
-                padding: 50
-            }
-        }, {
-            duration: 500,
-            easing: 'ease-out'
-        });
+        // Fit to view without animation
+        this.cy.fit(this.cy.elements(), 50);
     }
 
     /**

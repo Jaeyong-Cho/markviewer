@@ -1023,3 +1023,24 @@
         animation: none;
     }
 }
+
+/* Graph hover effects - will be applied via JavaScript */
+.graph-node-dimmed {
+    opacity: 0.3 !important;
+    transition: opacity 0.2s ease !important;
+}
+
+.graph-edge-dimmed {
+    opacity: 0.1 !important;
+    transition: opacity 0.2s ease !important;
+}
+
+.graph-node-highlighted-hover {
+    opacity: 1 !important;
+    transition: opacity 0.2s ease !important;
+}
+
+.graph-edge-highlighted-hover {
+    opacity: 0.8 !important;
+    transition: opacity 0.2s ease !important;
+}
