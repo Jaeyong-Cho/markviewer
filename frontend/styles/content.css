@@ -601,11 +601,11 @@
 
 /* Adjust ToC position when graph panel is visible */
 .graph-panel-open .toc-sidebar.visible {
-    right: 416px; /* 400px graph panel + 16px margin */
+    right: var(--toc-right-position, 416px); /* Dynamic positioning with fallback */
 }
 
 .graph-panel-open .toc-hover-trigger {
-    right: 400px; /* Move trigger area to avoid graph panel */
+    right: var(--toc-trigger-right-position, 400px); /* Dynamic positioning with fallback */
 }
 
 /* Auto-hide transparency states */
@@ -633,6 +633,12 @@
 .toc-hover-trigger:hover + .toc-sidebar,
 .toc-sidebar:hover {
     right: 16px;
+}
+
+/* When graph panel is open, adjust hover positioning */
+.graph-panel-open .toc-hover-trigger:hover + .toc-sidebar,
+.graph-panel-open .toc-sidebar:hover {
+    right: var(--toc-right-position, 416px);
 }
 
 /* ToC disabled state */
@@ -711,6 +717,11 @@
     transform: translateY(-50%) translateX(0);
 }
 
+/* Adjust show button position when graph panel is open */
+.graph-panel-open .toc-show-btn {
+    right: var(--toc-trigger-right-position, 400px);
+}
+
 .toc-disabled .toc-show-btn {
     opacity: 1;
     pointer-events: auto;
@@ -731,6 +742,11 @@
     opacity: 0;
     pointer-events: none;
     transform: translateY(-50%) translateX(100%);
+}
+
+/* Adjust hide button position when graph panel is open */
+.graph-panel-open .toc-hide-btn {
+    right: calc(var(--toc-right-position, 416px) - 16px); /* ToC position minus margin */
 }
 
 .toc-sidebar.visible ~ .toc-show-btn + .toc-hide-btn {

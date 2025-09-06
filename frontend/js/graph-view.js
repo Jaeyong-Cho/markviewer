@@ -285,7 +285,7 @@ class GraphView extends Utils.EventEmitter {
         // Resize handling
         window.addEventListener('resize', () => {
             if (this.isVisible && this.cy) {
-                this.cy.resize();
+                this.resizeAndAdjustGraph();
             }
         });
     }
@@ -315,7 +315,10 @@ class GraphView extends Utils.EventEmitter {
         console.log('Showing graph panel');
         this.graphPanel.style.display = 'flex';
         
-        // Get current panel width
+        // Add class to body for ToC positioning
+        document.body.classList.add('graph-panel-open');
+        
+        // Get current panel width after display is set
         const panelWidth = this.graphPanel.offsetWidth;
         
         // Adjust main content to make room for side panel
@@ -324,8 +327,15 @@ class GraphView extends Utils.EventEmitter {
             mainContent.style.marginRight = panelWidth + 'px';
         }
         
-        // Add class to body for ToC positioning
-        document.body.classList.add('graph-panel-open');
+        // Update ToC position based on panel width
+        this.updateToCPosition(panelWidth);
+        
+        // Adjust graph size to fit the panel
+        if (this.cy) {
+            setTimeout(() => {
+                this.resizeAndAdjustGraph();
+            }, 100);
+        }
         
         this.isVisible = true;
         this.emit('show');
@@ -348,6 +358,11 @@ class GraphView extends Utils.EventEmitter {
         
         // Remove class from body
         document.body.classList.remove('graph-panel-open');
+        
+        // Reset ToC position custom properties
+        document.documentElement.style.removeProperty('--graph-panel-width');
+        document.documentElement.style.removeProperty('--toc-right-position');
+        document.documentElement.style.removeProperty('--toc-trigger-right-position');
         
         this.isVisible = false;
         this.clearSelection();
@@ -467,6 +482,13 @@ class GraphView extends Utils.EventEmitter {
         
         // Highlight current file if available
         this.highlightCurrentFile();
+        
+        // Adjust graph size for current panel dimensions
+        setTimeout(() => {
+            if (this.isVisible) {
+                this.resizeAndAdjustGraph();
+            }
+        }, 100);
         
         console.log('Graph rendering completed');
     }
@@ -828,6 +850,13 @@ class GraphView extends Utils.EventEmitter {
 
         const layout = this.cy.layout(layoutOptions);
         layout.run();
+        
+        // Ensure the graph fits the current panel size after layout change
+        layout.on('layoutstop', () => {
+            setTimeout(() => {
+                this.resizeAndAdjustGraph();
+            }, 100);
+        });
     }
 
     /**
@@ -878,9 +907,12 @@ class GraphView extends Utils.EventEmitter {
                 mainContent.style.marginRight = newWidth + 'px';
             }
             
-            // Resize cytoscape canvas
+            // Update ToC position dynamically
+            this.updateToCPosition(newWidth);
+            
+            // Resize and adjust cytoscape canvas
             if (this.cy) {
-                this.cy.resize();
+                this.resizeAndAdjustGraph();
             }
         });
 
@@ -965,6 +997,57 @@ class GraphView extends Utils.EventEmitter {
         setTimeout(() => {
             node.removeClass('highlighted');
         }, 1500);
+    }
+
+    /**
+     * Update ToC and toggle button positions based on graph panel width
+     */
+    updateToCPosition(panelWidth) {
+        const tocSidebar = document.querySelector('.toc-sidebar');
+        const tocHoverTrigger = document.querySelector('.toc-hover-trigger');
+        const tocShowBtn = document.querySelector('.toc-show-btn');
+        const tocHideBtn = document.querySelector('.toc-hide-btn');
+        
+        if (tocSidebar && tocHoverTrigger) {
+            // Calculate new positions with 16px margin
+            const tocRightPosition = panelWidth + 16;
+            const triggerRightPosition = panelWidth;
+            
+            // Update CSS custom properties for dynamic positioning
+            document.documentElement.style.setProperty('--graph-panel-width', panelWidth + 'px');
+            document.documentElement.style.setProperty('--toc-right-position', tocRightPosition + 'px');
+            document.documentElement.style.setProperty('--toc-trigger-right-position', triggerRightPosition + 'px');
+        }
+    }
+
+    /**
+     * Resize and adjust graph layout when panel size changes
+     */
+    resizeAndAdjustGraph() {
+        if (!this.cy) return;
+
+        // Resize the cytoscape container
+        this.cy.resize();
+        
+        // Get current viewport and zoom
+        const zoom = this.cy.zoom();
+        const pan = this.cy.pan();
+        
+        // Fit the graph to the new container size with animation
+        this.cy.animate({
+            fit: {
+                eles: this.cy.elements(),
+                padding: 50
+            }
+        }, {
+            duration: 300,
+            easing: 'ease-out'
+        });
+        
+        // Update graph statistics after resize
+        setTimeout(() => {
+            this.updateGraphStats();
+        }, 350);
     }
 
     /**
