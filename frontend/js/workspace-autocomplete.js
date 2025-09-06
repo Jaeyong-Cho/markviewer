@@ -258,14 +258,12 @@ class WorkspaceAutocomplete extends Utils.EventEmitter {
                 item.classList.add('home');
             }
             
-            const icon = this.getSuggestionIcon(suggestion);
             const name = suggestion.name;
             const path = suggestion.path;
             
             item.innerHTML = `
                 <div class="suggestion-content">
                     <div class="suggestion-main">
-                        <span class="suggestion-icon">${icon}</span>
                         <span class="suggestion-name">${this.escapeHtml(name)}</span>
                         ${suggestion.hasMarkdown ? '<span class="markdown-indicator">📄</span>' : ''}
                         ${suggestion.isRecent ? '<span class="recent-indicator">⏱️</span>' : ''}
@@ -286,19 +284,6 @@ class WorkspaceAutocomplete extends Utils.EventEmitter {
             
             this.suggestionsList.appendChild(item);
         });
-    }
-
-    /**
-     * Get appropriate icon for suggestion type
-     * @param {Object} suggestion - Suggestion object
-     * @returns {string} Icon character
-     */
-    getSuggestionIcon(suggestion) {
-        if (suggestion.isHome) return '🏠';
-        if (suggestion.isRecent) return '📁';
-        if (suggestion.isCommon) return '📂';
-        if (suggestion.hasMarkdown) return '📋';
-        return '📁';
     }
 
     /**
