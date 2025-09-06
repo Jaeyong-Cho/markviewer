@@ -3,7 +3,7 @@
  */
 
 class MarkdownRenderer extends Utils.EventEmitter {
-    constructor(container) {
+    constructor(container, options = {}) {
         super();
         this.container = container;
         
@@ -12,7 +12,13 @@ class MarkdownRenderer extends Utils.EventEmitter {
         }
         
         this.scrollSpyHandler = null;
-        this.tocEnabled = this.getTocEnabledState();
+        
+        // Check if ToC should be disabled (e.g., for split panes)
+        if (options.disableToC) {
+            this.tocEnabled = false;
+        } else {
+            this.tocEnabled = this.getTocEnabledState();
+        }
         
         // Auto-hide functionality
         this.inactivityTimer = null;
@@ -21,7 +27,12 @@ class MarkdownRenderer extends Utils.EventEmitter {
         
         this.setupMarked();
         this.setupMermaid();
-        this.setupTocToggle();
+        
+        // Only setup ToC toggle if ToC is enabled
+        if (this.tocEnabled) {
+            this.setupTocToggle();
+        }
+        
         this.setupAutoHide();
     }
 

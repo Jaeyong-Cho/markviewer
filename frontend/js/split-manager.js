@@ -49,6 +49,10 @@ class SplitManager {
         this.leftTabManager = null;
         this.rightTabManager = null;
         
+        // Renderers for each pane
+        this.leftRenderer = null;
+        this.rightRenderer = null;
+        
         // Pane sizing
         this.leftPaneWidth = 50; // Percentage
         
@@ -107,6 +111,12 @@ class SplitManager {
         // Initialize tab managers for each pane
         this.initializePaneTabManagers();
         
+        // Initialize renderers for each pane
+        this.initializePaneRenderers();
+        
+        // Hide main ToC when in split mode
+        this.hideMainToC();
+        
         // Move current tab to left pane if exists
         const activeTab = this.app.tabManager.getActiveTab();
         if (activeTab) {
@@ -149,6 +159,9 @@ class SplitManager {
         
         // Clean up pane tab managers
         this.cleanupPaneTabManagers();
+        
+        // Restore main ToC when exiting split mode
+        this.showMainToC();
         
         // Save state
         this.saveState();
@@ -297,6 +310,21 @@ class SplitManager {
     }
     
     /**
+     * Initialize renderers for split panes
+     */
+    initializePaneRenderers() {
+        // Create left pane renderer with ToC disabled
+        const leftMarkdownContent = this.leftPane.querySelector('#left-markdown-content');
+        this.leftRenderer = new MarkdownRenderer(leftMarkdownContent, { disableToC: true });
+        
+        // Create right pane renderer with ToC disabled
+        const rightMarkdownContent = this.rightPane.querySelector('#right-markdown-content');
+        this.rightRenderer = new MarkdownRenderer(rightMarkdownContent, { disableToC: true });
+        
+        console.log('SplitManager: Pane renderers initialized with ToC disabled');
+    }
+    
+    /**
      * Setup event listeners for pane tab managers
      */
     setupPaneTabEvents() {
@@ -347,9 +375,8 @@ class SplitManager {
         try {
             const fileData = await window.api.getFileContent(tab.filePath);
             
-            // Create renderer for this pane
-            const contentElement = document.getElementById(`${pane}-markdown-content`);
-            const renderer = new MarkdownRenderer(contentElement);
+            // Use the pane's dedicated renderer
+            const renderer = pane === 'left' ? this.leftRenderer : this.rightRenderer;
             
             // Render content
             await renderer.renderMarkdown(fileData.content);
@@ -377,12 +404,11 @@ class SplitManager {
         
         // Check if content is cached
         const tabManager = pane === 'left' ? this.leftTabManager : this.rightTabManager;
+        const renderer = pane === 'left' ? this.leftRenderer : this.rightRenderer;
         const cachedContent = tabManager.getTabContent(tab.id);
         
         if (cachedContent) {
-            // Use cached content
-            const contentElement = document.getElementById(`${pane}-markdown-content`);
-            const renderer = new MarkdownRenderer(contentElement);
+            // Use cached content with the pane's dedicated renderer
             await renderer.renderMarkdown(cachedContent);
             
             // Update file info
@@ -555,6 +581,15 @@ class SplitManager {
             this.rightTabManager.clearAllTabs();
             this.rightTabManager = null;
         }
+        
+        // Clean up renderers
+        if (this.leftRenderer) {
+            this.leftRenderer = null;
+        }
+        
+        if (this.rightRenderer) {
+            this.rightRenderer = null;
+        }
     }
     
     /**
@@ -678,6 +713,36 @@ class SplitManager {
      */
     getActivePane() {
         return this.activePane;
+    }
+    
+    /**
+     * Hide main ToC when in split mode
+     */
+    hideMainToC() {
+        const tocSidebar = document.getElementById('toc-sidebar');
+        const tocShowBtn = document.getElementById('toc-show-btn');
+        const tocHideBtn = document.getElementById('toc-hide-btn');
+        const tocHoverTrigger = document.querySelector('.toc-hover-trigger');
+        
+        if (tocSidebar) tocSidebar.style.display = 'none';
+        if (tocShowBtn) tocShowBtn.style.display = 'none';
+        if (tocHideBtn) tocHideBtn.style.display = 'none';
+        if (tocHoverTrigger) tocHoverTrigger.style.display = 'none';
+    }
+    
+    /**
+     * Show main ToC when exiting split mode
+     */
+    showMainToC() {
+        const tocSidebar = document.getElementById('toc-sidebar');
+        const tocShowBtn = document.getElementById('toc-show-btn');
+        const tocHideBtn = document.getElementById('toc-hide-btn');
+        const tocHoverTrigger = document.querySelector('.toc-hover-trigger');
+        
+        if (tocSidebar) tocSidebar.style.display = '';
+        if (tocShowBtn) tocShowBtn.style.display = '';
+        if (tocHideBtn) tocHideBtn.style.display = '';
+        if (tocHoverTrigger) tocHoverTrigger.style.display = '';
     }
 }
 
