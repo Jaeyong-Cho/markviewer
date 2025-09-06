@@ -96,18 +96,18 @@
 
 .graph-btn:hover {
     background: var(--background-hover);
-    border-color: var(--secondary-color);
+    border-color: var(--text-header);
 }
 
 .graph-btn.active {
-    background: var(--primary-color);
+    background: var(--text-header);
     color: white;
-    border-color: var(--primary-color);
+    border-color: var(--text-header);
 }
 
 .graph-btn.active:hover {
-    background: #0356cc;
-    border-color: #0356cc;
+    background: #8b002c;
+    border-color: #8b002c;
 }
 
 .graph-btn:active {
@@ -478,7 +478,7 @@
 
 .graph-btn:hover {
     background: var(--background-hover);
-    border-color: var(--secondary-color);
+    border-color: var(--text-header);
     color: var(--text-primary);
 }
 

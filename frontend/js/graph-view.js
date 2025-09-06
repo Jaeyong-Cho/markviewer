@@ -80,10 +80,10 @@ class GraphView extends Utils.EventEmitter {
                 {
                     selector: 'node:selected',
                     style: {
-                        'background-color': '#28a745',
-                        'text-outline-color': '#28a745',
+                        'background-color': '#a50034',
+                        'text-outline-color': '#a50034',
                         'border-width': 3,
-                        'border-color': '#28a745',
+                        'border-color': '#a50034',
                         'border-opacity': 1
                     }
                 },
@@ -98,9 +98,9 @@ class GraphView extends Utils.EventEmitter {
                 {
                     selector: 'node.highlighted',
                     style: {
-                        'background-color': '#28a745',
-                        'text-outline-color': '#28a745',
-                        'border-color': '#28a745',
+                        'background-color': '#a50034',
+                        'text-outline-color': '#a50034',
+                        'border-color': '#a50034',
                         'border-width': 3
                     }
                 },
@@ -119,8 +119,8 @@ class GraphView extends Utils.EventEmitter {
                 {
                     selector: 'edge.highlighted',
                     style: {
-                        'line-color': '#28a745',
-                        'target-arrow-color': '#28a745',
+                        'line-color': '#a50034',
+                        'target-arrow-color': '#a50034',
                         'width': 3,
                         'opacity': 1
                     }
@@ -1220,7 +1220,7 @@ class GraphView extends Utils.EventEmitter {
         focusNodes.nodes().style({
             'display': 'element',
             'opacity': 1,
-            'background-color': '#0366d6'
+            'background-color': '#a50034'
         });
         
         focusEdges.style({
@@ -1255,7 +1255,7 @@ class GraphView extends Utils.EventEmitter {
         this.cy.nodes().style({
             'display': 'element',
             'opacity': 1,
-            'background-color': '#0366d6'
+            'background-color': '#a50034'
         });
         
         this.cy.edges().style({
