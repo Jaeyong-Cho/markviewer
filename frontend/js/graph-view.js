@@ -28,19 +28,19 @@ class GraphView extends Utils.EventEmitter {
         this.settings = {
             layout: {
                 name: 'cose',
-                idealEdgeLength: 100,
-                nodeOverlap: 20,
-                refresh: 20,
+                idealEdgeLength: 150,
+                nodeOverlap: 30,
+                refresh: 10,
                 fit: true,
-                padding: 30,
+                padding: 50,
                 randomize: false,
-                componentSpacing: 100,
-                nodeRepulsion: 400000,
-                edgeElasticity: 100,
-                nestingFactor: 5,
-                gravity: 80,
-                numIter: 1000,
-                initialTemp: 200,
+                componentSpacing: 120,
+                nodeRepulsion: 800000,
+                edgeElasticity: 200,
+                nestingFactor: 10,
+                gravity: 50,
+                numIter: 1500,
+                initialTemp: 300,
                 coolingFactor: 0.95,
                 minTemp: 1.0
             },
@@ -48,59 +48,69 @@ class GraphView extends Utils.EventEmitter {
                 {
                     selector: 'node',
                     style: {
-                        'background-color': '#4f81bd',
+                        'background-color': '#0366d6',
                         'label': 'data(name)',
                         'text-valign': 'center',
                         'text-halign': 'center',
                         'color': '#ffffff',
                         'text-outline-width': 2,
-                        'text-outline-color': '#4f81bd',
-                        'width': 'mapData(degree, 0, 100, 20, 60)',
-                        'height': 'mapData(degree, 0, 100, 20, 60)',
-                        'font-size': '10px',
-                        'font-weight': 'bold'
+                        'text-outline-color': '#0366d6',
+                        'width': 'mapData(degree, 0, 100, 25, 70)',
+                        'height': 'mapData(degree, 0, 100, 25, 70)',
+                        'font-size': '11px',
+                        'font-weight': '600',
+                        'font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                        'border-width': 2,
+                        'border-color': '#0366d6',
+                        'border-opacity': 0.8
                     }
                 },
                 {
                     selector: 'node:selected',
                     style: {
-                        'background-color': '#ff6b6b',
-                        'text-outline-color': '#ff6b6b',
+                        'background-color': '#28a745',
+                        'text-outline-color': '#28a745',
                         'border-width': 3,
-                        'border-color': '#ff0000'
+                        'border-color': '#28a745',
+                        'border-opacity': 1
                     }
                 },
                 {
                     selector: 'node.orphan',
                     style: {
-                        'background-color': '#95a5a6',
-                        'text-outline-color': '#95a5a6'
+                        'background-color': '#6a737d',
+                        'text-outline-color': '#6a737d',
+                        'border-color': '#6a737d'
                     }
                 },
                 {
                     selector: 'node.highlighted',
                     style: {
-                        'background-color': '#ff6b6b',
-                        'text-outline-color': '#ff6b6b'
+                        'background-color': '#28a745',
+                        'text-outline-color': '#28a745',
+                        'border-color': '#28a745',
+                        'border-width': 3
                     }
                 },
                 {
                     selector: 'edge',
                     style: {
                         'width': 2,
-                        'line-color': '#999',
-                        'target-arrow-color': '#999',
+                        'line-color': '#586069',
+                        'target-arrow-color': '#586069',
                         'target-arrow-shape': 'triangle',
                         'curve-style': 'bezier',
-                        'arrow-scale': 1.2
+                        'arrow-scale': 1.2,
+                        'opacity': 0.7
                     }
                 },
                 {
                     selector: 'edge.highlighted',
                     style: {
-                        'line-color': '#ff6b6b',
-                        'target-arrow-color': '#ff6b6b',
-                        'width': 3
+                        'line-color': '#28a745',
+                        'target-arrow-color': '#28a745',
+                        'width': 3,
+                        'opacity': 1
                     }
                 }
             ]
@@ -128,70 +138,66 @@ class GraphView extends Utils.EventEmitter {
      */
     createGraphContainer() {
         this.container.innerHTML = `
-            <div class="graph-view-container" style="display: none;">
-                <div class="graph-controls">
-                    <div class="graph-toolbar">
-                        <button class="graph-btn" id="graph-reset-zoom" title="Reset Zoom">
-                            <span class="icon">🔍</span> Reset Zoom
+            <div class="graph-panel">
+                <div class="graph-resizer" id="graph-resizer"></div>
+                <div class="graph-header">
+                    <h3>Document Graph</h3>
+                    <div class="graph-header-controls">
+                        <button class="graph-btn graph-btn-small" id="graph-refresh" title="Refresh Graph">
+                            <span class="icon">�</span>
                         </button>
-                        <button class="graph-btn" id="graph-center-view" title="Center View">
-                            <span class="icon">🎯</span> Center
+                        <button class="graph-btn graph-btn-small" id="graph-center-current" title="Focus Current File">
+                            <span class="icon">🎯</span>
                         </button>
-                        <button class="graph-btn" id="graph-fit-view" title="Fit to View">
-                            <span class="icon">📐</span> Fit
+                        <button class="graph-btn graph-btn-small" id="graph-fit-view" title="Fit to View">
+                            <span class="icon">📐</span>
                         </button>
-                        <div class="graph-search">
-                            <input type="text" id="graph-search-input" placeholder="Search files..." class="graph-search-input">
-                            <button class="graph-btn" id="graph-clear-search" title="Clear Search">✕</button>
-                        </div>
-                        <div class="graph-layout-selector">
-                            <select id="graph-layout-select" class="graph-layout-select">
-                                <option value="cose">Force Directed</option>
-                                <option value="circle">Circle</option>
-                                <option value="grid">Grid</option>
-                                <option value="breadthfirst">Hierarchical</option>
-                                <option value="concentric">Concentric</option>
-                            </select>
-                        </div>
-                        <button class="graph-btn graph-close" id="graph-close" title="Close Graph View">
-                            <span class="icon">✕</span> Close
+                        <select id="graph-layout-select" class="graph-layout-select">
+                            <option value="cose">Force</option>
+                            <option value="circle">Circle</option>
+                            <option value="grid">Grid</option>
+                            <option value="breadthfirst">Tree</option>
+                            <option value="concentric">Concentric</option>
+                        </select>
+                        <button class="graph-btn graph-btn-small graph-close" id="graph-close" title="Close Graph">
+                            <span class="icon">✕</span>
                         </button>
-                    </div>
-                    <div class="graph-stats">
-                        <span id="graph-stats-files">0 files</span>
-                        <span class="graph-stats-separator">•</span>
-                        <span id="graph-stats-links">0 links</span>
-                        <span class="graph-stats-separator">•</span>
-                        <span id="graph-stats-orphans">0 orphans</span>
                     </div>
                 </div>
-                <div class="graph-content">
-                    <div class="graph-canvas" id="graph-canvas"></div>
-                    <div class="graph-sidebar">
-                        <div class="graph-node-info" id="graph-node-info" style="display: none;">
-                            <h3>File Information</h3>
-                            <div class="node-info-content">
-                                <p><strong>Name:</strong> <span id="node-info-name">-</span></p>
-                                <p><strong>Path:</strong> <span id="node-info-path">-</span></p>
-                                <p><strong>Incoming Links:</strong> <span id="node-info-incoming">0</span></p>
-                                <p><strong>Outgoing Links:</strong> <span id="node-info-outgoing">0</span></p>
-                                <p><strong>Modified:</strong> <span id="node-info-modified">-</span></p>
-                            </div>
-                            <div class="node-connections">
-                                <h4>Connected Files</h4>
-                                <div id="node-connections-list" class="connections-list"></div>
-                            </div>
-                            <div class="node-actions">
-                                <button class="graph-btn" id="node-open-file">Open File</button>
-                                <button class="graph-btn" id="node-focus">Focus</button>
-                            </div>
-                        </div>
+                <div class="graph-search-bar">
+                    <input type="text" id="graph-search-input" placeholder="Search files..." class="graph-search-input">
+                    <button class="graph-btn graph-btn-small" id="graph-clear-search" title="Clear Search">✕</button>
+                </div>
+                <div class="graph-canvas" id="graph-canvas"></div>
+                <div class="graph-stats">
+                    <span id="graph-stats-files">0 files</span>
+                    <span class="graph-stats-separator">•</span>
+                    <span id="graph-stats-links">0 links</span>
+                    <span class="graph-stats-separator">•</span>
+                    <span id="graph-stats-orphans">0 orphans</span>
+                </div>
+                <div class="graph-node-info" id="graph-node-info" style="display: none;">
+                    <h4>File Information</h4>
+                    <div class="node-info-content">
+                        <p><strong>Name:</strong> <span id="node-info-name">-</span></p>
+                        <p><strong>Path:</strong> <span id="node-info-path">-</span></p>
+                        <p><strong>Incoming:</strong> <span id="node-info-incoming">0</span></p>
+                        <p><strong>Outgoing:</strong> <span id="node-info-outgoing">0</span></p>
+                        <p><strong>Modified:</strong> <span id="node-info-modified">-</span></p>
+                    </div>
+                    <div class="node-connections">
+                        <h5>Connected Files</h5>
+                        <div id="node-connections-list" class="connections-list"></div>
+                    </div>
+                    <div class="node-actions">
+                        <button class="graph-btn graph-btn-small" id="node-open-file">Open</button>
+                        <button class="graph-btn graph-btn-small" id="node-focus">Focus</button>
                     </div>
                 </div>
             </div>
         `;
         
-        this.graphContainer = this.container.querySelector('.graph-view-container');
+        this.graphPanel = this.container.querySelector('.graph-panel');
         this.graphCanvas = this.container.querySelector('#graph-canvas');
         this.nodeInfoPanel = this.container.querySelector('#graph-node-info');
     }
@@ -201,8 +207,8 @@ class GraphView extends Utils.EventEmitter {
      */
     createControls() {
         this.controls = {
-            resetZoom: this.container.querySelector('#graph-reset-zoom'),
-            centerView: this.container.querySelector('#graph-center-view'),
+            refreshBtn: this.container.querySelector('#graph-refresh'),
+            centerCurrentBtn: this.container.querySelector('#graph-center-current'),
             fitView: this.container.querySelector('#graph-fit-view'),
             searchInput: this.container.querySelector('#graph-search-input'),
             clearSearch: this.container.querySelector('#graph-clear-search'),
@@ -218,22 +224,40 @@ class GraphView extends Utils.EventEmitter {
      * Setup event listeners for controls
      */
     setupEventListeners() {
-        // Control buttons
-        this.controls.resetZoom.addEventListener('click', () => this.resetZoom());
-        this.controls.centerView.addEventListener('click', () => this.centerView());
-        this.controls.fitView.addEventListener('click', () => this.fitToView());
-        this.controls.clearSearch.addEventListener('click', () => this.clearSearch());
-        this.controls.closeGraph.addEventListener('click', () => this.hide());
+        // Control buttons - with null checks
+        if (this.controls.refreshBtn) {
+            this.controls.refreshBtn.addEventListener('click', () => this.refreshGraph());
+        }
+        
+        if (this.controls.centerCurrentBtn) {
+            this.controls.centerCurrentBtn.addEventListener('click', () => this.focusCurrentFile());
+        }
+        
+        if (this.controls.fitView) {
+            this.controls.fitView.addEventListener('click', () => this.fitToView());
+        }
+        
+        if (this.controls.clearSearch) {
+            this.controls.clearSearch.addEventListener('click', () => this.clearSearch());
+        }
+        
+        if (this.controls.closeGraph) {
+            this.controls.closeGraph.addEventListener('click', () => this.hide());
+        }
         
         // Layout selector
-        this.controls.layoutSelect.addEventListener('change', (e) => {
-            this.changeLayout(e.target.value);
-        });
+        if (this.controls.layoutSelect) {
+            this.controls.layoutSelect.addEventListener('change', (e) => {
+                this.changeLayout(e.target.value);
+            });
+        }
         
         // Search functionality
-        this.controls.searchInput.addEventListener('input', (e) => {
-            this.handleSearch(e.target.value);
-        });
+        if (this.controls.searchInput) {
+            this.controls.searchInput.addEventListener('input', (e) => {
+                this.handleSearch(e.target.value);
+            });
+        }
         
         // Node info panel actions
         const openFileBtn = this.container.querySelector('#node-open-file');
@@ -254,6 +278,9 @@ class GraphView extends Utils.EventEmitter {
                 }
             });
         }
+
+        // Panel resizer
+        this.setupResizer();
 
         // Resize handling
         window.addEventListener('resize', () => {
@@ -285,8 +312,21 @@ class GraphView extends Utils.EventEmitter {
             return;
         }
 
-        console.log('Showing graph container');
-        this.graphContainer.style.display = 'block';
+        console.log('Showing graph panel');
+        this.graphPanel.style.display = 'flex';
+        
+        // Get current panel width
+        const panelWidth = this.graphPanel.offsetWidth;
+        
+        // Adjust main content to make room for side panel
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            mainContent.style.marginRight = panelWidth + 'px';
+        }
+        
+        // Add class to body for ToC positioning
+        document.body.classList.add('graph-panel-open');
+        
         this.isVisible = true;
         this.emit('show');
         console.log('Graph view shown successfully');
@@ -298,7 +338,17 @@ class GraphView extends Utils.EventEmitter {
     hide() {
         if (!this.isVisible) return;
 
-        this.graphContainer.style.display = 'none';
+        this.graphPanel.style.display = 'none';
+        
+        // Reset main content margin
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            mainContent.style.marginRight = '0';
+        }
+        
+        // Remove class from body
+        document.body.classList.remove('graph-panel-open');
+        
         this.isVisible = false;
         this.clearSelection();
         this.emit('hide');
@@ -414,6 +464,10 @@ class GraphView extends Utils.EventEmitter {
 
         // Add event listeners
         this.setupCytoscapeEvents();
+        
+        // Highlight current file if available
+        this.highlightCurrentFile();
+        
         console.log('Graph rendering completed');
     }
 
@@ -705,6 +759,35 @@ class GraphView extends Utils.EventEmitter {
     }
 
     /**
+     * Refresh the graph with latest data
+     */
+    async refreshGraph() {
+        if (!window.app || !window.app.state.rootDirectory) {
+            Utils.showNotification('No workspace directory available', 'warning');
+            return;
+        }
+
+        try {
+            Utils.showNotification('Refreshing graph...', 'info');
+            
+            // Fetch fresh graph data
+            const response = await API.getGraphData(window.app.state.rootDirectory);
+            
+            if (response.success) {
+                this.graphData = response.data;
+                this.renderGraph();
+                this.updateStats();
+                Utils.showNotification('Graph refreshed successfully', 'success');
+            } else {
+                throw new Error(response.message || 'Failed to refresh graph data');
+            }
+        } catch (error) {
+            console.error('Error refreshing graph:', error);
+            Utils.showNotification('Failed to refresh graph: ' + error.message, 'error');
+        }
+    }
+
+    /**
      * Change graph layout
      * @param {string} layoutName - Layout name
      */
@@ -756,6 +839,132 @@ class GraphView extends Utils.EventEmitter {
         this.controls.statsFiles.textContent = `${this.graphData.stats.totalFiles} files`;
         this.controls.statsLinks.textContent = `${this.graphData.stats.totalLinks} links`;
         this.controls.statsOrphans.textContent = `${this.graphData.stats.orphanedFiles} orphans`;
+    }
+
+    /**
+     * Setup panel resizer functionality
+     */
+    setupResizer() {
+        const resizer = this.container.querySelector('#graph-resizer');
+        if (!resizer) return;
+
+        let isResizing = false;
+        let startX = 0;
+        let startWidth = 0;
+
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = this.graphPanel.offsetWidth;
+            
+            resizer.classList.add('resizing');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+
+            const deltaX = startX - e.clientX;
+            const newWidth = Math.max(300, Math.min(window.innerWidth * 0.6, startWidth + deltaX));
+            
+            this.graphPanel.style.width = newWidth + 'px';
+            
+            // Update main content margin
+            const mainContent = document.querySelector('.main-content');
+            if (mainContent) {
+                mainContent.style.marginRight = newWidth + 'px';
+            }
+            
+            // Resize cytoscape canvas
+            if (this.cy) {
+                this.cy.resize();
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                resizer.classList.remove('resizing');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            }
+        });
+    }
+
+    /**
+     * Highlight current file in the graph
+     */
+    highlightCurrentFile() {
+        if (!this.cy || !window.app || !window.app.state.currentFile) {
+            return;
+        }
+
+        const currentFile = window.app.state.currentFile;
+        const node = this.cy.nodes().filter(n => n.data('path') === currentFile);
+        
+        if (node.length > 0) {
+            // Remove previous current file highlighting
+            this.cy.nodes().removeClass('current-file');
+            
+            // Add current file class
+            node.addClass('current-file');
+        }
+    }
+
+    /**
+     * Focus on current file in the graph
+     */
+    focusCurrentFile() {
+        if (!this.cy || !window.app || !window.app.state.currentFile) {
+            Utils.showNotification('No current file to focus on', 'warning');
+            return;
+        }
+
+        const currentFile = window.app.state.currentFile;
+        const node = this.cy.nodes().filter(n => n.data('path') === currentFile);
+        
+        if (node.length === 0) {
+            Utils.showNotification('Current file not found in graph', 'warning');
+            return;
+        }
+
+        // Focus on the node
+        this.focusOnNode(node.id());
+        
+        // Select the node
+        this.selectNode(node);
+        
+        Utils.showNotification('Focused on current file', 'success');
+    }
+
+    /**
+     * Focus on a specific node
+     */
+    focusOnNode(nodeId) {
+        if (!this.cy) return;
+
+        const node = this.cy.getElementById(nodeId);
+        if (node.length === 0) return;
+
+        // Animate to focus on the node
+        this.cy.animate({
+            center: {
+                eles: node
+            },
+            zoom: 2
+        }, {
+            duration: 500,
+            easing: 'ease-out'
+        });
+
+        // Highlight the node temporarily
+        node.addClass('highlighted');
+        setTimeout(() => {
+            node.removeClass('highlighted');
+        }, 1500);
     }
 
     /**

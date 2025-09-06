@@ -212,6 +212,13 @@ class MarkViewerApp extends Utils.EventEmitter {
             // Initialize graph view
             if (typeof GraphView !== 'undefined') {
                 this.graphView = new GraphView('#graph-view-container');
+                
+                // Setup graph view event listeners
+                if (this.graphView) {
+                    this.graphView.on('fileSelect', (filePath) => {
+                        this.handleFileSelect(filePath);
+                    });
+                }
             } else {
                 console.warn('GraphView not available');
             }
@@ -596,6 +603,11 @@ class MarkViewerApp extends Utils.EventEmitter {
             
             // Update sidebar selection
             this.sidebar.setActiveFile(tab.filePath);
+            
+            // Update graph view current file highlight
+            if (this.graphView && this.graphView.isVisible) {
+                this.graphView.highlightCurrentFile();
+            }
             
         } catch (error) {
             console.error('Failed to load tab content:', error);

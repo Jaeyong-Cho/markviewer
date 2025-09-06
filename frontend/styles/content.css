@@ -599,6 +599,15 @@
     right: 16px;
 }
 
+/* Adjust ToC position when graph panel is visible */
+.graph-panel-open .toc-sidebar.visible {
+    right: 416px; /* 400px graph panel + 16px margin */
+}
+
+.graph-panel-open .toc-hover-trigger {
+    right: 400px; /* Move trigger area to avoid graph panel */
+}
+
 /* Auto-hide transparency states */
 .toc-sidebar.auto-transparent {
     opacity: 0.1;
