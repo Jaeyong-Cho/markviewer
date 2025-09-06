@@ -724,10 +724,14 @@ class SplitManager {
         const tocHideBtn = document.getElementById('toc-hide-btn');
         const tocHoverTrigger = document.querySelector('.toc-hover-trigger');
         
+        // Hide the ToC sidebar and edge buttons in split mode
         if (tocSidebar) tocSidebar.style.display = 'none';
         if (tocShowBtn) tocShowBtn.style.display = 'none';
         if (tocHideBtn) tocHideBtn.style.display = 'none';
         if (tocHoverTrigger) tocHoverTrigger.style.display = 'none';
+        
+        // Note: We do NOT hide the header ToC toggle button (#toc-toggle)
+        // because it should remain functional in split mode for global ToC control
     }
     
     /**
@@ -739,10 +743,14 @@ class SplitManager {
         const tocHideBtn = document.getElementById('toc-hide-btn');
         const tocHoverTrigger = document.querySelector('.toc-hover-trigger');
         
+        // Restore the ToC sidebar and edge buttons when exiting split mode
         if (tocSidebar) tocSidebar.style.display = '';
         if (tocShowBtn) tocShowBtn.style.display = '';
         if (tocHideBtn) tocHideBtn.style.display = '';
         if (tocHoverTrigger) tocHoverTrigger.style.display = '';
+        
+        // Note: The header ToC toggle button (#toc-toggle) should already be visible
+        // as we don't hide it when entering split mode
     }
 }
 

@@ -177,6 +177,7 @@ class MarkViewerApp extends Utils.EventEmitter {
             // Initialize SplitManager (check if available)
             if (typeof SplitManager !== 'undefined') {
                 this.splitManager = new SplitManager(this);
+                this.splitManager.init(this.elements.contentArea);
             } else {
                 this.splitManager = null;
             }

@@ -631,6 +631,15 @@ class MarkdownRenderer extends Utils.EventEmitter {
      * @param {NodeList} headings - List of heading elements
      */
     updateTocSidebar(headings) {
+        // Only update ToC sidebar for the main renderer
+        // Skip for pane renderers (which have ToC disabled)
+        if (this.container && (
+            this.container.id === 'left-markdown-content' ||
+            this.container.id === 'right-markdown-content'
+        )) {
+            return;
+        }
+        
         let tocHtml = '<div class="toc-content"><h3>Table of Contents</h3><ul class="toc-list">';
         
         headings.forEach((heading, index) => {
@@ -698,17 +707,31 @@ class MarkdownRenderer extends Utils.EventEmitter {
      * Setup ToC toggle functionality
      */
     setupTocToggle() {
+        // Only set up ToC toggle functionality for the main renderer
+        // Skip for pane renderers (which have ToC disabled)
+        if (this.container && (
+            this.container.id === 'left-markdown-content' ||
+            this.container.id === 'right-markdown-content'
+        )) {
+            console.log('MarkdownRenderer: Skipping ToC toggle setup for pane renderer');
+            return;
+        }
+        
         const tocToggleBtn = document.getElementById('toc-toggle');
         const tocShowBtn = document.getElementById('toc-show-btn');
         const tocHideBtn = document.getElementById('toc-hide-btn');
         
         // Header ToC toggle button
         if (tocToggleBtn) {
-            tocToggleBtn.addEventListener('click', () => {
+            // Remove any existing listeners to avoid duplicates
+            tocToggleBtn.replaceWith(tocToggleBtn.cloneNode(true));
+            const newTocToggleBtn = document.getElementById('toc-toggle');
+            
+            newTocToggleBtn.addEventListener('click', () => {
                 this.toggleToc();
             });
             
-            tocToggleBtn.addEventListener('keydown', (event) => {
+            newTocToggleBtn.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
                     this.toggleToc();
@@ -718,11 +741,15 @@ class MarkdownRenderer extends Utils.EventEmitter {
         
         // Edge ToC show button
         if (tocShowBtn) {
-            tocShowBtn.addEventListener('click', () => {
+            // Remove any existing listeners to avoid duplicates
+            tocShowBtn.replaceWith(tocShowBtn.cloneNode(true));
+            const newTocShowBtn = document.getElementById('toc-show-btn');
+            
+            newTocShowBtn.addEventListener('click', () => {
                 this.showToc();
             });
             
-            tocShowBtn.addEventListener('keydown', (event) => {
+            newTocShowBtn.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
                     this.showToc();
@@ -732,11 +759,15 @@ class MarkdownRenderer extends Utils.EventEmitter {
         
         // Edge ToC hide button
         if (tocHideBtn) {
-            tocHideBtn.addEventListener('click', () => {
+            // Remove any existing listeners to avoid duplicates
+            tocHideBtn.replaceWith(tocHideBtn.cloneNode(true));
+            const newTocHideBtn = document.getElementById('toc-hide-btn');
+            
+            newTocHideBtn.addEventListener('click', () => {
                 this.hideToc();
             });
             
-            tocHideBtn.addEventListener('keydown', (event) => {
+            newTocHideBtn.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
                     this.hideToc();
@@ -819,6 +850,15 @@ class MarkdownRenderer extends Utils.EventEmitter {
      * Update ToC toggle buttons appearance
      */
     updateTocToggleButton() {
+        // Only update ToC toggle button for the main renderer
+        // Skip for pane renderers (which have ToC disabled)
+        if (this.container && (
+            this.container.id === 'left-markdown-content' ||
+            this.container.id === 'right-markdown-content'
+        )) {
+            return;
+        }
+        
         const tocToggleBtn = document.getElementById('toc-toggle');
         const tocShowBtn = document.getElementById('toc-show-btn');
         const tocHideBtn = document.getElementById('toc-hide-btn');
@@ -869,6 +909,15 @@ class MarkdownRenderer extends Utils.EventEmitter {
      * Update ToC visibility based on current state
      */
     updateTocVisibility() {
+        // Only update ToC visibility for the main renderer
+        // Skip for pane renderers (which have ToC disabled)
+        if (this.container && (
+            this.container.id === 'left-markdown-content' ||
+            this.container.id === 'right-markdown-content'
+        )) {
+            return;
+        }
+        
         const contentSection = document.querySelector('.content-area');
         if (!contentSection) return;
 
