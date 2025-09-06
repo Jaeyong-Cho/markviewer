@@ -24,35 +24,64 @@ A powerful web-based markdown viewer with PlantUML, Mermaid, and search capabili
 
 ## Quick Start
 
-### 1. Clone and Setup
+### Option 1: Simple Start (Recommended)
 
 ```bash
 git clone <repository-url>
 cd markviewer
 npm run setup
+npm start
 ```
 
 This will:
-- Install all dependencies for both frontend and backend
-- Download the latest PlantUML jar file
-- Verify Java installation
+- Install all dependencies
+- Download PlantUML jar file
+- Start the application with auto-browser opening
+- Serve everything from a single port
 
-### 2. Start the Application
+### Option 2: Development Mode
 
 ```bash
 npm run dev
 ```
 
-This starts:
-- Backend API server on `http://localhost:3001`
-- Frontend development server on `http://localhost:8080`
+This starts separate frontend and backend servers for development.
 
-### 3. Open in Browser
+### Option 3: Download Pre-packaged Release
 
-Navigate to `http://localhost:8080` and:
-1. Click "Select Workspace Directory"
-2. Enter the path to your markdown files directory
-3. Start browsing and searching your markdown files!
+1. Download the latest release package
+2. Extract and run the installation:
+   - **Unix/Linux/macOS**: `./install.sh && ./markviewer`
+   - **Windows**: `install.bat` then `markviewer.bat`
+
+## Packaging for Distribution
+
+To create a distributable package:
+
+```bash
+npm run package
+```
+
+This creates:
+- Self-contained ZIP and TAR.GZ archives
+- Pre-installed dependencies
+- Cross-platform launcher scripts
+- Installation instructions
+
+## Using the Application
+
+1. **Auto Browser Opening**: The application automatically opens in your default browser
+2. **Manual Access**: If auto-opening fails, navigate to the URL shown in terminal output
+3. **Select Workspace**: Click "Select Workspace Directory" and enter your markdown files path
+4. **Browse and Search**: Start exploring your documentation!
+
+## Command Line Options
+
+- `npm start` - Start with auto-browser opening
+- `npm start -- --no-browser` - Start without opening browser
+- `npm run dev` - Start in development mode (separate servers)
+- `npm run package` - Create distribution package
+- `npm run test-package` - Test the packaged application
 
 ## Manual Setup
 

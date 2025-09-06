@@ -44,8 +44,8 @@ class FileWatcher {
         console.log(`[DEBUG] Original path: ${rootPath}, Normalized: ${normalizedRootPath}`);
 
         const watcher = chokidar.watch(normalizedRootPath, {
-            ignored: (path, stats) => {
-                const normalizedPath = this.normalizeFilePath(path);
+            ignored: (filePath, stats) => {
+                const normalizedPath = this.normalizeFilePath(filePath);
                 
                 // Ignore git directories
                 if (normalizedPath.includes('/.git/') || normalizedPath.endsWith('/.git')) return true;

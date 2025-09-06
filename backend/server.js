@@ -2,12 +2,49 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const { exec } = require('child_process');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const fileHandler = require('./services/file-handler');
 const plantumlService = require('./services/plantuml-service');
 const searchService = require('./services/search-service');
 const fileWatcher = require('./services/file-watcher');
+
+/**
+ * Open browser automatically for better user experience
+ * @param {string} url - URL to open
+ */
+function openBrowser(url) {
+    // Check if auto-open is disabled
+    if (process.env.NO_BROWSER === 'true' || process.env.NO_AUTO_OPEN === 'true') {
+        return;
+    }
+    
+    const platform = process.platform;
+    const commands = {
+        'darwin': `open "${url}"`,        // macOS
+        'win32': `start "" "${url}"`,     // Windows
+        'linux': `xdg-open "${url}"`      // Linux
+    };
+    
+    const command = commands[platform];
+    if (command) {
+        // Delay to ensure server is ready
+        setTimeout(() => {
+            exec(command, (error) => {
+                if (error) {
+                    console.log(`⚠️  Could not auto-open browser: ${error.message}`);
+                    console.log(`   Please manually open: ${url}`);
+                } else {
+                    console.log(`🌐 Browser opened automatically: ${url}`);
+                }
+            });
+        }, 1500); // 1.5 second delay to ensure server is ready
+    } else {
+        console.log(`ℹ️  Auto-browser opening not supported on ${platform}`);
+        console.log(`   Please manually open: ${url}`);
+    }
+}
 
 /**
  * Express server for markdown viewer backend
@@ -328,11 +365,17 @@ class MarkViewerServer {
      */
     start() {
         this.server.listen(this.port, '0.0.0.0', () => {
-            console.log(`MarkViewer server running on http://0.0.0.0:${this.port}`);
-            console.log(`API available at http://0.0.0.0:${this.port}/api`);
-            console.log(`Frontend available at http://0.0.0.0:${this.port}`);
-            console.log(`WebSocket available for real-time updates`);
-            console.log(`External access: http://<your-ip>:${this.port}`);
+            const url = `http://localhost:${this.port}`;
+            console.log(`🚀 MarkViewer server running on http://0.0.0.0:${this.port}`);
+            console.log(`📱 Frontend available at ${url}`);
+            console.log(`🔧 API available at http://0.0.0.0:${this.port}/api`);
+            console.log(`🔄 WebSocket available for real-time updates`);
+            console.log(`🌍 External access: http://<your-ip>:${this.port}`);
+            console.log('');
+            console.log('✅ Server ready! Opening browser...');
+            
+            // Auto-open browser
+            openBrowser(url);
         });
         
         // Graceful shutdown
