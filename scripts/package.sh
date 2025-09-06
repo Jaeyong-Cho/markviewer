@@ -2,19 +2,10 @@
 
 # MarkViewer Packaging Script
 # Creates a distributable package of MarkViewer application
+# Usage: ./package.sh [version]
+#   version - Optional version number (defaults to package.json version)
 
 set -e  # Exit on any error
-
-echo "📦 MarkViewer Packaging Script"
-echo "==============================="
-echo ""
-
-# Configuration
-PACKAGE_NAME="markviewer"
-VERSION=$(node -p "require('./package.json').version")
-RELEASE_DIR="release"
-PACKAGE_DIR="${RELEASE_DIR}/${PACKAGE_NAME}-${VERSION}"
-CURRENT_DIR=$(pwd)
 
 # Colors for output
 RED='\033[0;31m'
@@ -39,6 +30,52 @@ error() {
     echo -e "${RED}❌ $1${NC}"
     exit 1
 }
+
+# Function to show usage
+show_usage() {
+    echo "Usage: $0 [version]"
+    echo ""
+    echo "Arguments:"
+    echo "  version    Optional version number (e.g., 1.2.0)"
+    echo "             If not provided, uses version from package.json"
+    echo ""
+    echo "Examples:"
+    echo "  $0                # Use version from package.json"
+    echo "  $0 1.2.0          # Use specific version 1.2.0"
+    echo "  $0 1.2.0-beta.1   # Use pre-release version"
+    exit 1
+}
+
+# Check for help flag
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    show_usage
+fi
+
+echo "📦 MarkViewer Packaging Script"
+echo "==============================="
+echo ""
+
+# Configuration
+PACKAGE_NAME="markviewer"
+
+# Determine version
+if [ -n "$1" ]; then
+    VERSION="$1"
+    echo "🏷️  Using specified version: $VERSION"
+    
+    # Basic version validation (semantic versioning pattern)
+    if ! echo "$VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$' > /dev/null; then
+        warning "Version '$VERSION' doesn't follow semantic versioning format (e.g., 1.2.3, 1.2.3-beta.1)"
+        echo "   Continuing anyway..."
+    fi
+else
+    VERSION=$(node -p "require('./package.json').version")
+    echo "🏷️  Using package.json version: $VERSION"
+fi
+
+RELEASE_DIR="release"
+PACKAGE_DIR="${RELEASE_DIR}/${PACKAGE_NAME}-${VERSION}"
+CURRENT_DIR=$(pwd)
 
 # Function to check if command exists
 check_command() {
