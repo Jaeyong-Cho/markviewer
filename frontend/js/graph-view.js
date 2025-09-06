@@ -26,7 +26,7 @@ class GraphView extends Utils.EventEmitter {
         this.selectedNode = null;
         
         // Focus and depth settings
-        this.autoFocus = false;
+        this.autoFocus = true;
         this.focusDepth = 2;
         this.currentFocusNode = null;
         
@@ -153,7 +153,7 @@ class GraphView extends Utils.EventEmitter {
             <div class="graph-panel" style="display: none;">
                 <div class="graph-resizer" id="graph-resizer"></div>
                 <div class="graph-header">
-                    <h3>Document Graph</h3>
+                    <h3>Graph View</h3>
                     <div class="graph-header-controls">
                         <button class="graph-btn graph-btn-small" id="graph-settings" title="Graph Settings">
                             Settings
@@ -1232,28 +1232,32 @@ class GraphView extends Utils.EventEmitter {
             focusNodes = this.cy.elements();
         }
         
-        // Hide non-focus nodes with animation
+        // Hide non-focus nodes completely
         const allNodes = this.cy.nodes();
+        const allEdges = this.cy.edges();
         const hiddenNodes = allNodes.difference(focusNodes.nodes());
+        const focusEdges = focusNodes.edgesWith(focusNodes);
+        const hiddenEdges = allEdges.difference(focusEdges);
         
-        // Animate hiding nodes
-        hiddenNodes.animate({
-            style: {
-                opacity: 0.1,
-                'background-color': '#cccccc'
-            }
-        }, {
-            duration: 300
+        // Completely hide nodes and edges outside focus area
+        hiddenNodes.style({
+            'display': 'none'
         });
         
-        // Animate showing focus nodes
-        focusNodes.nodes().animate({
-            style: {
-                opacity: 1,
-                'background-color': '#0366d6'
-            }
-        }, {
-            duration: 300
+        hiddenEdges.style({
+            'display': 'none'
+        });
+        
+        // Show focus nodes and edges
+        focusNodes.nodes().style({
+            'display': 'element',
+            'opacity': 1,
+            'background-color': '#0366d6'
+        });
+        
+        focusEdges.style({
+            'display': 'element',
+            'opacity': 0.7
         });
         
         // Focus and zoom to the target node with animation
@@ -1279,14 +1283,16 @@ class GraphView extends Utils.EventEmitter {
 
         this.currentFocusNode = null;
         
-        // Show all nodes with animation
-        this.cy.nodes().animate({
-            style: {
-                opacity: 1,
-                'background-color': '#0366d6'
-            }
-        }, {
-            duration: 300
+        // Show all nodes and edges
+        this.cy.nodes().style({
+            'display': 'element',
+            'opacity': 1,
+            'background-color': '#0366d6'
+        });
+        
+        this.cy.edges().style({
+            'display': 'element',
+            'opacity': 0.7
         });
         
         // Fit to view

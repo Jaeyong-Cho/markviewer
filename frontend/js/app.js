@@ -311,7 +311,6 @@ class MarkViewerApp extends Utils.EventEmitter {
         if (this.graphView) {
             this.graphView.on('fileSelect', (filePath) => {
                 this.handleFileSelect(filePath);
-                this.graphView.hide(); // Hide graph view after file selection
             });
             
             this.graphView.on('show', () => {
