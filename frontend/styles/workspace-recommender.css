@@ -1,0 +1,387 @@
+/* Workspace Recommender Styles */
+
+/* Scan Button */
+.workspace-scan-btn {
+    width: 100%;
+    padding: 8px 12px;
+    margin-top: 8px;
+    background: linear-gradient(135deg, var(--primary-color), #0078d4);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.workspace-scan-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #0078d4, #106ebe);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+}
+
+.workspace-scan-btn:active {
+    transform: translateY(0);
+}
+
+.workspace-scan-btn:disabled {
+    background: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.workspace-scan-btn .scan-icon {
+    font-size: 14px;
+}
+
+.workspace-scan-btn .cached-indicator {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--accent-color);
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 16px;
+    text-align: center;
+}
+
+/* Progress Container */
+.scan-progress {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.scan-progress.hidden {
+    display: none;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.progress-text {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.scan-cancel-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.scan-cancel-btn:hover {
+    background: var(--error-color);
+    color: white;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--border-color);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.progress-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-secondary);
+    font-size: 11px;
+}
+
+.current-directory {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 8px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.scan-stats {
+    flex-shrink: 0;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+/* Recommendations Container */
+.workspace-recommendations {
+    margin-top: 12px;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    max-height: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.workspace-recommendations.hidden {
+    display: none;
+}
+
+.recommendations-header {
+    padding: 12px;
+    background: var(--background-secondary);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.recommendations-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.recommendations-count {
+    font-size: 11px;
+    color: var(--text-secondary);
+    background: var(--primary-color);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.recommendations-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.recommendation-item {
+    padding: 10px;
+    margin: 2px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.recommendation-item:hover,
+.recommendation-item.hover {
+    background: var(--hover-color);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.recommendation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6px;
+}
+
+.recommendation-path {
+    flex: 1;
+    min-width: 0;
+}
+
+.path-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
+    display: block;
+}
+
+.path-full {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 2px;
+}
+
+.recommendation-score {
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.stars {
+    color: #ffa500;
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+.recommendation-details {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+.detail-item {
+    font-size: 11px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.recommendation-preview {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.preview-item {
+    font-size: 10px;
+    background: var(--background-secondary);
+    color: var(--text-secondary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.preview-more {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 2px 4px;
+}
+
+.recommendations-footer {
+    padding: 8px 12px;
+    background: var(--background-secondary);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.scan-again-btn,
+.recommendations-close-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--surface-color);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.2s ease;
+}
+
+.scan-again-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.recommendations-close-btn:hover {
+    background: var(--text-muted);
+    color: white;
+    border-color: var(--text-muted);
+}
+
+/* No Recommendations State */
+.no-recommendations {
+    text-align: center;
+    padding: 24px 16px;
+    color: var(--text-secondary);
+}
+
+.no-recommendations-icon {
+    font-size: 32px;
+    display: block;
+    margin-bottom: 8px;
+    opacity: 0.5;
+}
+
+.no-recommendations-text {
+    font-size: 13px;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.no-recommendations-hint {
+    font-size: 11px;
+    display: block;
+    opacity: 0.7;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .workspace-recommendations {
+        max-height: 300px;
+    }
+    
+    .recommendation-details {
+        gap: 8px;
+    }
+    
+    .detail-item {
+        font-size: 10px;
+    }
+    
+    .recommendation-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    
+    .recommendation-score {
+        margin-left: 0;
+    }
+}
+
+/* Dark theme adjustments */
+@media (prefers-color-scheme: dark) {
+    .workspace-scan-btn {
+        background: linear-gradient(135deg, #0078d4, #106ebe);
+    }
+    
+    .workspace-scan-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, #106ebe, #005a9e);
+    }
+    
+    .progress-fill {
+        background: linear-gradient(90deg, #0078d4, #00a2ed);
+    }
+    
+    .stars {
+        color: #ffb84d;
+    }
+}

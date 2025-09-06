@@ -138,6 +138,8 @@
     <link rel="stylesheet" href="styles/sidebar.css">
     <link rel="stylesheet" href="styles/content.css">
     <link rel="stylesheet" href="styles/search.css">
+    <link rel="stylesheet" href="styles/workspace-recommender.css">
+    <link rel="stylesheet" href="styles/workspace-autocomplete.css">
 </head>
 <body>
     <!-- Main application container -->
@@ -359,6 +361,8 @@ function renderMarkdown(content) {
             'js/search.js',
             'js/sidebar.js',
             'js/sidebar-resizer.js',
+            'js/workspace-recommender.js',
+            'js/workspace-autocomplete.js',
             'js/app.js'
         ];        // Load scripts one by one to ensure dependency order
         async function loadScriptsSequentially() {

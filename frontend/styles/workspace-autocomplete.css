@@ -1,0 +1,237 @@
+/* Workspace Autocomplete Styles */
+
+.workspace-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    font-size: 13px;
+    margin-top: 2px;
+}
+
+.workspace-suggestions::-webkit-scrollbar {
+    width: 6px;
+}
+
+.workspace-suggestions::-webkit-scrollbar-track {
+    background: var(--surface-color);
+}
+
+.workspace-suggestions::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.workspace-suggestions::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+.suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-light);
+    transition: background-color 0.15s ease;
+    display: flex;
+    align-items: center;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover,
+.suggestion-item.selected {
+    background-color: var(--hover-color);
+}
+
+.suggestion-item.selected {
+    background-color: var(--primary-color-light);
+}
+
+.suggestion-content {
+    flex: 1;
+    min-width: 0; /* Allow content to shrink */
+}
+
+.suggestion-main {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2px;
+}
+
+.suggestion-icon {
+    font-size: 14px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.suggestion-name {
+    font-weight: 500;
+    color: var(--text-color);
+    margin-right: 8px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.suggestion-path {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-left: 22px; /* Align with icon + margin */
+}
+
+.markdown-indicator {
+    font-size: 10px;
+    margin-left: 4px;
+    color: var(--success-color);
+    flex-shrink: 0;
+}
+
+.recent-indicator {
+    font-size: 10px;
+    margin-left: 4px;
+    color: var(--primary-color);
+    flex-shrink: 0;
+}
+
+/* Special suggestion types */
+.suggestion-item.recent {
+    background-color: rgba(99, 102, 241, 0.02);
+}
+
+.suggestion-item.recent .suggestion-name {
+    color: var(--primary-color);
+}
+
+.suggestion-item.has-markdown {
+    background-color: rgba(34, 197, 94, 0.02);
+}
+
+.suggestion-item.common {
+    background-color: rgba(168, 85, 247, 0.02);
+}
+
+.suggestion-item.home {
+    background-color: rgba(251, 191, 36, 0.02);
+}
+
+.suggestion-item.home .suggestion-name {
+    font-weight: 600;
+}
+
+/* Workspace input container positioning */
+.workspace-input-container {
+    position: relative;
+}
+
+/* Enhanced workspace input styling when autocomplete is active */
+.workspace-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+    outline: none;
+}
+
+/* Loading state for suggestions */
+.workspace-suggestions.loading {
+    padding: 16px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.workspace-suggestions.loading::before {
+    content: "🔄 Loading suggestions...";
+    font-size: 12px;
+}
+
+/* Empty state for suggestions */
+.workspace-suggestions.empty {
+    padding: 16px;
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.workspace-suggestions.empty::before {
+    content: "No directories found";
+    font-size: 12px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .workspace-suggestions {
+        max-height: 200px;
+        font-size: 12px;
+    }
+    
+    .suggestion-item {
+        padding: 6px 10px;
+    }
+    
+    .suggestion-path {
+        font-size: 10px;
+    }
+}
+
+/* Dark theme adjustments */
+@media (prefers-color-scheme: dark) {
+    .workspace-suggestions {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .suggestion-item.recent {
+        background-color: rgba(99, 102, 241, 0.05);
+    }
+    
+    .suggestion-item.has-markdown {
+        background-color: rgba(34, 197, 94, 0.05);
+    }
+    
+    .suggestion-item.common {
+        background-color: rgba(168, 85, 247, 0.05);
+    }
+    
+    .suggestion-item.home {
+        background-color: rgba(251, 191, 36, 0.05);
+    }
+}
+
+/* Keyboard navigation hints */
+.workspace-suggestions::after {
+    content: "↑↓ Navigate • Enter Select • Esc Close";
+    display: block;
+    padding: 4px 8px;
+    font-size: 10px;
+    color: var(--text-muted);
+    background: var(--surface-alt);
+    border-top: 1px solid var(--border-light);
+    text-align: center;
+}
+
+.workspace-suggestions:empty::after {
+    display: none;
+}
+
+/* Animation for showing/hiding */
+.workspace-suggestions {
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.workspace-suggestions[style*="block"] {
+    opacity: 1;
+    transform: translateY(0);
+}

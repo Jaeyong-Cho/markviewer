@@ -111,6 +111,58 @@ class ApiClient {
         const url = `${this.baseUrl}/health`;
         return await this.request(url);
     }
+
+    /**
+     * Start workspace scanning
+     * @param {Object} options - Scan options
+     * @returns {Promise<Object>} Scan start response with scanId
+     */
+    async startWorkspaceScan(options = {}) {
+        const url = `${this.baseUrl}/workspace/scan`;
+        return await this.request(url, {
+            method: 'POST',
+            body: JSON.stringify(options)
+        });
+    }
+
+    /**
+     * Get scan progress
+     * @param {string} scanId - Scan identifier
+     * @returns {Promise<Object>} Scan progress and results
+     */
+    async getScanProgress(scanId) {
+        const url = `${this.baseUrl}/workspace/scan/${scanId}`;
+        return await this.request(url);
+    }
+
+    /**
+     * Cancel ongoing scan
+     * @param {string} scanId - Scan identifier
+     * @returns {Promise<Object>} Cancellation response
+     */
+    async cancelScan(scanId) {
+        const url = `${this.baseUrl}/workspace/scan/${scanId}`;
+        return await this.request(url, { method: 'DELETE' });
+    }
+
+    /**
+     * Get cached workspace recommendations
+     * @returns {Promise<Object>} Cached recommendations
+     */
+    async getCachedRecommendations() {
+        const url = `${this.baseUrl}/workspace/recommendations`;
+        return await this.request(url);
+    }
+
+    /**
+     * Get directory suggestions based on partial path
+     * @param {string} partialPath - Partial directory path
+     * @returns {Promise<Object>} Directory suggestions
+     */
+    async getDirectorySuggestions(partialPath) {
+        const url = `${this.baseUrl}/workspace/suggestions?${new URLSearchParams({ path: partialPath })}`;
+        return await this.request(url);
+    }
 }
 
 /**
@@ -229,6 +281,65 @@ class ApiService {
             console.error('Health check failed:', error);
             throw error;
         }
+    }
+
+    /**
+     * Start workspace scan (no caching)
+     * @param {Object} options - Scan options
+     * @returns {Promise<Object>} Scan start response
+     */
+    async startWorkspaceScan(options = {}) {
+        try {
+            return await this.client.startWorkspaceScan(options);
+        } catch (error) {
+            console.error('Failed to start workspace scan:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get scan progress (no caching)
+     * @param {string} scanId - Scan identifier
+     * @returns {Promise<Object>} Scan progress
+     */
+    async getScanProgress(scanId) {
+        try {
+            return await this.client.getScanProgress(scanId);
+        } catch (error) {
+            console.error('Failed to get scan progress:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Cancel scan (no caching)
+     * @param {string} scanId - Scan identifier
+     * @returns {Promise<Object>} Cancellation response
+     */
+    async cancelScan(scanId) {
+        try {
+            return await this.client.cancelScan(scanId);
+        } catch (error) {
+            console.error('Failed to cancel scan:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get cached recommendations (short-term caching)
+     * @returns {Promise<Object>} Workspace recommendations
+     */
+    async getCachedRecommendations() {
+        return await this.cachedRequest('getCachedRecommendations', this.client.getCachedRecommendations);
+    }
+
+    /**
+     * Get directory suggestions (with short-term caching)
+     * @param {string} partialPath - Partial directory path
+     * @returns {Promise<Object>} Directory suggestions
+     */
+    async getDirectorySuggestions(partialPath) {
+        return await this.cachedRequest('getDirectorySuggestions', this.client.getDirectorySuggestions, partialPath);
     }
 
     /**

@@ -23,6 +23,8 @@ class MarkViewerApp extends Utils.EventEmitter {
         this.renderer = null;
         this.search = null;
         this.webSocket = null;
+        this.workspaceRecommender = null;
+        this.workspaceAutocomplete = null;
 
         // DOM elements
         this.elements = {};
@@ -175,6 +177,23 @@ class MarkViewerApp extends Utils.EventEmitter {
             
             // Initialize markdown renderer
             this.renderer = new MarkdownRenderer(this.elements.markdownContent);
+            
+            // Initialize workspace recommender
+            if (typeof WorkspaceRecommender !== 'undefined') {
+                this.workspaceRecommender = new WorkspaceRecommender(this);
+                this.workspaceRecommender.init();
+                console.log('Workspace recommender initialized');
+            } else {
+                console.warn('WorkspaceRecommender not available');
+            }
+            
+            // Initialize workspace autocomplete
+            if (typeof WorkspaceAutocomplete !== 'undefined') {
+                this.workspaceAutocomplete = new WorkspaceAutocomplete(this.elements.workspaceInput, this);
+                console.log('Workspace autocomplete initialized');
+            } else {
+                console.warn('WorkspaceAutocomplete not available');
+            }
             
             // Initialize WebSocket client (with error handling)
             try {

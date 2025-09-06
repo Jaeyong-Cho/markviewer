@@ -9,6 +9,7 @@ const fileHandler = require('./services/file-handler');
 const plantumlService = require('./services/plantuml-service');
 const searchService = require('./services/search-service');
 const fileWatcher = require('./services/file-watcher');
+const WorkspaceScanner = require('./services/workspace-scanner');
 
 /**
  * Browser opening functionality has been removed
@@ -23,6 +24,9 @@ class MarkViewerServer {
     constructor(options = {}) {
         this.app = express();
         this.server = createServer(this.app);
+        
+        // Initialize services
+        this.workspaceScanner = new WorkspaceScanner();
         
         // Initialize Socket.IO
         this.io = new Server(this.server, {
@@ -285,6 +289,94 @@ class MarkViewerServer {
             }
         });
 
+        // Workspace scanning endpoints
+        
+        // Start workspace scan
+        this.app.post('/api/workspace/scan', async (req, res) => {
+            try {
+                const options = req.body || {};
+                console.log('Starting workspace scan with options:', options);
+                
+                const scanId = await this.workspaceScanner.startScan(options);
+                res.json({ 
+                    scanId, 
+                    status: 'started',
+                    message: 'Workspace scan initiated'
+                });
+            } catch (error) {
+                console.error('Error starting workspace scan:', error);
+                res.status(500).json({ error: error.message });
+            }
+        });
+
+        // Get scan progress
+        this.app.get('/api/workspace/scan/:scanId', (req, res) => {
+            try {
+                const { scanId } = req.params;
+                const progress = this.workspaceScanner.getScanProgress(scanId);
+                
+                if (progress.error && progress.error === 'Scan not found') {
+                    return res.status(404).json({ error: 'Scan not found' });
+                }
+                
+                res.json(progress);
+            } catch (error) {
+                console.error('Error getting scan progress:', error);
+                res.status(500).json({ error: error.message });
+            }
+        });
+
+        // Cancel scan
+        this.app.delete('/api/workspace/scan/:scanId', (req, res) => {
+            try {
+                const { scanId } = req.params;
+                this.workspaceScanner.cancelScan(scanId);
+                res.json({ 
+                    scanId, 
+                    status: 'cancelled',
+                    message: 'Scan cancelled successfully'
+                });
+            } catch (error) {
+                console.error('Error cancelling scan:', error);
+                res.status(500).json({ error: error.message });
+            }
+        });
+
+        // Get cached recommendations
+        this.app.get('/api/workspace/recommendations', (req, res) => {
+            try {
+                const recommendations = this.workspaceScanner.getCachedRecommendations();
+                res.json({ 
+                    recommendations,
+                    count: recommendations.length,
+                    cached: true
+                });
+            } catch (error) {
+                console.error('Error getting cached recommendations:', error);
+                res.status(500).json({ error: error.message });
+            }
+        });
+
+        // Get directory suggestions for autocomplete
+        this.app.get('/api/workspace/suggestions', async (req, res) => {
+            try {
+                const { path: partialPath } = req.query;
+                if (!partialPath) {
+                    return res.status(400).json({ error: 'Path parameter is required' });
+                }
+
+                const suggestions = await this.getDirectorySuggestions(partialPath);
+                res.json({ 
+                    suggestions,
+                    count: suggestions.length,
+                    query: partialPath
+                });
+            } catch (error) {
+                console.error('Error getting directory suggestions:', error);
+                res.status(500).json({ error: error.message });
+            }
+        });
+
         // Serve frontend for all other routes (SPA support)
         this.app.get('*', (req, res) => {
             const frontendPath = path.join(__dirname, '..', 'frontend', 'index.html');
@@ -338,6 +430,11 @@ class MarkViewerServer {
      * Start the server
      */
     start() {
+        // Set up periodic cleanup for workspace scanner
+        setInterval(() => {
+            this.workspaceScanner.cleanup();
+        }, 5 * 60 * 1000); // Clean up every 5 minutes
+
         this.server.listen(this.port, this.host, () => {
             const displayHost = this.host === '0.0.0.0' ? 'localhost' : this.host;
             const url = `http://${displayHost}:${this.port}`;
@@ -345,6 +442,7 @@ class MarkViewerServer {
             console.log(`📱 Frontend available at ${url}`);
             console.log(`🔧 API available at http://${this.host}:${this.port}/api`);
             console.log(`🔄 WebSocket available for real-time updates`);
+            console.log(`🔍 Workspace scanning available at ${url}/api/workspace/scan`);
             
             if (this.host === '0.0.0.0') {
                 console.log(`🌍 External access: http://<your-ip>:${this.port}`);
@@ -358,6 +456,144 @@ class MarkViewerServer {
         // Graceful shutdown
         process.on('SIGTERM', () => this.shutdown());
         process.on('SIGINT', () => this.shutdown());
+    }
+    
+    /**
+     * Get directory suggestions for autocomplete
+     * @param {string} partialPath - Partial directory path
+     * @returns {Array} Array of directory suggestions
+     */
+    async getDirectorySuggestions(partialPath) {
+        const fs = require('fs').promises;
+        const path = require('path');
+        const os = require('os');
+        
+        try {
+            const suggestions = [];
+            
+            // Handle empty or root-level paths
+            if (!partialPath || partialPath.length === 0) {
+                const homeDir = os.homedir();
+                const commonDirs = ['Documents', 'Desktop', 'Downloads', 'Projects', 'dev', 'workspace'];
+                
+                for (const dir of commonDirs) {
+                    const fullPath = path.join(homeDir, dir);
+                    try {
+                        const stat = await fs.stat(fullPath);
+                        if (stat.isDirectory()) {
+                            suggestions.push({
+                                path: fullPath,
+                                name: dir,
+                                type: 'directory',
+                                isCommon: true
+                            });
+                        }
+                    } catch (error) {
+                        // Skip directories that don't exist
+                    }
+                }
+                
+                // Add home directory itself
+                suggestions.unshift({
+                    path: homeDir,
+                    name: path.basename(homeDir),
+                    type: 'directory',
+                    isHome: true
+                });
+                
+                return suggestions.slice(0, 10);
+            }
+            
+            // Normalize and resolve the partial path
+            let basePath = path.resolve(partialPath);
+            let searchName = '';
+            
+            // If the path doesn't exist, get the parent directory and search pattern
+            try {
+                const stat = await fs.stat(basePath);
+                if (!stat.isDirectory()) {
+                    searchName = path.basename(basePath);
+                    basePath = path.dirname(basePath);
+                }
+            } catch (error) {
+                // Path doesn't exist, treat last part as search pattern
+                searchName = path.basename(basePath);
+                basePath = path.dirname(basePath);
+            }
+            
+            // Ensure base path exists
+            try {
+                const baseStat = await fs.stat(basePath);
+                if (!baseStat.isDirectory()) {
+                    return [];
+                }
+            } catch (error) {
+                return [];
+            }
+            
+            // Read directory contents
+            const entries = await fs.readdir(basePath, { withFileTypes: true });
+            
+            for (const entry of entries) {
+                if (!entry.isDirectory()) continue;
+                
+                // Skip hidden directories (except .github, .vscode for development)
+                if (entry.name.startsWith('.') && 
+                    !['github', 'vscode'].includes(entry.name.substring(1).toLowerCase())) {
+                    continue;
+                }
+                
+                // Skip common exclude patterns
+                const excludePatterns = [
+                    'node_modules', '.git', '.svn', 'target', 'build', 'dist',
+                    '.cache', 'tmp', 'temp', '__pycache__'
+                ];
+                if (excludePatterns.includes(entry.name.toLowerCase())) {
+                    continue;
+                }
+                
+                // Filter by search pattern if provided
+                if (searchName && !entry.name.toLowerCase().includes(searchName.toLowerCase())) {
+                    continue;
+                }
+                
+                const fullPath = path.join(basePath, entry.name);
+                
+                // Check if directory has markdown files (quick check)
+                let hasMarkdown = false;
+                try {
+                    const subEntries = await fs.readdir(fullPath);
+                    hasMarkdown = subEntries.some(name => 
+                        name.toLowerCase().endsWith('.md') || 
+                        name.toLowerCase().endsWith('.markdown')
+                    );
+                } catch (error) {
+                    // Skip directories we can't read
+                    continue;
+                }
+                
+                suggestions.push({
+                    path: fullPath,
+                    name: entry.name,
+                    type: 'directory',
+                    hasMarkdown,
+                    parent: basePath
+                });
+            }
+            
+            // Sort suggestions: directories with markdown first, then alphabetically
+            suggestions.sort((a, b) => {
+                if (a.hasMarkdown && !b.hasMarkdown) return -1;
+                if (!a.hasMarkdown && b.hasMarkdown) return 1;
+                return a.name.localeCompare(b.name);
+            });
+            
+            return suggestions.slice(0, 10);
+            
+        } catch (error) {
+            console.error('Error getting directory suggestions:', error);
+            return [];
+        }
     }
     
     /**
