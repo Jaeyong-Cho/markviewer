@@ -133,7 +133,14 @@ class GraphView extends Utils.EventEmitter {
                         'arrow-scale': 1.2,
                         'opacity': 0.6,
                         'line-style': 'dashed',
-                        'line-dash-pattern': [6, 3]
+                        'line-dash-pattern': [6, 3],
+                        'label': 'data(edgeLabel)',
+                        'font-size': '10px',
+                        'text-rotation': 'autorotate',
+                        'text-margin-y': -8,
+                        'color': '#68a728ff',
+                        'text-outline-width': 1,
+                        'text-outline-color': '#ffffff'
                     }
                 },
                 {
@@ -564,6 +571,10 @@ class GraphView extends Utils.EventEmitter {
         this.graphData.edges.forEach(edge => {
             if (validNodeIds.has(edge.source) && validNodeIds.has(edge.target)) {
                 const edgeClasses = edge.type === 'tag' ? 'tag' : '';
+                const edgeLabel = edge.type === 'tag' && edge.sharedTags && edge.sharedTags.length > 0 
+                    ? edge.sharedTags.join(', ') 
+                    : '';
+                
                 elements.push({
                     data: {
                         id: `${edge.source}-${edge.target}`,
@@ -572,7 +583,8 @@ class GraphView extends Utils.EventEmitter {
                         sourcePath: edge.sourcePath,
                         targetPath: edge.targetPath,
                         type: edge.type || 'link',
-                        sharedTags: edge.sharedTags || []
+                        sharedTags: edge.sharedTags || [],
+                        edgeLabel: edgeLabel
                     },
                     classes: edgeClasses
                 });
@@ -642,6 +654,16 @@ class GraphView extends Utils.EventEmitter {
 
         this.cy.on('mouseout', 'node', (event) => {
             this.clearHoverHighlight();
+        });
+
+        // Edge hover for tooltip
+        this.cy.on('mouseover', 'edge', (event) => {
+            const edge = event.target;
+            this.showEdgeTooltip(edge, event);
+        });
+
+        this.cy.on('mouseout', 'edge', (event) => {
+            this.hideEdgeTooltip();
         });
 
         // Background click (deselect)
@@ -813,6 +835,76 @@ class GraphView extends Utils.EventEmitter {
             'transition-property': 'opacity',
             'transition-duration': '0.2s'
         });
+    }
+
+    /**
+     * Show edge tooltip with connection information
+     * @param {Object} edge - Cytoscape edge object
+     * @param {Object} event - Mouse event
+     */
+    showEdgeTooltip(edge, event) {
+        const edgeData = edge.data();
+        let tooltipContent = '';
+        
+        if (edgeData.type === 'tag' && edgeData.sharedTags && edgeData.sharedTags.length > 0) {
+            const source = edge.source().data('fullName');
+            const target = edge.target().data('fullName');
+            tooltipContent = `<div class="edge-tooltip tag-edge">
+                <div class="tooltip-title">Tag Connection</div>
+                <div class="tooltip-files">${source} ↔ ${target}</div>
+                <div class="tooltip-tags">Shared tags: ${edgeData.sharedTags.map(tag => 
+                    `<span class="tag-badge mini">${tag}</span>`
+                ).join(' ')}</div>
+            </div>`;
+        } else {
+            const source = edge.source().data('fullName');
+            const target = edge.target().data('fullName');
+            tooltipContent = `<div class="edge-tooltip link-edge">
+                <div class="tooltip-title">Link Connection</div>
+                <div class="tooltip-files">${source} → ${target}</div>
+            </div>`;
+        }
+        
+        this.createTooltip(tooltipContent, event.renderedPosition || event.position);
+    }
+
+    /**
+     * Create and show tooltip
+     * @param {string} content - HTML content for tooltip
+     * @param {Object} position - Position object with x, y coordinates
+     */
+    createTooltip(content, position) {
+        this.hideEdgeTooltip(); // Remove any existing tooltip
+        
+        const tooltip = document.createElement('div');
+        tooltip.id = 'graph-edge-tooltip';
+        tooltip.innerHTML = content;
+        tooltip.style.cssText = `
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 10000;
+            max-width: 300px;
+            word-wrap: break-word;
+            left: ${position.x + 10}px;
+            top: ${position.y - 30}px;
+        `;
+        
+        document.body.appendChild(tooltip);
+    }
+
+    /**
+     * Hide edge tooltip
+     */
+    hideEdgeTooltip() {
+        const existingTooltip = document.getElementById('graph-edge-tooltip');
+        if (existingTooltip) {
+            existingTooltip.remove();
+        }
     }
 
     /**

@@ -175,6 +175,25 @@ class MarkdownRenderer extends Utils.EventEmitter {
     }
 
     /**
+     * Strip YAML frontmatter from markdown content
+     * @param {string} content - Markdown content with potential frontmatter
+     * @returns {string} Content without frontmatter
+     */
+    stripFrontmatter(content) {
+        // YAML frontmatter pattern: starts with ---, followed by YAML content, ends with ---
+        const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n/;
+        const match = content.match(frontmatterRegex);
+        
+        if (match) {
+            // Return content without the frontmatter block
+            return content.slice(match[0].length);
+        }
+        
+        // If no frontmatter found, return original content
+        return content;
+    }
+
+    /**
      * Render markdown content
      * @param {string} content - Markdown content
      */
@@ -185,8 +204,11 @@ class MarkdownRenderer extends Utils.EventEmitter {
         }
         
         try {
+            // Strip YAML frontmatter before rendering
+            const contentWithoutFrontmatter = this.stripFrontmatter(content);
+            
             // Parse markdown to HTML
-            let html = marked.parse(content);
+            let html = marked.parse(contentWithoutFrontmatter);
             
             // Sanitize HTML for security
             html = Utils.sanitizeHtml(html);
