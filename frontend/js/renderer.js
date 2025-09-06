@@ -781,26 +781,17 @@ class MarkdownRenderer extends Utils.EventEmitter {
      * @returns {boolean} Whether ToC is enabled
      */
     getTocEnabledState() {
-        try {
-            const stored = localStorage.getItem('tocEnabled');
-            return stored !== null ? JSON.parse(stored) : true; // Default to enabled
-        } catch (error) {
-            console.warn('Failed to get ToC state from localStorage:', error);
-            return true;
-        }
+        // Always return true to keep ToC enabled by default
+        return true;
     }
 
     /**
-     * Set ToC enabled state in localStorage
+     * Set ToC enabled state (session only, not persisted)
      * @param {boolean} enabled - Whether ToC should be enabled
      */
     setTocEnabledState(enabled) {
-        try {
-            localStorage.setItem('tocEnabled', JSON.stringify(enabled));
-            this.tocEnabled = enabled;
-        } catch (error) {
-            console.warn('Failed to save ToC state to localStorage:', error);
-        }
+        // Only set for current session, don't persist to localStorage
+        this.tocEnabled = enabled;
     }
 
     /**

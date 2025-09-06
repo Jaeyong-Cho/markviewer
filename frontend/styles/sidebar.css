@@ -55,7 +55,7 @@ body.resizing * {
 
 /* Workspace selector at top of sidebar */
 .workspace-selector {
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm);
     border-bottom: 1px solid var(--border-color);
     background-color: var(--surface-color);
 }
@@ -63,15 +63,15 @@ body.resizing * {
 .workspace-input-container {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xs);
+    gap: 4px;
 }
 
 .workspace-input {
     width: 100%;
-    padding: var(--spacing-sm);
+    padding: var(--spacing-xs);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
-    font-size: 13px;
+    font-size: 12px;
     font-family: inherit;
     background-color: var(--background-color);
     color: var(--text-color);
@@ -95,11 +95,11 @@ body.resizing * {
 }
 
 .current-workspace-path {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--text-muted);
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
     word-break: break-all;
-    line-height: 1.3;
+    line-height: 1.2;
 }
 
 .current-workspace-path.selected {
@@ -110,7 +110,7 @@ body.resizing * {
 .sidebar-content {
     flex: 1;
     overflow: auto;
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm);
     min-width: 0; /* Allow content to shrink */
 }
 
@@ -121,14 +121,14 @@ body.resizing * {
 }
 
 .file-count {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-muted);
     text-align: center;
 }
 
 /* Directory tree styles */
 .directory-tree {
-    font-size: 13px;
+    font-size: 12px;
     overflow-x: auto; /* Enable horizontal scrolling */
     overflow-y: auto;
     white-space: nowrap; /* Prevent text wrapping initially */
@@ -188,7 +188,7 @@ body.resizing * {
 .tree-item-content {
     display: flex;
     align-items: center;
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: 2px var(--spacing-xs);
     cursor: pointer;
     border-radius: var(--border-radius);
     transition: background-color var(--transition-fast);
@@ -212,15 +212,15 @@ body.resizing * {
 
 /* Tree item icons */
 .tree-item-icon {
-    width: 16px;
-    height: 16px;
-    margin-right: var(--spacing-xs);
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
     color: var(--text-secondary);
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .tree-item-icon.folder {
@@ -246,17 +246,17 @@ body.resizing * {
 
 /* Tree expand/collapse button */
 .tree-expand-btn {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     background: none;
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: var(--spacing-xs);
+    margin-right: 4px;
     color: var(--text-secondary);
-    font-size: 10px;
+    font-size: 9px;
     border-radius: 2px;
     transition: all var(--transition-fast);
     flex-shrink: 0;
@@ -276,11 +276,9 @@ body.resizing * {
 
 /* Nested tree items */
 .tree-children {
-    margin-left: var(--spacing-md);
+    margin-left: var(--spacing-sm);
     border-left: 1px solid var(--border-color);
-    padding-left: var(--spacing-sm);
-    white-space: nowrap;
-    min-width: fit-content;
+    padding-left: var(--spacing-xs);
 }
 
 .tree-children.collapsed {
