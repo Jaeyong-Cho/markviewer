@@ -99,6 +99,17 @@
     border-color: var(--secondary-color);
 }
 
+.graph-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.graph-btn.active:hover {
+    background: #0356cc;
+    border-color: #0356cc;
+}
+
 .graph-btn:active {
     background: var(--background-secondary);
     transform: translateY(1px);

@@ -21,6 +21,11 @@ class GraphView extends Utils.EventEmitter {
         this.isVisible = false;
         this.selectedNode = null;
         
+        // Focus and depth settings
+        this.autoFocus = false;
+        this.focusDepth = 2;
+        this.currentFocusNode = null;
+        
         // Cytoscape instance
         this.cy = null;
         
@@ -141,7 +146,7 @@ class GraphView extends Utils.EventEmitter {
      */
     createGraphContainer() {
         this.container.innerHTML = `
-            <div class="graph-panel">
+            <div class="graph-panel" style="display: none;">
                 <div class="graph-resizer" id="graph-resizer"></div>
                 <div class="graph-header">
                     <h3>Document Graph</h3>
@@ -155,8 +160,17 @@ class GraphView extends Utils.EventEmitter {
                         <button class="graph-btn graph-btn-small" id="graph-fit-view" title="Fit to View">
                             Fit
                         </button>
+                        <button class="graph-btn graph-btn-small" id="graph-auto-focus" title="Toggle Auto Focus">
+                            Auto Focus
                         </button>
-                        <select id="graph-layout-select" class="graph-layout-select">
+                        <select id="graph-depth-select" class="graph-layout-select" title="Focus Depth">
+                            <option value="1">Depth 1</option>
+                            <option value="2" selected>Depth 2</option>
+                            <option value="3">Depth 3</option>
+                            <option value="4">Depth 4</option>
+                            <option value="all">All</option>
+                        </select>
+                        <select id="graph-layout-select" class="graph-layout-select" title="Graph Layout">
                             <option value="cose">Force</option>
                             <option value="circle">Circle</option>
                             <option value="grid">Grid</option>
@@ -214,6 +228,8 @@ class GraphView extends Utils.EventEmitter {
             refreshBtn: this.container.querySelector('#graph-refresh'),
             centerCurrentBtn: this.container.querySelector('#graph-center-current'),
             fitView: this.container.querySelector('#graph-fit-view'),
+            autoFocusBtn: this.container.querySelector('#graph-auto-focus'),
+            depthSelect: this.container.querySelector('#graph-depth-select'),
             searchInput: this.container.querySelector('#graph-search-input'),
             clearSearch: this.container.querySelector('#graph-clear-search'),
             layoutSelect: this.container.querySelector('#graph-layout-select'),
@@ -239,6 +255,16 @@ class GraphView extends Utils.EventEmitter {
         
         if (this.controls.fitView) {
             this.controls.fitView.addEventListener('click', () => this.fitToView());
+        }
+        
+        if (this.controls.autoFocusBtn) {
+            this.controls.autoFocusBtn.addEventListener('click', () => this.toggleAutoFocus());
+        }
+        
+        if (this.controls.depthSelect) {
+            this.controls.depthSelect.addEventListener('change', (e) => {
+                this.setFocusDepth(e.target.value);
+            });
         }
         
         if (this.controls.clearSearch) {
@@ -318,6 +344,10 @@ class GraphView extends Utils.EventEmitter {
 
         console.log('Showing graph panel');
         this.graphPanel.style.display = 'flex';
+        
+        // Re-query canvas element after showing panel
+        this.graphCanvas = this.container.querySelector('#graph-canvas');
+        console.log('Graph canvas after show:', this.graphCanvas);
         
         // Add class to body for ToC positioning
         document.body.classList.add('graph-panel-open');
@@ -469,6 +499,12 @@ class GraphView extends Utils.EventEmitter {
         console.log('Creating Cytoscape instance with', elements.length, 'elements');
         console.log('Graph canvas element:', this.graphCanvas);
 
+        if (!this.graphCanvas) {
+            console.error('Graph canvas element not found!');
+            Utils.showNotification('Graph canvas not available', 'error');
+            return;
+        }
+
         // Initialize Cytoscape
         this.cy = cytoscape({
             container: this.graphCanvas,
@@ -531,7 +567,14 @@ class GraphView extends Utils.EventEmitter {
         // Double click to focus
         this.cy.on('dbltap', 'node', (event) => {
             const node = event.target;
-            this.focusOnNode(node.id());
+            this.focusOnNodeWithDepth(node, this.focusDepth);
+        });
+        
+        // Double click background to clear focus
+        this.cy.on('dbltap', (event) => {
+            if (event.target === this.cy) {
+                this.clearFocus();
+            }
         });
     }
 
@@ -1044,7 +1087,150 @@ class GraphView extends Utils.EventEmitter {
         this.cy.fit(this.cy.elements(), 50);
         
         // Update graph statistics after resize
-        this.updateGraphStats();
+        this.updateStats();
+    }
+
+    /**
+     * Toggle auto focus mode
+     */
+    toggleAutoFocus() {
+        this.autoFocus = !this.autoFocus;
+        
+        // Update button appearance
+        if (this.controls.autoFocusBtn) {
+            if (this.autoFocus) {
+                this.controls.autoFocusBtn.classList.add('active');
+                this.controls.autoFocusBtn.style.backgroundColor = 'var(--primary-color)';
+                this.controls.autoFocusBtn.style.color = 'white';
+            } else {
+                this.controls.autoFocusBtn.classList.remove('active');
+                this.controls.autoFocusBtn.style.backgroundColor = '';
+                this.controls.autoFocusBtn.style.color = '';
+            }
+        }
+        
+        Utils.showNotification(`Auto focus ${this.autoFocus ? 'enabled' : 'disabled'}`, 'info');
+    }
+
+    /**
+     * Set focus depth
+     */
+    setFocusDepth(depth) {
+        this.focusDepth = depth === 'all' ? 'all' : parseInt(depth);
+        
+        // If currently focusing on a node, update the focus
+        if (this.currentFocusNode) {
+            this.focusOnNodeWithDepth(this.currentFocusNode, this.focusDepth);
+        }
+        
+        Utils.showNotification(`Focus depth set to ${depth}`, 'info');
+    }
+
+    /**
+     * Focus on a specific file with animation
+     */
+    focusOnFile(filePath) {
+        if (!this.cy || !filePath) return;
+
+        const node = this.cy.nodes().filter(n => n.data('path') === filePath);
+        
+        if (node.length > 0) {
+            this.focusOnNodeWithDepth(node[0], this.focusDepth);
+        }
+    }
+
+    /**
+     * Focus on a node with specified depth and animation
+     */
+    focusOnNodeWithDepth(node, depth) {
+        if (!this.cy || !node) return;
+
+        this.currentFocusNode = node;
+        
+        // Get connected nodes based on depth
+        let focusNodes = this.cy.collection();
+        focusNodes = focusNodes.union(node);
+        
+        if (depth !== 'all') {
+            // Add nodes within the specified depth
+            let currentLevel = this.cy.collection().union(node);
+            
+            for (let i = 0; i < depth; i++) {
+                const nextLevel = currentLevel.neighborhood();
+                focusNodes = focusNodes.union(nextLevel);
+                currentLevel = nextLevel.nodes();
+            }
+        } else {
+            focusNodes = this.cy.elements();
+        }
+        
+        // Hide non-focus nodes with animation
+        const allNodes = this.cy.nodes();
+        const hiddenNodes = allNodes.difference(focusNodes.nodes());
+        
+        // Animate hiding nodes
+        hiddenNodes.animate({
+            style: {
+                opacity: 0.1,
+                'background-color': '#cccccc'
+            }
+        }, {
+            duration: 300
+        });
+        
+        // Animate showing focus nodes
+        focusNodes.nodes().animate({
+            style: {
+                opacity: 1,
+                'background-color': '#0366d6'
+            }
+        }, {
+            duration: 300
+        });
+        
+        // Focus and zoom to the target node with animation
+        this.cy.animate({
+            center: {
+                eles: node
+            },
+            zoom: 1.5
+        }, {
+            duration: 500,
+            easing: 'ease-out'
+        });
+        
+        // Update selected node
+        this.selectNode(node);
+    }
+
+    /**
+     * Clear focus and show all nodes
+     */
+    clearFocus() {
+        if (!this.cy) return;
+
+        this.currentFocusNode = null;
+        
+        // Show all nodes with animation
+        this.cy.nodes().animate({
+            style: {
+                opacity: 1,
+                'background-color': '#0366d6'
+            }
+        }, {
+            duration: 300
+        });
+        
+        // Fit to view
+        this.cy.animate({
+            fit: {
+                eles: this.cy.elements(),
+                padding: 50
+            }
+        }, {
+            duration: 500,
+            easing: 'ease-out'
+        });
     }
 
     /**

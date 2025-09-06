@@ -575,6 +575,11 @@ class MarkViewerApp extends Utils.EventEmitter {
                 this.search.clear();
             }
             
+            // Auto focus in graph view if enabled
+            if (this.graphView && this.graphView.autoFocus && this.graphView.isVisible) {
+                this.graphView.focusOnFile(filePath);
+            }
+            
         } catch (error) {
             console.error('Failed to open file:', error);
             Utils.showNotification('Failed to open file: ' + error.message, 'error');
@@ -607,6 +612,11 @@ class MarkViewerApp extends Utils.EventEmitter {
             // Update graph view current file highlight
             if (this.graphView && this.graphView.isVisible) {
                 this.graphView.highlightCurrentFile();
+                
+                // Auto focus if enabled
+                if (this.graphView.autoFocus) {
+                    this.graphView.focusOnFile(tab.filePath);
+                }
             }
             
         } catch (error) {
