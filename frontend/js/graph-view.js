@@ -60,20 +60,20 @@ class GraphView extends Utils.EventEmitter {
                 {
                     selector: 'node',
                     style: {
-                        'background-color': '#0366d6',
+                        'background-color': '#a50034',
                         'label': 'data(name)',
                         'text-valign': 'center',
                         'text-halign': 'center',
                         'color': '#ffffff',
                         'text-outline-width': 2,
-                        'text-outline-color': '#0366d6',
+                        'text-outline-color': '#a50034',
                         'width': 'mapData(degree, 0, 100, 25, 70)',
                         'height': 'mapData(degree, 0, 100, 25, 70)',
                         'font-size': '11px',
                         'font-weight': '600',
                         'font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
                         'border-width': 2,
-                        'border-color': '#0366d6',
+                        'border-color': '#a50034',
                         'border-opacity': 0.8
                     }
                 },
@@ -398,20 +398,11 @@ class GraphView extends Utils.EventEmitter {
         this.graphCanvas = this.container.querySelector('#graph-canvas');
         console.log('Graph canvas after show:', this.graphCanvas);
         
-        // Add class to body for ToC positioning
-        document.body.classList.add('graph-panel-open');
-        
-        // Get current panel width after display is set
-        const panelWidth = this.graphPanel.offsetWidth;
-        
-        // Adjust main content to make room for side panel
-        const mainContent = document.querySelector('.main-content');
-        if (mainContent) {
-            mainContent.style.marginRight = panelWidth + 'px';
+        // Add class to app-main for content area adjustment
+        const appMain = document.querySelector('.app-main');
+        if (appMain) {
+            appMain.classList.add('graph-view-active');
         }
-        
-        // Update ToC position based on panel width
-        this.updateToCPosition(panelWidth);
         
         // Adjust graph size to fit the panel
         if (this.cy) {
@@ -433,19 +424,11 @@ class GraphView extends Utils.EventEmitter {
 
         this.graphPanel.style.display = 'none';
         
-        // Reset main content margin
-        const mainContent = document.querySelector('.main-content');
-        if (mainContent) {
-            mainContent.style.marginRight = '0';
+        // Remove class from app-main
+        const appMain = document.querySelector('.app-main');
+        if (appMain) {
+            appMain.classList.remove('graph-view-active');
         }
-        
-        // Remove class from body
-        document.body.classList.remove('graph-panel-open');
-        
-        // Reset ToC position custom properties
-        document.documentElement.style.removeProperty('--graph-panel-width');
-        document.documentElement.style.removeProperty('--toc-right-position');
-        document.documentElement.style.removeProperty('--toc-trigger-right-position');
         
         this.isVisible = false;
         this.clearSelection();
@@ -1002,14 +985,12 @@ class GraphView extends Utils.EventEmitter {
             
             this.graphPanel.style.width = newWidth + 'px';
             
-            // Update main content margin
-            const mainContent = document.querySelector('.main-content');
-            if (mainContent) {
-                mainContent.style.marginRight = newWidth + 'px';
+            // Update content area width accordingly
+            const appMain = document.querySelector('.app-main');
+            if (appMain && appMain.classList.contains('graph-view-active')) {
+                const contentWidth = window.innerWidth - newWidth;
+                appMain.querySelector('.content-area').style.width = contentWidth + 'px';
             }
-            
-            // Update ToC position dynamically
-            this.updateToCPosition(newWidth);
             
             // Debounced graph resize for better performance
             if (this.cy) {
@@ -1107,27 +1088,6 @@ class GraphView extends Utils.EventEmitter {
         setTimeout(() => {
             node.removeClass('highlighted');
         }, 1500);
-    }
-
-    /**
-     * Update ToC and toggle button positions based on graph panel width
-     */
-    updateToCPosition(panelWidth) {
-        const tocSidebar = document.querySelector('.toc-sidebar');
-        const tocHoverTrigger = document.querySelector('.toc-hover-trigger');
-        const tocShowBtn = document.querySelector('.toc-show-btn');
-        const tocHideBtn = document.querySelector('.toc-hide-btn');
-        
-        if (tocSidebar && tocHoverTrigger) {
-            // Calculate new positions with 16px margin
-            const tocRightPosition = panelWidth + 16;
-            const triggerRightPosition = panelWidth;
-            
-            // Update CSS custom properties for dynamic positioning
-            document.documentElement.style.setProperty('--graph-panel-width', panelWidth + 'px');
-            document.documentElement.style.setProperty('--toc-right-position', tocRightPosition + 'px');
-            document.documentElement.style.setProperty('--toc-trigger-right-position', triggerRightPosition + 'px');
-        }
     }
 
     /**

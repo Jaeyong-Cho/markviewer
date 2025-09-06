@@ -168,25 +168,25 @@ body {
 
 .split-toggle:hover,
 .graph-toggle:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-    color: var(--primary-color);
+    background-color: rgba(165, 0, 52, 0.1);
+    color: var(--text-header);
 }
 
 .split-toggle:focus,
 .graph-toggle:focus {
-    outline: 2px solid var(--primary-color);
+    outline: 2px solid var(--text-header);
     outline-offset: 2px;
 }
 
 .split-toggle.active,
 .graph-toggle.active {
-    background-color: var(--primary-color);
+    background-color: var(--text-header);
     color: white;
 }
 
 .split-toggle.active:hover,
 .graph-toggle.active:hover {
-    background-color: #0356cc;
+    background-color: #8b002c;
 }
 
 .toc-icon {
@@ -733,6 +733,17 @@ body {
     background: var(--text-muted);
     border-color: var(--text-muted);
     cursor: not-allowed;
+}
+
+/* Graph view adjustments for main content */
+.app-main.graph-view-active .content-area {
+    width: 60vw; /* 100vw - 40vw graph panel */
+    transition: width var(--transition-normal);
+}
+
+/* Ensure smooth transitions when graph view is toggled */
+.content-area {
+    transition: width var(--transition-normal);
 }
 
 @media (max-width: 480px) {

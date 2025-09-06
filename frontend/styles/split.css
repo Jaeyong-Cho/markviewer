@@ -184,13 +184,13 @@
 
 .split-toggle:hover {
     background: var(--background-hover);
-    border-color: var(--secondary-color);
-    color: var(--text-primary);
+    border-color: var(--text-header);
+    color: var(--text-header);
 }
 
 .split-toggle.active {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
+    background: var(--text-header);
+    border-color: var(--text-header);
     color: white;
 }
 
