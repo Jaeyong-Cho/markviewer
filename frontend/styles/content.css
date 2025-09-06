@@ -556,8 +556,8 @@
     position: fixed;
     top: 50%;
     transform: translateY(-50%);
-    width: 36px;
-    height: 60px;
+    width: 24px;
+    height: 40px;
     background-color: var(--surface-color);
     border: 1px solid var(--border-color);
     cursor: pointer;
@@ -568,12 +568,15 @@
     color: var(--text-secondary);
     transition: all 0.3s ease;
     box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+    font-size: 12px;
+    opacity: 0.2;
 }
 
 .toc-edge-toggle:hover {
     background-color: var(--background-hover);
     color: var(--primary-color);
     box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+    opacity: 1;
 }
 
 .toc-edge-toggle:focus {
@@ -583,7 +586,7 @@
 
 .toc-show-btn {
     right: 0;
-    border-radius: 12px 0 0 12px;
+    border-radius: 8px 0 0 8px;
     border-right: none;
     opacity: 1;
     pointer-events: auto;
@@ -605,7 +608,7 @@
 
 .toc-hide-btn {
     right: 296px; /* Position next to visible ToC */
-    border-radius: 12px 0 0 12px;
+    border-radius: 8px 0 0 8px;
     border-right: none;
     opacity: 0;
     pointer-events: none;
