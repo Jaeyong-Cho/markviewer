@@ -37,6 +37,9 @@ class SplitManager {
         this.app = app; // Reference to main app
         this.isSplitMode = false;
         
+        // Active pane tracking
+        this.activePane = 'left'; // 'left' or 'right'
+        
         // Split panes
         this.leftPane = null;
         this.rightPane = null;
@@ -192,7 +195,8 @@ class SplitManager {
                             <article id="left-markdown-content" class="markdown-content">
                                 <div class="welcome-content">
                                     <h2>Left Pane</h2>
-                                    <p>Select a file to view in the left pane</p>
+                                    <p>Click here to activate this pane</p>
+                                    <p>Then select a file from the sidebar to view it here</p>
                                 </div>
                             </article>
                         </div>
@@ -223,7 +227,8 @@ class SplitManager {
                             <article id="right-markdown-content" class="markdown-content">
                                 <div class="welcome-content">
                                     <h2>Right Pane</h2>
-                                    <p>Select a file to view in the right pane</p>
+                                    <p>Click here to activate this pane</p>
+                                    <p>Then select a file from the sidebar to view it here</p>
                                 </div>
                             </article>
                         </div>
@@ -244,6 +249,9 @@ class SplitManager {
         
         // Setup resizer
         this.setupResizer();
+        
+        // Setup pane click handlers for activation
+        this.setupPaneActivation();
     }
     
     /**
@@ -627,6 +635,49 @@ class SplitManager {
         // Constrain between 20% and 80%
         this.leftPaneWidth = Math.max(20, Math.min(80, percentage));
         this.applySizing();
+    }
+    
+    /**
+     * Setup pane activation click handlers
+     */
+    setupPaneActivation() {
+        if (!this.leftPane || !this.rightPane) return;
+        
+        // Add click handlers to activate panes
+        this.leftPane.addEventListener('click', () => {
+            this.setActivePane('left');
+        });
+        
+        this.rightPane.addEventListener('click', () => {
+            this.setActivePane('right');
+        });
+        
+        // Set initial active pane
+        this.setActivePane(this.activePane);
+    }
+    
+    /**
+     * Set the active pane
+     * @param {string} pane - 'left' or 'right'
+     */
+    setActivePane(pane) {
+        if (pane !== 'left' && pane !== 'right') return;
+        
+        this.activePane = pane;
+        
+        // Update visual indicators
+        this.leftPane.classList.toggle('active', pane === 'left');
+        this.rightPane.classList.toggle('active', pane === 'right');
+        
+        console.log(`SplitManager: Active pane set to ${pane}`);
+    }
+    
+    /**
+     * Get the active pane
+     * @returns {string} 'left' or 'right'
+     */
+    getActivePane() {
+        return this.activePane;
     }
 }
 

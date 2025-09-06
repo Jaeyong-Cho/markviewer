@@ -30,6 +30,55 @@
     border-left: 1px solid var(--border-color);
 }
 
+/* Active Pane Indication */
+.split-pane {
+    transition: box-shadow var(--transition-fast), background-color var(--transition-fast);
+    cursor: pointer;
+}
+
+.split-pane:hover {
+    background: var(--surface-light);
+}
+
+.split-pane.active {
+    box-shadow: inset 0 0 0 2px var(--primary-color);
+    background: var(--background-color);
+}
+
+.split-pane.active .pane-tab-area {
+    background: var(--primary-color-light);
+    border-color: var(--primary-color);
+}
+
+.split-pane.active .content-header {
+    background: var(--primary-color-light);
+    border-color: var(--primary-color);
+}
+
+/* Welcome content for split panes */
+.split-pane .welcome-content {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-muted);
+}
+
+.split-pane .welcome-content h2 {
+    margin-bottom: var(--spacing-md);
+    color: var(--text-color);
+}
+
+.split-pane .welcome-content p {
+    margin-bottom: var(--spacing-sm);
+}
+
+.split-pane.active .welcome-content {
+    color: var(--primary-color);
+}
+
+.split-pane.active .welcome-content h2 {
+    color: var(--primary-color);
+}
+
 /* Pane Tab Areas */
 .pane-tab-area {
     background: var(--surface-color);

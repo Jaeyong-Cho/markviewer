@@ -541,10 +541,10 @@ class MarkViewerApp extends Utils.EventEmitter {
 
         try {
             // Check if in split mode
-            if (this.splitManager.isSplit()) {
-                // For now, always open in left pane
-                // TODO: Add logic to determine which pane to use
-                this.splitManager.openFileInPane('left', filePath);
+            if (this.splitManager && this.splitManager.isSplit()) {
+                // Open in the active pane
+                const activePane = this.splitManager.getActivePane();
+                this.splitManager.openFileInPane(activePane, filePath);
             } else {
                 // Open file in a tab (or switch to existing tab)
                 const tabId = this.tabManager.openFile(filePath);
