@@ -265,7 +265,7 @@ class WorkspaceAutocomplete extends Utils.EventEmitter {
                 <div class="suggestion-content">
                     <div class="suggestion-main">
                         <span class="suggestion-name">${this.escapeHtml(name)}</span>
-                        ${suggestion.hasMarkdown ? '<span class="markdown-indicator">📄</span>' : ''}
+                        ${suggestion.hasMarkdown ? '<span class="markdown-indicator">MD</span>' : ''}
                         ${suggestion.isRecent ? '<span class="recent-indicator">⏱️</span>' : ''}
                     </div>
                     <div class="suggestion-path">${this.escapeHtml(this.truncatePath(path, 60))}</div>

@@ -24,6 +24,9 @@ class GraphView extends Utils.EventEmitter {
         // Cytoscape instance
         this.cy = null;
         
+        // Debounce timer for resize operations
+        this.resizeTimer = null;
+        
         // Graph settings
         this.settings = {
             layout: {
@@ -144,13 +147,14 @@ class GraphView extends Utils.EventEmitter {
                     <h3>Document Graph</h3>
                     <div class="graph-header-controls">
                         <button class="graph-btn graph-btn-small" id="graph-refresh" title="Refresh Graph">
-                            <span class="icon">�</span>
+                            Refresh
                         </button>
                         <button class="graph-btn graph-btn-small" id="graph-center-current" title="Focus Current File">
-                            <span class="icon">🎯</span>
+                            Focus
                         </button>
                         <button class="graph-btn graph-btn-small" id="graph-fit-view" title="Fit to View">
-                            <span class="icon">📐</span>
+                            Fit
+                        </button>
                         </button>
                         <select id="graph-layout-select" class="graph-layout-select">
                             <option value="cose">Force</option>
@@ -160,13 +164,13 @@ class GraphView extends Utils.EventEmitter {
                             <option value="concentric">Concentric</option>
                         </select>
                         <button class="graph-btn graph-btn-small graph-close" id="graph-close" title="Close Graph">
-                            <span class="icon">✕</span>
+                            Close
                         </button>
                     </div>
                 </div>
                 <div class="graph-search-bar">
                     <input type="text" id="graph-search-input" placeholder="Search files..." class="graph-search-input">
-                    <button class="graph-btn graph-btn-small" id="graph-clear-search" title="Clear Search">✕</button>
+                    <button class="graph-btn graph-btn-small" id="graph-clear-search" title="Clear Search">Clear</button>
                 </div>
                 <div class="graph-canvas" id="graph-canvas"></div>
                 <div class="graph-stats">
@@ -851,11 +855,9 @@ class GraphView extends Utils.EventEmitter {
         const layout = this.cy.layout(layoutOptions);
         layout.run();
         
-        // Ensure the graph fits the current panel size after layout change
+        // Simple fit after layout change without excessive animation
         layout.on('layoutstop', () => {
-            setTimeout(() => {
-                this.resizeAndAdjustGraph();
-            }, 100);
+            this.cy.fit(this.cy.elements(), 50);
         });
     }
 
@@ -910,9 +912,12 @@ class GraphView extends Utils.EventEmitter {
             // Update ToC position dynamically
             this.updateToCPosition(newWidth);
             
-            // Resize and adjust cytoscape canvas
+            // Debounced graph resize for better performance
             if (this.cy) {
-                this.resizeAndAdjustGraph();
+                clearTimeout(this.resizeTimer);
+                this.resizeTimer = setTimeout(() => {
+                    this.cy.resize();
+                }, 50);
             }
         });
 
@@ -922,6 +927,12 @@ class GraphView extends Utils.EventEmitter {
                 resizer.classList.remove('resizing');
                 document.body.style.cursor = '';
                 document.body.style.userSelect = '';
+                
+                // Final graph adjustment after resizing is complete
+                if (this.cy) {
+                    clearTimeout(this.resizeTimer);
+                    this.resizeAndAdjustGraph();
+                }
             }
         });
     }
@@ -1029,25 +1040,11 @@ class GraphView extends Utils.EventEmitter {
         // Resize the cytoscape container
         this.cy.resize();
         
-        // Get current viewport and zoom
-        const zoom = this.cy.zoom();
-        const pan = this.cy.pan();
-        
-        // Fit the graph to the new container size with animation
-        this.cy.animate({
-            fit: {
-                eles: this.cy.elements(),
-                padding: 50
-            }
-        }, {
-            duration: 300,
-            easing: 'ease-out'
-        });
+        // Simple fit without animation for better performance
+        this.cy.fit(this.cy.elements(), 50);
         
         // Update graph statistics after resize
-        setTimeout(() => {
-            this.updateGraphStats();
-        }, 350);
+        this.updateGraphStats();
     }
 
     /**

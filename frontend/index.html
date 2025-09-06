@@ -434,7 +434,7 @@ function renderMarkdown(content) {
                     // Small delay to ensure script execution
                     await new Promise(resolve => setTimeout(resolve, 50));
                 }
-                console.log('🎉 All scripts loaded successfully');
+                console.log('All scripts loaded successfully');
                 allScriptsLoaded = true;
                 
                 // Trigger dependency check after all scripts are loaded
@@ -479,7 +479,7 @@ function renderMarkdown(content) {
                 .map(([name]) => name);
             
             if (missingDeps.length === 0) {
-                console.log('🚀 All dependencies loaded, starting MarkViewer...');
+                console.log('All dependencies loaded, starting MarkViewer...');
                 console.log('Dependencies check:', dependencies);
                 
                 try {

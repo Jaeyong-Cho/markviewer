@@ -47,7 +47,7 @@ class WorkspaceRecommender extends Utils.EventEmitter {
         scanButton.id = 'workspace-scan-btn';
         scanButton.className = 'workspace-scan-btn';
         scanButton.innerHTML = `
-            <span class="scan-icon">🔍</span>
+            <span class="scan-icon">Scan</span>
             <span class="scan-text">Scan for Workspaces</span>
         `;
         scanButton.addEventListener('click', this.handleScanClick);
@@ -76,7 +76,7 @@ class WorkspaceRecommender extends Utils.EventEmitter {
         recommendationsContainer.className = 'workspace-recommendations hidden';
         recommendationsContainer.innerHTML = `
             <div class="recommendations-header">
-                <span class="recommendations-title">📁 Workspace Recommendations</span>
+                <span class="recommendations-title">Workspace Recommendations</span>
                 <span class="recommendations-count">0 found</span>
             </div>
             <div class="recommendations-list"></div>
@@ -346,7 +346,7 @@ class WorkspaceRecommender extends Utils.EventEmitter {
         if (this.recommendations.length === 0) {
             this.elements.recommendationsList.innerHTML = `
                 <div class="no-recommendations">
-                    <span class="no-recommendations-icon">📂</span>
+                    <span class="no-recommendations-icon">Empty</span>
                     <span class="no-recommendations-text">No workspace recommendations found</span>
                     <span class="no-recommendations-hint">Try scanning with different settings or check your directories</span>
                 </div>
@@ -393,8 +393,8 @@ class WorkspaceRecommender extends Utils.EventEmitter {
                 </div>
             </div>
             <div class="recommendation-details">
-                <span class="detail-item">📄 ${workspace.markdownCount} files</span>
-                <span class="detail-item">📁 ${workspace.subdirectories?.length || 0} folders</span>
+                <span class="detail-item">${workspace.markdownCount} files</span>
+                <span class="detail-item">${workspace.subdirectories?.length || 0} folders</span>
                 <span class="detail-item">📅 ${lastModified}</span>
             </div>
             <div class="recommendation-preview">
@@ -434,7 +434,7 @@ class WorkspaceRecommender extends Utils.EventEmitter {
                 // Show scan button with indicator that cached recommendations are available
                 if (this.elements.scanButton) {
                     this.elements.scanButton.innerHTML = `
-                        <span class="scan-icon">🔍</span>
+                        <span class="scan-icon">Scan</span>
                         <span class="scan-text">Scan for Workspaces</span>
                         <span class="cached-indicator" title="${this.recommendations.length} cached recommendations">(${this.recommendations.length})</span>
                     `;
