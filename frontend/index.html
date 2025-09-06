@@ -138,6 +138,7 @@
     <link rel="stylesheet" href="styles/sidebar.css">
     <link rel="stylesheet" href="styles/content.css">
     <link rel="stylesheet" href="styles/search.css">
+    <link rel="stylesheet" href="styles/tabs.css">
     <link rel="stylesheet" href="styles/workspace-recommender.css">
     <link rel="stylesheet" href="styles/workspace-autocomplete.css">
 </head>
@@ -223,6 +224,11 @@
             <!-- Content area -->
             <section class="content-area">
                 
+                <!-- Tab bar will be inserted here by TabManager -->
+                <div id="tab-area" class="tab-area">
+                    <!-- Tab bar will be dynamically created here -->
+                </div>
+                
                 <!-- Search results (hidden by default) -->
                 <div id="search-results" class="search-results hidden">
                     <div class="search-results-header">
@@ -261,15 +267,33 @@
                                     <li>Recursive directory sidebar navigation</li>
                                     <li>Full-text search functionality</li>
                                     <li>GitHub-style code highlighting</li>
+                                    <li><strong>Tabbed interface</strong> for multiple files</li>
+                                    <li><strong>Split screen</strong> for side-by-side viewing</li>
                                 </ul>
                                 
                                 <h2>Getting Started</h2>
                                 <ol>
                                     <li>Enter a workspace directory path in the input field at the top of the sidebar</li>
                                     <li>Press Enter to load the directory and browse files</li>
+                                    <li>Click on files to open them in tabs</li>
                                     <li>Use the search box to find content across all files</li>
                                     <li>View rendered markdown with diagrams and highlighted code</li>
                                 </ol>
+                                
+                                <h2>Tab Features</h2>
+                                <ul>
+                                    <li>Open multiple files in tabs</li>
+                                    <li>Click tabs to switch between files</li>
+                                    <li>Close tabs with the × button or middle-click</li>
+                                    <li>Keyboard shortcuts: Ctrl+W to close active tab</li>
+                                </ul>
+                                
+                                <h2>Split Screen</h2>
+                                <ul>
+                                    <li>Toggle split screen mode with Ctrl+Shift+\</li>
+                                    <li>Drag tabs between left and right panes</li>
+                                    <li>Independent file browsing in each pane</li>
+                                </ul>
                                 
                                 <div class="feature-demo">
                                     <h3>Code Highlighting Example</h3>
@@ -361,6 +385,7 @@ function renderMarkdown(content) {
             'js/search.js',
             'js/sidebar.js',
             'js/sidebar-resizer.js',
+            'js/tab-manager.js',
             'js/workspace-recommender.js',
             'js/workspace-autocomplete.js',
             'js/app.js'
@@ -407,6 +432,7 @@ function renderMarkdown(content) {
                 MarkdownRenderer: typeof MarkdownRenderer !== 'undefined',
                 Sidebar: typeof Sidebar !== 'undefined',
                 SearchManager: typeof SearchManager !== 'undefined',
+                TabManager: typeof TabManager !== 'undefined',
                 MarkViewerApp: typeof MarkViewerApp !== 'undefined'
             };
             

@@ -15,7 +15,8 @@ class MarkViewerApp extends Utils.EventEmitter {
             searchResults: null,
             isSearchMode: false,
             sidebarOpen: true,
-            isLoading: false
+            isLoading: false,
+            splitMode: false
         };
 
         // Component instances
@@ -25,6 +26,7 @@ class MarkViewerApp extends Utils.EventEmitter {
         this.webSocket = null;
         this.workspaceRecommender = null;
         this.workspaceAutocomplete = null;
+        this.tabManager = null;
 
         // DOM elements
         this.elements = {};
@@ -148,7 +150,8 @@ class MarkViewerApp extends Utils.EventEmitter {
             breadcrumb: document.getElementById('breadcrumb'),
             currentFileName: document.getElementById('current-file'),
             fileModified: document.getElementById('file-modified'),
-            fileCount: document.getElementById('file-count')
+            fileCount: document.getElementById('file-count'),
+            tabArea: document.getElementById('tab-area')
         };
 
         // Verify all elements exist
@@ -159,6 +162,8 @@ class MarkViewerApp extends Utils.EventEmitter {
         if (missingElements.length > 0) {
             throw new Error(`Missing DOM elements: ${missingElements.join(', ')}`);
         }
+        
+        console.log('App: DOM elements cached successfully');
     }
 
     /**
@@ -168,6 +173,11 @@ class MarkViewerApp extends Utils.EventEmitter {
         try {
             // Initialize API service
             window.api = new window.API.ApiService();
+            
+            // Initialize TabManager
+            this.tabManager = new TabManager();
+            this.tabManager.init(this.elements.tabArea);
+            console.log('App: TabManager initialized');
             
             // Initialize sidebar
             this.sidebar = new Sidebar(this.elements.sidebar);
@@ -214,6 +224,32 @@ class MarkViewerApp extends Utils.EventEmitter {
      * Setup event listeners for components
      */
     setupComponentEvents() {
+        // TabManager events
+        if (this.tabManager) {
+            this.tabManager.on('tabOpened', (tabData) => {
+                console.log('App: Tab opened', tabData.filePath);
+                this.loadFileContent(tabData.filePath);
+            });
+            this.tabManager.on('tabActivated', (tabData, previousTabId) => {
+                console.log('App: Tab activated', tabData.filePath);
+                this.switchToTab(tabData);
+            });
+            this.tabManager.on('tabClosed', (tabData) => {
+                console.log('App: Tab closed', tabData.filePath);
+                // Clear content if no tabs are open
+                const activeTab = this.tabManager.getActiveTab();
+                if (!activeTab) {
+                    this.showWelcomeContent();
+                }
+            });
+            this.tabManager.on('noTabsOpen', () => {
+                console.log('App: No tabs open, showing welcome');
+                this.showWelcomeContent();
+            });
+        } else {
+            console.error('App: TabManager not initialized, cannot setup events');
+        }
+        
         // Sidebar events
         if (this.sidebar) {
             this.sidebar.on('fileSelect', this.handleFileSelect.bind(this));
@@ -445,18 +481,47 @@ class MarkViewerApp extends Utils.EventEmitter {
     }
 
     /**
-     * Handle file selection
+     * Handle file selection (now opens in tabs)
      * @param {string} filePath - Selected file path
      */
     async handleFileSelect(filePath) {
-        if (!filePath || this.state.currentFile === filePath) return;
+        if (!filePath) return;
 
+        try {
+            // Open file in a tab (or switch to existing tab)
+            const tabId = this.tabManager.openFile(filePath);
+            
+            // Hide search results if in search mode
+            if (this.state.isSearchMode) {
+                this.hideSearchResults();
+                this.updateState({ isSearchMode: false });
+                this.search.clear();
+            }
+            
+        } catch (error) {
+            console.error('Failed to open file in tab:', error);
+            Utils.showNotification('Failed to open file: ' + error.message, 'error');
+        }
+    }
+    
+    /**
+     * Load file content for a tab
+     * @param {string} filePath - File path to load
+     */
+    async loadFileContent(filePath) {
         try {
             Utils.showLoading('Loading file...');
             
             const fileData = await window.api.getFileContent(filePath);
             
+            // Update current file state
             this.updateState({ currentFile: filePath });
+            
+            // Cache content in tab
+            const tab = this.tabManager.findTabByPath(filePath);
+            if (tab) {
+                this.tabManager.setTabContent(tab.id, fileData.content);
+            }
             
             // Update UI
             this.updateFileInfo(filePath, fileData);
@@ -467,19 +532,106 @@ class MarkViewerApp extends Utils.EventEmitter {
             // Update sidebar selection
             this.sidebar.setActiveFile(filePath);
             
-            // Hide search results if in search mode
-            if (this.state.isSearchMode) {
-                this.hideSearchResults();
-                this.updateState({ isSearchMode: false });
-                this.search.clear();
-            }
-            
             Utils.hideLoading();
         } catch (error) {
             Utils.hideLoading();
-            console.error('Failed to load file:', error);
+            console.error('Failed to load file content:', error);
             Utils.showNotification('Failed to load file: ' + error.message, 'error');
         }
+    }
+    
+    /**
+     * Switch to an already loaded tab
+     * @param {Object} tabData - Tab data
+     */
+    async switchToTab(tabData) {
+        try {
+            // Update current file state
+            this.updateState({ currentFile: tabData.filePath });
+            
+            // Check if content is cached
+            const cachedContent = this.tabManager.getTabContent(tabData.id);
+            
+            if (cachedContent) {
+                // Use cached content
+                await this.renderer.renderMarkdown(cachedContent);
+            } else {
+                // Load content fresh
+                await this.loadFileContent(tabData.filePath);
+                return; // loadFileContent handles the rest
+            }
+            
+            // Update UI
+            this.updateFileInfo(tabData.filePath, { content: cachedContent });
+            
+            // Update sidebar selection
+            this.sidebar.setActiveFile(tabData.filePath);
+            
+        } catch (error) {
+            console.error('Failed to switch to tab:', error);
+            Utils.showNotification('Failed to switch tab: ' + error.message, 'error');
+        }
+    }
+    
+    /**
+     * Show welcome content when no tabs are open
+     */
+    showWelcomeContent() {
+        this.updateState({ currentFile: null });
+        this.elements.currentFileName.textContent = 'Welcome';
+        this.elements.breadcrumb.innerHTML = '';
+        this.elements.fileModified.textContent = '';
+        
+        // Show default welcome content (it's already in the HTML)
+        const welcomeContent = this.elements.markdownContent.querySelector('.welcome-content');
+        if (!welcomeContent) {
+            // If welcome content was removed, recreate it
+            this.elements.markdownContent.innerHTML = `
+                <div class="welcome-content">
+                    <h1>Welcome to MarkViewer</h1>
+                    <p>A powerful markdown viewer with PlantUML, Mermaid, and search capabilities.</p>
+                    
+                    <h2>Features</h2>
+                    <ul>
+                        <li>Render markdown with JavaScript</li>
+                        <li>PlantUML diagrams using local plantuml.jar (SVG format)</li>
+                        <li>Mermaid diagram rendering</li>
+                        <li>Recursive directory sidebar navigation</li>
+                        <li>Full-text search functionality</li>
+                        <li>GitHub-style code highlighting</li>
+                        <li><strong>Tabbed interface</strong> for multiple files</li>
+                        <li><strong>Split screen</strong> for side-by-side viewing</li>
+                    </ul>
+                    
+                    <h2>Getting Started</h2>
+                    <ol>
+                        <li>Enter a workspace directory path in the input field at the top of the sidebar</li>
+                        <li>Press Enter to load the directory and browse files</li>
+                        <li>Click on files to open them in tabs</li>
+                        <li>Use the search box to find content across all files</li>
+                        <li>View rendered markdown with diagrams and highlighted code</li>
+                    </ol>
+                    
+                    <h2>Tab Features</h2>
+                    <ul>
+                        <li>Open multiple files in tabs</li>
+                        <li>Click tabs to switch between files</li>
+                        <li>Close tabs with the × button or middle-click</li>
+                        <li>Keyboard shortcuts: Ctrl+W to close active tab</li>
+                    </ul>
+                    
+                    <h2>Split Screen</h2>
+                    <ul>
+                        <li>Toggle split screen mode with Ctrl+Shift+\\</li>
+                        <li>Drag tabs between left and right panes</li>
+                        <li>Independent file browsing in each pane</li>
+                    </ul>
+                </div>
+            `;
+        }
+        
+        // Clear sidebar selection
+        this.sidebar.setActiveFile(null);
     }
 
     /**
@@ -676,6 +828,21 @@ class MarkViewerApp extends Utils.EventEmitter {
             this.handleSidebarToggle();
         }
         
+        // Ctrl/Cmd + W: Close active tab
+        if ((event.ctrlKey || event.metaKey) && event.key === 'w') {
+            event.preventDefault();
+            const activeTab = this.tabManager.getActiveTab();
+            if (activeTab) {
+                this.tabManager.closeTab(activeTab.id);
+            }
+        }
+        
+        // Ctrl/Cmd + Shift + \: Toggle split screen
+        if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === '\\') {
+            event.preventDefault();
+            this.toggleSplitScreen();
+        }
+        
         // Escape: Clear search or close sidebar on mobile
         if (event.key === 'Escape') {
             if (this.state.isSearchMode) {
@@ -684,6 +851,14 @@ class MarkViewerApp extends Utils.EventEmitter {
                 this.handleSidebarToggle();
             }
         }
+    }
+
+    /**
+     * Toggle split screen mode (placeholder for future implementation)
+     */
+    toggleSplitScreen() {
+        console.log('Split screen toggle - will be implemented in Phase 2');
+        Utils.showNotification('Split screen feature coming soon!', 'info');
     }
 
     /**

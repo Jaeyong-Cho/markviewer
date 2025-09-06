@@ -1,0 +1,322 @@
+/* Tab Bar Styles */
+.tab-area {
+    position: relative;
+    background: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tab-bar {
+    display: flex;
+    align-items: center;
+    background: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+    min-height: 42px;
+    overflow: hidden;
+}
+
+.tab-container {
+    display: flex;
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+
+.tab-container::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+/* Individual Tab Styles */
+.tab {
+    display: flex;
+    align-items: center;
+    min-width: 120px;
+    max-width: 200px;
+    height: 40px;
+    padding: 0 12px;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    margin-right: 2px;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.tab:hover {
+    background: var(--background-color);
+    border-color: var(--secondary-color);
+}
+
+.tab.active {
+    background: var(--background-color);
+    border-color: var(--primary-color);
+    border-bottom: 1px solid var(--background-color);
+    z-index: 1;
+}
+
+.tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--primary-color);
+}
+
+.tab-title {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-right: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+.tab.active .tab-title {
+    color: var(--primary-color);
+}
+
+.tab-modified {
+    display: none;
+    color: var(--accent-color);
+    font-size: 16px;
+    line-height: 1;
+    margin-right: 6px;
+    margin-left: -2px;
+}
+
+.tab-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0;
+    margin-left: auto;
+    flex-shrink: 0;
+    transition: all var(--transition-fast);
+}
+
+.tab-close:hover {
+    background: var(--background-hover);
+    color: var(--text-primary);
+}
+
+.tab-close:active {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* Drag and Drop States */
+.tab.dragging {
+    opacity: 0.6;
+    transform: rotate(5deg);
+    z-index: 1000;
+}
+
+.tab.drag-over {
+    border-left: 3px solid var(--primary-color);
+}
+
+/* Split Screen Styles */
+.split-mode .content-area {
+    display: flex;
+    flex-direction: row;
+}
+
+.split-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.split-pane + .split-pane {
+    border-left: 1px solid var(--border-color);
+}
+
+.split-pane .tab-area {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.split-pane .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.split-resizer {
+    width: 4px;
+    background: var(--border-color);
+    cursor: col-resize;
+    position: relative;
+    transition: background-color var(--transition-fast);
+}
+
+.split-resizer:hover {
+    background: var(--primary-color);
+}
+
+.split-resizer::before {
+    content: '';
+    position: absolute;
+    left: -2px;
+    right: -2px;
+    top: 0;
+    bottom: 0;
+    background: transparent;
+}
+
+/* Split Mode Toggle Button */
+.split-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border-color);
+    background: var(--background-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    margin-left: 8px;
+    transition: all var(--transition-fast);
+}
+
+.split-toggle:hover {
+    background: var(--background-hover);
+    border-color: var(--secondary-color);
+    color: var(--text-primary);
+}
+
+.split-toggle.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+/* Tab Actions Area */
+.tab-actions {
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .tab {
+        min-width: 100px;
+        max-width: 150px;
+        padding: 0 8px;
+    }
+    
+    .tab-title {
+        font-size: 12px;
+    }
+    
+    .tab-close {
+        width: 18px;
+        height: 18px;
+        font-size: 14px;
+    }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .tab-close {
+        font-size: 15px;
+    }
+}
+
+/* Dark theme support (if implemented) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --tab-bg: #2d333b;
+        --tab-active-bg: #21262d;
+        --tab-border: #444c56;
+        --tab-text: #f0f6fc;
+        --tab-text-muted: #8b949e;
+    }
+    
+    .tab {
+        background: var(--tab-bg);
+        border-color: var(--tab-border);
+        color: var(--tab-text);
+    }
+    
+    .tab.active {
+        background: var(--tab-active-bg);
+    }
+    
+    .tab-title {
+        color: var(--tab-text);
+    }
+    
+    .tab-close {
+        color: var(--tab-text-muted);
+    }
+    
+    .tab-close:hover {
+        color: var(--tab-text);
+    }
+}
+
+/* Animation for tab creation/removal */
+@keyframes tabSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes tabSlideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(20px) scale(0.9);
+    }
+}
+
+.tab.entering {
+    animation: tabSlideIn 0.2s ease-out;
+}
+
+.tab.exiting {
+    animation: tabSlideOut 0.2s ease-out;
+}
+
+/* Focus styles for accessibility */
+.tab:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: -2px;
+}
+
+.tab-close:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 1px;
+}
