@@ -65,6 +65,10 @@ npm install
 info "Setting up PlantUML..."
 npm run download-plantuml
 
+# Download frontend libraries
+info "Downloading frontend libraries..."
+npm run download-frontend-libs
+
 # Install sub-project dependencies
 info "Installing all project dependencies..."
 npm run install-all

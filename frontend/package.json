@@ -1,12 +1,13 @@
 {
   "name": "markviewer-frontend",
   "version": "1.0.0",
-  "description": "Frontend for markdown viewer application",
+  "description": "Frontend for markdown viewer application. Dependencies are now downloaded as local files via download-libs script.",
   "main": "index.html",
   "scripts": {
     "serve": "python3 ../scripts/dev-server.py 8081 .",
     "serve-basic": "python3 -m http.server 8081",
-    "build": "echo 'No build process needed for vanilla JS'"
+    "build": "echo 'No build process needed for vanilla JS'",
+    "download-libs": "node ../scripts/download-frontend-libs.js"
   },
   "keywords": [
     "markdown",
@@ -15,10 +16,11 @@
   ],
   "author": "",
   "license": "MIT",
-  "dependencies": {
+  "devDependencies": {
     "highlight.js": "^11.9.0",
     "marked": "^9.1.2",
     "mermaid": "^10.6.1",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "cytoscape": "^3.26.0"
   }
 }

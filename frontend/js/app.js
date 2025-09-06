@@ -98,21 +98,35 @@ class MarkViewerApp extends Utils.EventEmitter {
 
         return new Promise((resolve, reject) => {
             const checkLibraries = () => {
-                const markedLoaded = typeof marked !== 'undefined';
-                const hljsLoaded = typeof hljs !== 'undefined';
-                const mermaidLoaded = typeof mermaid !== 'undefined';
+                // Use the global libraryLoadStatus from the new loader
+                const status = window.libraryLoadStatus || {};
+                
+                const markedLoaded = status.marked || typeof marked !== 'undefined';
+                const hljsLoaded = status.hljs || typeof hljs !== 'undefined';
+                const mermaidLoaded = status.mermaid || typeof mermaid !== 'undefined';
+                const socketioLoaded = status.socketio || typeof io !== 'undefined';
+                const cytoscapeLoaded = status.cytoscape || typeof cytoscape !== 'undefined';
                 
                 // Check if all critical libraries are loaded
                 const criticalLibrariesLoaded = markedLoaded;
-                const optionalLibrariesLoaded = hljsLoaded && mermaidLoaded;
+                const optionalLibrariesLoaded = hljsLoaded && mermaidLoaded && socketioLoaded && cytoscapeLoaded;
                 
                 if (criticalLibrariesLoaded && optionalLibrariesLoaded) {
+                    console.log('✅ All libraries loaded successfully');
                     resolve();
                 } else if (elapsed >= maxWaitTime) {
                     // For non-critical libraries, continue anyway
                     if (markedLoaded) {
+                        console.warn('⚠️ Some optional libraries failed to load, continuing anyway');
+                        console.warn('Missing libraries:', {
+                            'highlight.js': !hljsLoaded,
+                            'mermaid': !mermaidLoaded,
+                            'socket.io': !socketioLoaded,
+                            'cytoscape': !cytoscapeLoaded
+                        });
                         resolve();
                     } else {
+                        console.error('❌ Critical library (marked) failed to load');
                         reject(new Error(`Critical library 'marked' failed to load. Cannot proceed.`));
                     }
                 } else {
