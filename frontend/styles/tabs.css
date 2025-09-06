@@ -192,23 +192,33 @@
     height: 32px;
     border: 1px solid var(--border-color);
     background: var(--background-color);
-    color: var(--text-secondary);
+    color: var(--text-primary);
     cursor: pointer;
     border-radius: var(--border-radius);
     margin-left: 8px;
-    transition: all var(--transition-fast);
+    transition: var(--transition-fast);
+    font-weight: 500;
 }
 
 .split-toggle:hover {
     background: var(--background-hover);
-    border-color: var(--secondary-color);
-    color: var(--text-primary);
+    border-color: var(--text-header);
 }
 
 .split-toggle.active {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
+    background: var(--text-header);
+    border-color: var(--text-header);
     color: white;
+}
+
+.split-toggle.active:hover {
+    background: #8b002c;
+    border-color: #8b002c;
+}
+
+.split-toggle:active {
+    background: var(--background-secondary);
+    transform: translateY(1px);
 }
 
 /* Tab Actions Area */

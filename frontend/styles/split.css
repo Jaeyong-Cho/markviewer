@@ -164,40 +164,7 @@
     opacity: 1;
 }
 
-/* Split Mode Toggle Button in Header */
-.split-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--border-color);
-    background: var(--background-color);
-    color: var(--text-secondary);
-    cursor: pointer;
-    border-radius: var(--border-radius);
-    margin-left: var(--spacing-sm);
-    transition: all var(--transition-fast);
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.split-toggle:hover {
-    background: var(--background-hover);
-    border-color: var(--text-header);
-    color: var(--text-header);
-}
-
-.split-toggle.active {
-    background: var(--text-header);
-    border-color: var(--text-header);
-    color: white;
-}
-
-.split-toggle svg {
-    width: 16px;
-    height: 16px;
-}
+/* Split pane content styles */
 
 /* Breadcrumb in split panes */
 .split-pane .breadcrumb {
@@ -368,11 +335,6 @@
 }
 
 /* Focus styles for accessibility */
-.split-toggle:focus {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
-}
-
 .split-resizer:focus {
     outline: 2px solid var(--primary-color);
     outline-offset: 1px;
