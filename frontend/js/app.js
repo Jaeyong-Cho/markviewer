@@ -201,8 +201,8 @@ class MarkViewerApp extends Utils.EventEmitter {
             // Initialize sidebar
             this.sidebar = new Sidebar(this.elements.sidebar);
             
-            // Initialize search
-            this.search = new SearchComponent();
+            // Initialize search (pass app instance for state access)
+            this.search = new SearchComponent(this);
             
             // Initialize markdown renderer
             this.renderer = new MarkdownRenderer(this.elements.markdownContent);

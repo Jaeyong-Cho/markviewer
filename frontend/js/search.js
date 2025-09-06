@@ -3,8 +3,11 @@
  */
 
 class SearchComponent extends Utils.EventEmitter {
-    constructor() {
+    constructor(app) {
         super();
+        
+        // Store reference to main app instance for state access
+        this.app = app;
         
         // Cache DOM elements
         this.searchInput = document.getElementById('search-input');
@@ -17,6 +20,12 @@ class SearchComponent extends Utils.EventEmitter {
         // Verify critical elements exist
         if (!this.searchInput) {
             console.error('Search input element not found');
+            return;
+        }
+        
+        // Verify app instance is provided
+        if (!this.app) {
+            console.error('SearchComponent requires app instance for state access');
             return;
         }
         
