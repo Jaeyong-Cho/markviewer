@@ -3,9 +3,20 @@
  * Manages tab creation, switching, closing, and state persistence
  */
 
-class TabManager extends Utils.EventEmitter {
+/**
+ * Tab Manager Component
+ * Manages tab creation, switching, closing, and state persistence
+ */
+
+class TabManager {
     constructor() {
-        super();
+        // Initialize EventEmitter using composition instead of inheritance
+        this.eventEmitter = new Utils.EventEmitter();
+        
+        // Delegate event methods to the EventEmitter instance
+        this.on = this.eventEmitter.on.bind(this.eventEmitter);
+        this.emit = this.eventEmitter.emit.bind(this.eventEmitter);
+        this.off = this.eventEmitter.off.bind(this.eventEmitter);
         
         // Tab state
         this.tabs = new Map(); // Map of tabId -> tab data
@@ -13,20 +24,17 @@ class TabManager extends Utils.EventEmitter {
         this.recentlyUsed = []; // Most recently used tab order
         this.nextTabId = 1;
         
-        // DOM elements (will be set by init)
+        // DOM elements
+        this.container = null;
         this.tabBar = null;
-        this.tabContainer = null;
-        
-        // Tab template
-        this.tabTemplate = null;
         
         // Storage key for persistence
         this.storageKey = 'markviewer-tabs';
         
-        // Bind methods
-        this.handleTabClick = this.handleTabClick.bind(this);
-        this.handleTabClose = this.handleTabClose.bind(this);
-        this.handleTabMiddleClick = this.handleTabMiddleClick.bind(this);
+        // Keyboard shortcuts
+        this.setupKeyboardShortcuts();
+        
+        console.log('TabManager: Constructor completed');
     }
     
     /**
@@ -458,6 +466,67 @@ class TabManager extends Utils.EventEmitter {
             const tabId = e.currentTarget.dataset.tabId;
             this.closeTab(tabId);
         }
+    }
+    
+    /**
+     * Setup keyboard shortcuts for tab management
+     */
+    setupKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+W: Close current tab
+            if (e.ctrlKey && e.key === 'w') {
+                e.preventDefault();
+                if (this.activeTabId) {
+                    this.closeTab(this.activeTabId);
+                }
+            }
+            
+            // Ctrl+Tab: Switch to next tab
+            if (e.ctrlKey && e.key === 'Tab' && !e.shiftKey) {
+                e.preventDefault();
+                this.switchToNextTab();
+            }
+            
+            // Ctrl+Shift+Tab: Switch to previous tab
+            if (e.ctrlKey && e.key === 'Tab' && e.shiftKey) {
+                e.preventDefault();
+                this.switchToPreviousTab();
+            }
+            
+            // Ctrl+1-9: Switch to tab by number
+            if (e.ctrlKey && e.key >= '1' && e.key <= '9') {
+                e.preventDefault();
+                const tabIndex = parseInt(e.key) - 1;
+                const tabIds = Array.from(this.tabs.keys());
+                if (tabIds[tabIndex]) {
+                    this.activateTab(tabIds[tabIndex]);
+                }
+            }
+        });
+    }
+    
+    /**
+     * Switch to next tab in order
+     */
+    switchToNextTab() {
+        const tabIds = Array.from(this.tabs.keys());
+        if (tabIds.length <= 1) return;
+        
+        const currentIndex = tabIds.indexOf(this.activeTabId);
+        const nextIndex = (currentIndex + 1) % tabIds.length;
+        this.activateTab(tabIds[nextIndex]);
+    }
+    
+    /**
+     * Switch to previous tab in order
+     */
+    switchToPreviousTab() {
+        const tabIds = Array.from(this.tabs.keys());
+        if (tabIds.length <= 1) return;
+        
+        const currentIndex = tabIds.indexOf(this.activeTabId);
+        const prevIndex = currentIndex === 0 ? tabIds.length - 1 : currentIndex - 1;
+        this.activateTab(tabIds[prevIndex]);
     }
 }
 

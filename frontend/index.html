@@ -139,6 +139,7 @@
     <link rel="stylesheet" href="styles/content.css">
     <link rel="stylesheet" href="styles/search.css">
     <link rel="stylesheet" href="styles/tabs.css">
+    <link rel="stylesheet" href="styles/split.css">
     <link rel="stylesheet" href="styles/workspace-recommender.css">
     <link rel="stylesheet" href="styles/workspace-autocomplete.css">
 </head>
@@ -170,6 +171,14 @@
                         ×
                     </button>
                 </div>
+                
+                <!-- Split Screen Toggle Button -->
+                <button id="split-toggle" class="split-toggle" aria-label="Toggle split screen" title="Toggle Split Screen (Ctrl+Shift+\)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="8" height="18" rx="1"></rect>
+                        <rect x="13" y="3" width="8" height="18" rx="1"></rect>
+                    </svg>
+                </button>
             </div>
         </header>
 
@@ -386,6 +395,7 @@ function renderMarkdown(content) {
             'js/sidebar.js',
             'js/sidebar-resizer.js',
             'js/tab-manager.js',
+            'js/split-manager.js',
             'js/workspace-recommender.js',
             'js/workspace-autocomplete.js',
             'js/app.js'
@@ -433,6 +443,7 @@ function renderMarkdown(content) {
                 Sidebar: typeof Sidebar !== 'undefined',
                 SearchManager: typeof SearchManager !== 'undefined',
                 TabManager: typeof TabManager !== 'undefined',
+                SplitManager: typeof SplitManager !== 'undefined',
                 MarkViewerApp: typeof MarkViewerApp !== 'undefined'
             };
             

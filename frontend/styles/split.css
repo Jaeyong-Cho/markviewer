@@ -1,0 +1,363 @@
+/* Split Screen Styles */
+
+/* Split Container */
+.split-container {
+    display: flex;
+    flex: 1;
+    height: 100%;
+    min-height: 0;
+}
+
+.split-mode .content-area {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Split Panes */
+.split-pane {
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+    min-height: 0;
+    background: var(--background-color);
+}
+
+.split-pane.left-pane {
+    border-right: 1px solid var(--border-color);
+}
+
+.split-pane.right-pane {
+    border-left: 1px solid var(--border-color);
+}
+
+/* Pane Tab Areas */
+.pane-tab-area {
+    background: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+    min-height: 42px;
+}
+
+.pane-tab-area .tab-bar {
+    border-bottom: none;
+}
+
+/* Pane Content */
+.pane-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.pane-main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.pane-main-content .content-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--surface-light);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.pane-main-content .content-body {
+    flex: 1;
+    overflow: auto;
+    padding: var(--spacing-md);
+}
+
+.pane-main-content .markdown-content {
+    max-width: none;
+    margin: 0;
+}
+
+/* Split Resizer */
+.split-resizer {
+    width: 6px;
+    background: var(--border-color);
+    cursor: col-resize;
+    position: relative;
+    transition: background-color var(--transition-fast);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.split-resizer:hover {
+    background: var(--primary-color);
+}
+
+.split-resizer-handle {
+    width: 2px;
+    height: 40px;
+    background: var(--background-color);
+    border-radius: 1px;
+    opacity: 0.7;
+}
+
+.split-resizer:hover .split-resizer-handle {
+    background: white;
+    opacity: 1;
+}
+
+/* Active resizing state */
+.split-resizer.resizing {
+    background: var(--primary-color);
+}
+
+.split-resizer.resizing .split-resizer-handle {
+    background: white;
+    opacity: 1;
+}
+
+/* Split Mode Toggle Button in Header */
+.split-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border-color);
+    background: var(--background-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    margin-left: var(--spacing-sm);
+    transition: all var(--transition-fast);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.split-toggle:hover {
+    background: var(--background-hover);
+    border-color: var(--secondary-color);
+    color: var(--text-primary);
+}
+
+.split-toggle.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.split-toggle svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Breadcrumb in split panes */
+.split-pane .breadcrumb {
+    font-size: 12px;
+    margin-bottom: var(--spacing-xs);
+}
+
+.split-pane .breadcrumb-item {
+    color: var(--text-secondary);
+}
+
+.split-pane .breadcrumb-separator {
+    color: var(--text-muted);
+    margin: 0 var(--spacing-xs);
+}
+
+/* File info in split panes */
+.split-pane .file-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.split-pane .current-file-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.split-pane .file-modified {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* Welcome content in panes */
+.split-pane .welcome-content {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-muted);
+}
+
+.split-pane .welcome-content h2 {
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-md);
+    font-size: 18px;
+}
+
+/* Scrollbar styling for split panes */
+.pane-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.pane-content::-webkit-scrollbar-track {
+    background: var(--surface-color);
+}
+
+.pane-content::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.pane-content::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-color);
+}
+
+/* Responsive Design for Split Mode */
+@media (max-width: 1024px) {
+    .split-pane {
+        min-width: 150px;
+    }
+    
+    .split-resizer {
+        width: 4px;
+    }
+    
+    .pane-main-content .content-body {
+        padding: var(--spacing-sm);
+    }
+}
+
+@media (max-width: 768px) {
+    /* On small screens, disable split mode or stack vertically */
+    .split-container {
+        flex-direction: column;
+    }
+    
+    .split-pane {
+        min-height: 200px;
+        min-width: auto;
+    }
+    
+    .split-pane.left-pane {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .split-pane.right-pane {
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .split-resizer {
+        width: 100%;
+        height: 6px;
+        cursor: row-resize;
+        flex-direction: row;
+    }
+    
+    .split-resizer-handle {
+        width: 40px;
+        height: 2px;
+    }
+}
+
+/* Dark theme support for split mode */
+@media (prefers-color-scheme: dark) {
+    .split-pane {
+        background: var(--background-color, #0d1117);
+    }
+    
+    .split-resizer {
+        background: var(--border-color, #30363d);
+    }
+    
+    .split-resizer:hover {
+        background: var(--primary-color, #58a6ff);
+    }
+    
+    .split-resizer-handle {
+        background: var(--background-color, #21262d);
+    }
+    
+    .pane-main-content .content-header {
+        background: var(--surface-light, #161b22);
+        border-bottom-color: var(--border-color, #30363d);
+    }
+}
+
+/* Animation for entering/exiting split mode */
+@keyframes splitEnter {
+    from {
+        opacity: 0;
+        transform: scaleX(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scaleX(1);
+    }
+}
+
+@keyframes splitExit {
+    from {
+        opacity: 1;
+        transform: scaleX(1);
+    }
+    to {
+        opacity: 0;
+        transform: scaleX(0.95);
+    }
+}
+
+.split-container.entering {
+    animation: splitEnter 0.3s ease-out;
+}
+
+.split-container.exiting {
+    animation: splitExit 0.3s ease-out;
+}
+
+/* Focus styles for accessibility */
+.split-toggle:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.split-resizer:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 1px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .split-resizer {
+        background: var(--text-primary);
+    }
+    
+    .split-resizer:hover {
+        background: var(--primary-color);
+    }
+    
+    .split-pane.left-pane,
+    .split-pane.right-pane {
+        border-width: 2px;
+    }
+}
+
+/* Print styles - hide split controls when printing */
+@media print {
+    .split-toggle,
+    .split-resizer {
+        display: none;
+    }
+    
+    .split-container {
+        flex-direction: column;
+    }
+    
+    .split-pane {
+        border: none;
+        page-break-inside: avoid;
+    }
+}
