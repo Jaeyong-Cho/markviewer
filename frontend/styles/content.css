@@ -4,6 +4,9 @@
     margin: 0 auto;
     line-height: 1.6;
     color: var(--text-primary);
+    /* Ensure child elements can overflow horizontally */
+    overflow-x: visible;
+    overflow-y: visible;
 }
 
 /* Typography */
@@ -356,17 +359,52 @@
 /* PlantUML diagrams */
 .plantuml-diagram {
     margin: 16px 0;
-    text-align: center;
     background-color: white;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     padding: 16px;
-    overflow-x: auto;
+    /* Enable horizontal scrolling for large diagrams */
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    /* Add subtle scroll indicators */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+    /* Ensure the container has a defined width */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Webkit scrollbar styling for better UX */
+.plantuml-diagram::-webkit-scrollbar {
+    height: 8px;
+}
+
+.plantuml-diagram::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 4px;
+}
+
+.plantuml-diagram::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.plantuml-diagram::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
 }
 
 .plantuml-diagram svg {
-    max-width: 100%;
-    height: auto;
+    /* Show diagrams at their original/natural size */
+    /* Remove any size constraints to preserve PlantUML's default sizing */
+    max-width: none !important;
+    width: auto !important;
+    height: auto !important;
+    /* Remove centering to allow proper scrolling */
+    display: inline-block !important;
+    /* Ensure minimum size for very small diagrams */
+    min-width: 200px;
+    /* Ensure the SVG is the source of truth for size */
+    flex-shrink: 0;
 }
 
 .plantuml-error {
@@ -392,11 +430,51 @@
 /* Mermaid diagrams */
 .mermaid-diagram {
     margin: 16px 0;
-    text-align: center;
     background-color: white;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     padding: 16px;
+    /* Enable horizontal scrolling for large diagrams */
+    overflow-x: auto;
+    overflow-y: hidden;
+    /* Add subtle scroll indicators */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+    /* Ensure the container has a defined width */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Webkit scrollbar styling for Mermaid diagrams */
+.mermaid-diagram::-webkit-scrollbar {
+    height: 8px;
+}
+
+.mermaid-diagram::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 4px;
+}
+
+.mermaid-diagram::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.mermaid-diagram::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+.mermaid-diagram svg {
+    /* Show diagrams at their original/natural size */
+    max-width: none !important;
+    width: auto !important;
+    height: auto !important;
+    /* Remove centering to allow proper scrolling */
+    display: inline-block;
+    /* Ensure minimum size for very small diagrams */
+    min-width: 200px;
+    /* Ensure the SVG is the source of truth for size */
+    flex-shrink: 0;
 }
 
 /* Enhanced diagram loading states */
