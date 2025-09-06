@@ -1048,7 +1048,7 @@
 /* Tag-related styles */
 .tag-badge {
     display: inline-block;
-    background: var(--success-color, #28a745);
+    background: #d97706;
     color: white;
     padding: 2px 6px;
     border-radius: 10px;
@@ -1065,7 +1065,7 @@
 
 /* Enhanced connection type styling */
 .connection-type.tag {
-    background: var(--success-color, #28a745);
+    background: #d97706;
     color: white;
 }
 
@@ -1111,7 +1111,7 @@
 }
 
 .edge-tooltip.tag-edge .tooltip-title {
-    color: #28a745;
+    color: #d97706;
 }
 
 .edge-tooltip.link-edge .tooltip-title {
@@ -1123,9 +1123,9 @@
     font-size: 9px;
     padding: 1px 4px;
     margin: 0 1px;
-    background: rgba(40, 167, 69, 0.2);
-    color: #28a745;
-    border: 1px solid #28a745;
+    background: rgba(217, 119, 6, 0.15);
+    color: #d97706;
+    border: 1px solid #d97706;
     border-radius: 2px;
     display: inline-block;
 }

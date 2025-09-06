@@ -175,22 +175,109 @@ class MarkdownRenderer extends Utils.EventEmitter {
     }
 
     /**
-     * Strip YAML frontmatter from markdown content
+     * Extract YAML frontmatter from markdown content
      * @param {string} content - Markdown content with potential frontmatter
-     * @returns {string} Content without frontmatter
+     * @returns {Object} Object with frontmatter data and content without frontmatter
      */
-    stripFrontmatter(content) {
+    extractFrontmatter(content) {
         // YAML frontmatter pattern: starts with ---, followed by YAML content, ends with ---
         const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n/;
         const match = content.match(frontmatterRegex);
         
         if (match) {
-            // Return content without the frontmatter block
-            return content.slice(match[0].length);
+            try {
+                // Parse YAML content (simple parsing for tags)
+                const yamlContent = match[1];
+                const frontmatter = this.parseSimpleYaml(yamlContent);
+                const contentWithoutFrontmatter = content.slice(match[0].length);
+                
+                return {
+                    frontmatter: frontmatter,
+                    content: contentWithoutFrontmatter
+                };
+            } catch (error) {
+                console.warn('Error parsing YAML frontmatter:', error);
+                return {
+                    frontmatter: {},
+                    content: content.slice(match[0].length)
+                };
+            }
         }
         
         // If no frontmatter found, return original content
-        return content;
+        return {
+            frontmatter: {},
+            content: content
+        };
+    }
+
+    /**
+     * Simple YAML parser for frontmatter (specifically for tags)
+     * @param {string} yamlContent - YAML content
+     * @returns {Object} Parsed data
+     */
+    parseSimpleYaml(yamlContent) {
+        const result = {};
+        const lines = yamlContent.split('\n');
+        let currentKey = null;
+        let currentList = null;
+        
+        for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) continue;
+            
+            // Handle key-value pairs
+            if (trimmedLine.includes(':') && !trimmedLine.startsWith('-')) {
+                const [key, ...valueParts] = trimmedLine.split(':');
+                const value = valueParts.join(':').trim();
+                currentKey = key.trim();
+                
+                if (value) {
+                    // Simple value
+                    result[currentKey] = value.replace(/^["']|["']$/g, ''); // Remove quotes
+                    currentList = null;
+                } else {
+                    // Array follows
+                    currentList = [];
+                    result[currentKey] = currentList;
+                }
+            } else if (trimmedLine.startsWith('-') && currentList) {
+                // Array item
+                const item = trimmedLine.substring(1).trim().replace(/^["']|["']$/g, '');
+                currentList.push(item);
+            }
+        }
+        
+        return result;
+    }
+
+    /**
+     * Strip YAML frontmatter from markdown content
+     * @param {string} content - Markdown content with potential frontmatter
+     * @returns {string} Content without frontmatter
+     */
+    stripFrontmatter(content) {
+        return this.extractFrontmatter(content).content;
+    }
+
+    /**
+     * Generate tag display HTML
+     * @param {Array} tags - Array of tag strings
+     * @returns {string} HTML for tag display
+     */
+    generateTagDisplay(tags) {
+        if (!tags || !Array.isArray(tags) || tags.length === 0) {
+            return '';
+        }
+        
+        const tagBadges = tags.map(tag => 
+            `<span class="tag-badge">#${Utils.escapeHtml(tag)}</span>`
+        ).join(' ');
+        
+        return `<div class="document-tags">
+            <div class="tags-label">Tags:</div>
+            <div class="tags-container">${tagBadges}</div>
+        </div>`;
     }
 
     /**
@@ -204,8 +291,8 @@ class MarkdownRenderer extends Utils.EventEmitter {
         }
         
         try {
-            // Strip YAML frontmatter before rendering
-            const contentWithoutFrontmatter = this.stripFrontmatter(content);
+            // Extract frontmatter and content
+            const { frontmatter, content: contentWithoutFrontmatter } = this.extractFrontmatter(content);
             
             // Parse markdown to HTML
             let html = marked.parse(contentWithoutFrontmatter);
@@ -213,8 +300,14 @@ class MarkdownRenderer extends Utils.EventEmitter {
             // Sanitize HTML for security
             html = Utils.sanitizeHtml(html);
             
+            // Generate tag display if tags exist
+            const tagDisplay = this.generateTagDisplay(frontmatter.tags);
+            
+            // Combine tag display with main content
+            const finalHtml = tagDisplay + html;
+            
             // Set the HTML content
-            this.container.innerHTML = html;
+            this.container.innerHTML = finalHtml;
             
             // Process special content types (non-blocking for diagrams)
             this.processImages();

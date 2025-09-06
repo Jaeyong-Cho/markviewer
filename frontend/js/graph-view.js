@@ -126,19 +126,19 @@ class GraphView extends Utils.EventEmitter {
                     selector: 'edge.tag',
                     style: {
                         'width': 2,
-                        'line-color': '#28a745',
-                        'target-arrow-color': '#28a745',
+                        'line-color': '#d97706',
+                        'target-arrow-color': '#d97706',
                         'target-arrow-shape': 'triangle',
                         'curve-style': 'bezier',
                         'arrow-scale': 1.2,
-                        'opacity': 0.6,
+                        'opacity': 0.7,
                         'line-style': 'dashed',
                         'line-dash-pattern': [6, 3],
                         'label': 'data(edgeLabel)',
                         'font-size': '10px',
                         'text-rotation': 'autorotate',
                         'text-margin-y': -8,
-                        'color': '#68a728ff',
+                        'color': '#d97706',
                         'text-outline-width': 1,
                         'text-outline-color': '#ffffff'
                     }
@@ -155,12 +155,13 @@ class GraphView extends Utils.EventEmitter {
                 {
                     selector: 'edge.tag.highlighted',
                     style: {
-                        'line-color': '#28a745',
-                        'target-arrow-color': '#28a745',
+                        'line-color': '#d97706',
+                        'target-arrow-color': '#d97706',
                         'width': 3,
                         'opacity': 1,
                         'line-style': 'dashed',
-                        'line-dash-pattern': [6, 3]
+                        'line-dash-pattern': [6, 3],
+                        'color': '#d97706'
                     }
                 }
             ]
@@ -879,22 +880,44 @@ class GraphView extends Utils.EventEmitter {
         const tooltip = document.createElement('div');
         tooltip.id = 'graph-edge-tooltip';
         tooltip.innerHTML = content;
+        
+        // Get the graph container position to calculate relative position
+        const graphContainer = this.container.querySelector('.graph-content');
+        const containerRect = graphContainer ? graphContainer.getBoundingClientRect() : this.container.getBoundingClientRect();
+        
+        // Calculate position relative to the viewport
+        const x = containerRect.left + position.x;
+        const y = containerRect.top + position.y;
+        
         tooltip.style.cssText = `
-            position: absolute;
+            position: fixed;
             background: rgba(0, 0, 0, 0.9);
             color: white;
             padding: 8px 12px;
-            border-radius: 4px;
+            border-radius: 6px;
             font-size: 12px;
             pointer-events: none;
             z-index: 10000;
             max-width: 300px;
             word-wrap: break-word;
-            left: ${position.x + 10}px;
-            top: ${position.y - 30}px;
+            left: ${x + 10}px;
+            top: ${y - 40}px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         `;
         
+        // Ensure tooltip stays within viewport
         document.body.appendChild(tooltip);
+        const tooltipRect = tooltip.getBoundingClientRect();
+        
+        // Adjust horizontal position if tooltip goes off-screen
+        if (tooltipRect.right > window.innerWidth) {
+            tooltip.style.left = `${x - tooltipRect.width - 10}px`;
+        }
+        
+        // Adjust vertical position if tooltip goes off-screen
+        if (tooltipRect.top < 0) {
+            tooltip.style.top = `${y + 20}px`;
+        }
     }
 
     /**
