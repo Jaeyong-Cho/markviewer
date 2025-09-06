@@ -1,6 +1,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const marked = require('marked');
+const yaml = require('js-yaml');
 
 /**
  * Link Analysis Service for MarkViewer
@@ -32,10 +33,13 @@ class LinkAnalysisService {
             // Get all markdown files
             const markdownFiles = await this.getAllMarkdownFiles(rootPath);
             
-            // Process each file to extract links
+            // Process each file to extract links and tags
             for (const filePath of markdownFiles) {
                 await this.analyzeFile(filePath, rootPath);
             }
+
+            // Create tag-based connections after all files are processed
+            this.createTagBasedConnections();
 
             // Identify orphaned files
             this.identifyOrphans();
@@ -49,7 +53,7 @@ class LinkAnalysisService {
     }
 
     /**
-     * Analyze a single markdown file to extract internal links
+     * Analyze a single markdown file to extract internal links and tags
      * @param {string} filePath - Path to the markdown file
      * @param {string} rootPath - Root directory path for resolving relative links
      */
@@ -58,11 +62,14 @@ class LinkAnalysisService {
             const content = await fs.readFile(filePath, 'utf-8');
             const fileKey = this.getFileKey(filePath, rootPath);
             
-            // Add node for this file
-            this.addNode(fileKey, filePath, rootPath);
+            // Extract frontmatter and content
+            const { frontmatter, content: markdownContent } = this.extractFrontmatter(content);
+            
+            // Add node for this file with tag information
+            this.addNode(fileKey, filePath, rootPath, frontmatter);
 
             // Extract links from markdown content
-            const links = this.extractLinksFromMarkdown(content, filePath, rootPath);
+            const links = this.extractLinksFromMarkdown(markdownContent, filePath, rootPath);
             
             // Add edges for each valid link (only if target file exists and is already a node)
             for (const targetPath of links) {
@@ -70,7 +77,7 @@ class LinkAnalysisService {
                 
                 // Only add edge if target node exists (target file was found in markdown files)
                 if (this.linkGraph.nodes.has(targetKey)) {
-                    this.addEdge(fileKey, targetKey, filePath, targetPath);
+                    this.addEdge(fileKey, targetKey, filePath, targetPath, 'link');
                 } else {
                     console.warn(`Target file not found in markdown collection: ${targetKey}`);
                 }
@@ -134,6 +141,39 @@ class LinkAnalysisService {
         }
 
         return [...new Set(links)]; // Remove duplicates
+    }
+
+    /**
+     * Extract YAML frontmatter from markdown content
+     * @param {string} content - Full markdown content
+     * @returns {Object} Object with frontmatter and content properties
+     */
+    extractFrontmatter(content) {
+        const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n/;
+        const match = content.match(frontmatterRegex);
+        
+        if (!match) {
+            return {
+                frontmatter: {},
+                content: content
+            };
+        }
+
+        try {
+            const frontmatter = yaml.load(match[1]) || {};
+            const contentWithoutFrontmatter = content.slice(match[0].length);
+            
+            return {
+                frontmatter: frontmatter,
+                content: contentWithoutFrontmatter
+            };
+        } catch (error) {
+            console.warn('Error parsing YAML frontmatter:', error);
+            return {
+                frontmatter: {},
+                content: content
+            };
+        }
     }
 
     /**
@@ -240,10 +280,21 @@ class LinkAnalysisService {
      * @param {string} key - File key (relative path)
      * @param {string} filePath - Absolute file path
      * @param {string} rootPath - Root directory path
+     * @param {Object} frontmatter - Parsed frontmatter object
      */
-    addNode(key, filePath, rootPath) {
+    addNode(key, filePath, rootPath, frontmatter = {}) {
         if (!this.linkGraph.nodes.has(key)) {
             const stats = this.getFileStats(filePath);
+            
+            // Extract and normalize tags from frontmatter
+            let tags = [];
+            if (frontmatter.tags && Array.isArray(frontmatter.tags)) {
+                tags = frontmatter.tags
+                    .filter(tag => typeof tag === 'string')
+                    .map(tag => tag.toLowerCase().trim())
+                    .filter(tag => tag.length > 0);
+            }
+            
             this.linkGraph.nodes.set(key, {
                 id: key,
                 path: filePath,
@@ -252,7 +303,9 @@ class LinkAnalysisService {
                 size: stats.size,
                 modified: stats.modified,
                 incomingLinks: 0,
-                outgoingLinks: 0
+                outgoingLinks: 0,
+                tags: tags,
+                tagConnections: 0
             });
         }
     }
@@ -263,8 +316,10 @@ class LinkAnalysisService {
      * @param {string} targetKey - Target file key
      * @param {string} sourcePath - Source file path
      * @param {string} targetPath - Target file path
+     * @param {string} type - Edge type ('link' or 'tag')
+     * @param {Array<string>} sharedTags - For tag edges, array of shared tags
      */
-    addEdge(sourceKey, targetKey, sourcePath, targetPath) {
+    addEdge(sourceKey, targetKey, sourcePath, targetPath, type = 'link', sharedTags = []) {
         // Only add edge if both source and target nodes exist
         if (!this.linkGraph.nodes.has(sourceKey) || !this.linkGraph.nodes.has(targetKey)) {
             console.warn(`Skipping edge ${sourceKey} -> ${targetKey}: missing node(s)`, {
@@ -281,15 +336,67 @@ class LinkAnalysisService {
                 source: sourceKey,
                 target: targetKey,
                 sourcePath: sourcePath,
-                targetPath: targetPath
+                targetPath: targetPath,
+                type: type,
+                sharedTags: sharedTags
             });
 
             // Update link counts
             const sourceNode = this.linkGraph.nodes.get(sourceKey);
             const targetNode = this.linkGraph.nodes.get(targetKey);
             
-            if (sourceNode) sourceNode.outgoingLinks++;
-            if (targetNode) targetNode.incomingLinks++;
+            if (type === 'link') {
+                if (sourceNode) sourceNode.outgoingLinks++;
+                if (targetNode) targetNode.incomingLinks++;
+            } else if (type === 'tag') {
+                if (sourceNode) sourceNode.tagConnections++;
+                if (targetNode) targetNode.tagConnections++;
+            }
+        }
+    }
+
+    /**
+     * Create tag-based connections between files with shared tags
+     */
+    createTagBasedConnections() {
+        // Create a map of tags to files
+        const tagToFiles = new Map();
+        
+        for (const [key, node] of this.linkGraph.nodes) {
+            if (node.tags && node.tags.length > 0) {
+                for (const tag of node.tags) {
+                    if (!tagToFiles.has(tag)) {
+                        tagToFiles.set(tag, []);
+                    }
+                    tagToFiles.get(tag).push(key);
+                }
+            }
+        }
+
+        // Create edges between files that share tags
+        for (const [tag, files] of tagToFiles) {
+            if (files.length > 1) {
+                // Create connections between all pairs of files with this tag
+                for (let i = 0; i < files.length; i++) {
+                    for (let j = i + 1; j < files.length; j++) {
+                        const sourceKey = files[i];
+                        const targetKey = files[j];
+                        
+                        // Get the nodes to access their paths
+                        const sourceNode = this.linkGraph.nodes.get(sourceKey);
+                        const targetNode = this.linkGraph.nodes.get(targetKey);
+                        
+                        if (sourceNode && targetNode) {
+                            // Find all shared tags between these two files
+                            const sharedTags = sourceNode.tags.filter(t => targetNode.tags.includes(t));
+                            
+                            // Create bidirectional edges for tag connections
+                            this.addEdge(sourceKey, targetKey, sourceNode.path, targetNode.path, 'tag', sharedTags);
+                            this.addEdge(targetKey, sourceKey, targetNode.path, sourceNode.path, 'tag', sharedTags);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -324,11 +431,11 @@ class LinkAnalysisService {
     }
 
     /**
-     * Identify orphaned files (no incoming or outgoing links)
+     * Identify orphaned files (no incoming links, outgoing links, or tag connections)
      */
     identifyOrphans() {
         for (const [key, node] of this.linkGraph.nodes) {
-            if (node.incomingLinks === 0 && node.outgoingLinks === 0) {
+            if (node.incomingLinks === 0 && node.outgoingLinks === 0 && node.tagConnections === 0) {
                 this.linkGraph.orphans.add(key);
             }
         }
@@ -343,11 +450,7 @@ class LinkAnalysisService {
             nodes: Array.from(this.linkGraph.nodes.values()),
             edges: Array.from(this.linkGraph.edges.values()),
             orphans: Array.from(this.linkGraph.orphans),
-            stats: {
-                totalFiles: this.linkGraph.nodes.size,
-                totalLinks: this.linkGraph.edges.size,
-                orphanedFiles: this.linkGraph.orphans.size
-            }
+            stats: this.getStats()
         };
     }
 
@@ -357,19 +460,38 @@ class LinkAnalysisService {
      */
     getStats() {
         const nodes = Array.from(this.linkGraph.nodes.values());
+        const edges = Array.from(this.linkGraph.edges.values());
+        
         const incomingCounts = nodes.map(n => n.incomingLinks);
         const outgoingCounts = nodes.map(n => n.outgoingLinks);
+        const tagConnectionCounts = nodes.map(n => n.tagConnections);
+        
+        const linkEdges = edges.filter(e => e.type === 'link');
+        const tagEdges = edges.filter(e => e.type === 'tag');
+        
+        // Get unique tags
+        const allTags = new Set();
+        nodes.forEach(node => {
+            if (node.tags) {
+                node.tags.forEach(tag => allTags.add(tag));
+            }
+        });
 
         return {
             totalFiles: this.linkGraph.nodes.size,
-            totalLinks: this.linkGraph.edges.size,
+            totalLinks: linkEdges.length,
+            totalTagConnections: tagEdges.length,
+            totalTags: allTags.size,
             orphanedFiles: this.linkGraph.orphans.size,
             averageIncomingLinks: incomingCounts.length > 0 ? 
                 incomingCounts.reduce((a, b) => a + b, 0) / incomingCounts.length : 0,
             averageOutgoingLinks: outgoingCounts.length > 0 ? 
                 outgoingCounts.reduce((a, b) => a + b, 0) / outgoingCounts.length : 0,
+            averageTagConnections: tagConnectionCounts.length > 0 ? 
+                tagConnectionCounts.reduce((a, b) => a + b, 0) / tagConnectionCounts.length : 0,
             maxIncomingLinks: Math.max(...incomingCounts, 0),
-            maxOutgoingLinks: Math.max(...outgoingCounts, 0)
+            maxOutgoingLinks: Math.max(...outgoingCounts, 0),
+            maxTagConnections: Math.max(...tagConnectionCounts, 0)
         };
     }
 }

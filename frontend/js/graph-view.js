@@ -123,12 +123,37 @@ class GraphView extends Utils.EventEmitter {
                     }
                 },
                 {
+                    selector: 'edge.tag',
+                    style: {
+                        'width': 2,
+                        'line-color': '#28a745',
+                        'target-arrow-color': '#28a745',
+                        'target-arrow-shape': 'triangle',
+                        'curve-style': 'bezier',
+                        'arrow-scale': 1.2,
+                        'opacity': 0.6,
+                        'line-style': 'dashed',
+                        'line-dash-pattern': [6, 3]
+                    }
+                },
+                {
                     selector: 'edge.highlighted',
                     style: {
                         'line-color': '#a50034',
                         'target-arrow-color': '#a50034',
                         'width': 3,
                         'opacity': 1
+                    }
+                },
+                {
+                    selector: 'edge.tag.highlighted',
+                    style: {
+                        'line-color': '#28a745',
+                        'target-arrow-color': '#28a745',
+                        'width': 3,
+                        'opacity': 1,
+                        'line-style': 'dashed',
+                        'line-dash-pattern': [6, 3]
                     }
                 }
             ]
@@ -226,6 +251,8 @@ class GraphView extends Utils.EventEmitter {
                     <span class="graph-stats-separator">•</span>
                     <span id="graph-stats-links">0 links</span>
                     <span class="graph-stats-separator">•</span>
+                    <span id="graph-stats-tags">0 tag connections</span>
+                    <span class="graph-stats-separator">•</span>
                     <span id="graph-stats-orphans">0 orphans</span>
                 </div>
                 <div class="graph-node-info" id="graph-node-info" style="display: none;">
@@ -235,6 +262,8 @@ class GraphView extends Utils.EventEmitter {
                         <p><strong>Path:</strong> <span id="node-info-path">-</span></p>
                         <p><strong>Incoming:</strong> <span id="node-info-incoming">0</span></p>
                         <p><strong>Outgoing:</strong> <span id="node-info-outgoing">0</span></p>
+                        <p><strong>Tag Connections:</strong> <span id="node-info-tag-connections">0</span></p>
+                        <p><strong>Tags:</strong> <span id="node-info-tags">None</span></p>
                         <p><strong>Modified:</strong> <span id="node-info-modified">-</span></p>
                     </div>
                     <div class="node-connections">
@@ -264,6 +293,7 @@ class GraphView extends Utils.EventEmitter {
             closeGraph: this.container.querySelector('#graph-close'),
             statsFiles: this.container.querySelector('#graph-stats-files'),
             statsLinks: this.container.querySelector('#graph-stats-links'),
+            statsTags: this.container.querySelector('#graph-stats-tags'),
             statsOrphans: this.container.querySelector('#graph-stats-orphans'),
             
             // Settings panel elements
@@ -507,7 +537,9 @@ class GraphView extends Utils.EventEmitter {
         
         // Add nodes
         this.graphData.nodes.forEach(node => {
-            const isOrphan = node.incomingLinks === 0 && node.outgoingLinks === 0;
+            // Updated orphan detection to include tag connections
+            const isOrphan = node.incomingLinks === 0 && node.outgoingLinks === 0 && 
+                           (!node.tagConnections || node.tagConnections === 0);
             validNodeIds.add(node.id);
             elements.push({
                 data: {
@@ -518,7 +550,9 @@ class GraphView extends Utils.EventEmitter {
                     relativePath: node.relativePath,
                     incomingLinks: node.incomingLinks,
                     outgoingLinks: node.outgoingLinks,
-                    degree: node.incomingLinks + node.outgoingLinks,
+                    tagConnections: node.tagConnections || 0,
+                    tags: node.tags || [],
+                    degree: node.incomingLinks + node.outgoingLinks + (node.tagConnections || 0),
                     modified: node.modified,
                     size: node.size
                 },
@@ -529,14 +563,18 @@ class GraphView extends Utils.EventEmitter {
         // Add edges (only if both source and target nodes exist)
         this.graphData.edges.forEach(edge => {
             if (validNodeIds.has(edge.source) && validNodeIds.has(edge.target)) {
+                const edgeClasses = edge.type === 'tag' ? 'tag' : '';
                 elements.push({
                     data: {
                         id: `${edge.source}-${edge.target}`,
                         source: edge.source,
                         target: edge.target,
                         sourcePath: edge.sourcePath,
-                        targetPath: edge.targetPath
-                    }
+                        targetPath: edge.targetPath,
+                        type: edge.type || 'link',
+                        sharedTags: edge.sharedTags || []
+                    },
+                    classes: edgeClasses
                 });
             } else {
                 console.warn(`Skipping edge ${edge.source} -> ${edge.target}: missing node(s)`, {
@@ -791,6 +829,18 @@ class GraphView extends Utils.EventEmitter {
         document.getElementById('node-info-path').textContent = data.relativePath;
         document.getElementById('node-info-incoming').textContent = data.incomingLinks;
         document.getElementById('node-info-outgoing').textContent = data.outgoingLinks;
+        document.getElementById('node-info-tag-connections').textContent = data.tagConnections || 0;
+        
+        // Display tags
+        const tagsElement = document.getElementById('node-info-tags');
+        if (data.tags && data.tags.length > 0) {
+            tagsElement.innerHTML = data.tags.map(tag => 
+                `<span class="tag-badge">${tag}</span>`
+            ).join(' ');
+        } else {
+            tagsElement.textContent = 'None';
+        }
+        
         document.getElementById('node-info-modified').textContent = 
             new Date(data.modified).toLocaleDateString();
 
@@ -820,12 +870,15 @@ class GraphView extends Utils.EventEmitter {
             const source = edge.source();
             const target = edge.target();
             const other = source.id() === node.id() ? target : source;
-            const type = source.id() === node.id() ? 'outgoing' : 'incoming';
+            const direction = source.id() === node.id() ? 'outgoing' : 'incoming';
+            const edgeData = edge.data();
             
             connections.push({
                 id: other.id(),
                 name: other.data('fullName'),
-                type: type
+                direction: direction,
+                type: edgeData.type || 'link',
+                sharedTags: edgeData.sharedTags || []
             });
         });
 
@@ -838,10 +891,20 @@ class GraphView extends Utils.EventEmitter {
         connections.forEach(connection => {
             const item = document.createElement('div');
             item.className = 'connection-item';
-            item.innerHTML = `
-                <span class="connection-type ${connection.type}">${connection.type}</span>
-                <span class="connection-name">${connection.name}</span>
-            `;
+            
+            const typeLabel = connection.type === 'tag' ? 'tag' : 'link';
+            const directionLabel = connection.direction;
+            
+            let connectionInfo = `<span class="connection-type ${connection.direction} ${connection.type}">${typeLabel} (${directionLabel})</span>`;
+            connectionInfo += `<span class="connection-name">${connection.name}</span>`;
+            
+            if (connection.type === 'tag' && connection.sharedTags.length > 0) {
+                connectionInfo += `<div class="shared-tags">Shared tags: ${connection.sharedTags.map(tag => 
+                    `<span class="tag-badge small">${tag}</span>`
+                ).join(' ')}</div>`;
+            }
+            
+            item.innerHTML = connectionInfo;
             item.addEventListener('click', () => {
                 const targetNode = this.cy.getElementById(connection.id);
                 if (targetNode.length > 0) {
@@ -1036,6 +1099,7 @@ class GraphView extends Utils.EventEmitter {
 
         this.controls.statsFiles.textContent = `${this.graphData.stats.totalFiles} files`;
         this.controls.statsLinks.textContent = `${this.graphData.stats.totalLinks} links`;
+        this.controls.statsTags.textContent = `${this.graphData.stats.totalTagConnections || 0} tag connections`;
         this.controls.statsOrphans.textContent = `${this.graphData.stats.orphanedFiles} orphans`;
     }
 

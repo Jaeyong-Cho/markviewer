@@ -1044,3 +1044,46 @@
     opacity: 0.8 !important;
     transition: opacity 0.2s ease !important;
 }
+
+/* Tag-related styles */
+.tag-badge {
+    display: inline-block;
+    background: var(--success-color, #28a745);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-right: 4px;
+    margin-bottom: 2px;
+}
+
+.tag-badge.small {
+    padding: 1px 4px;
+    font-size: 9px;
+}
+
+/* Enhanced connection type styling */
+.connection-type.tag {
+    background: var(--success-color, #28a745);
+    color: white;
+}
+
+.connection-type.link {
+    background: var(--primary-color, #0366d6);
+    color: white;
+}
+
+.shared-tags {
+    margin-top: 4px;
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.connection-item {
+    position: relative;
+}
+
+.connection-item .shared-tags {
+    margin-left: 2px;
+}
