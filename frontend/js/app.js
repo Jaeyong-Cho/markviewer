@@ -31,6 +31,8 @@ class MarkViewerApp extends Utils.EventEmitter {
         this.handleFileSelect = this.handleFileSelect.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
         this.handleSidebarToggle = this.handleSidebarToggle.bind(this);
+        this.handleSidebarShow = this.handleSidebarShow.bind(this);
+        this.handleSidebarHide = this.handleSidebarHide.bind(this);
         this.handleKeyboard = this.handleKeyboard.bind(this);
         this.handleResize = this.handleResize.bind(this);
 
@@ -130,6 +132,8 @@ class MarkViewerApp extends Utils.EventEmitter {
             currentWorkspacePath: document.getElementById('current-workspace'),
             sidebarToggle: document.getElementById('sidebar-toggle'),
             sidebar: document.getElementById('sidebar'),
+            sidebarShowBtn: document.getElementById('sidebar-show-btn'),
+            sidebarHideBtn: document.getElementById('sidebar-hide-btn'),
             searchInput: document.getElementById('search-input'),
             searchClear: document.getElementById('search-clear'),
             searchResults: document.getElementById('search-results'),
@@ -203,6 +207,27 @@ class MarkViewerApp extends Utils.EventEmitter {
 
         // Sidebar toggle
         this.elements.sidebarToggle.addEventListener('click', this.handleSidebarToggle);
+        
+        // Sidebar edge toggle buttons
+        if (this.elements.sidebarShowBtn) {
+            this.elements.sidebarShowBtn.addEventListener('click', this.handleSidebarShow);
+            this.elements.sidebarShowBtn.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    this.handleSidebarShow();
+                }
+            });
+        }
+        
+        if (this.elements.sidebarHideBtn) {
+            this.elements.sidebarHideBtn.addEventListener('click', this.handleSidebarHide);
+            this.elements.sidebarHideBtn.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    this.handleSidebarHide();
+                }
+            });
+        }
 
         // Keyboard shortcuts
         document.addEventListener('keydown', this.handleKeyboard);
@@ -456,13 +481,31 @@ class MarkViewerApp extends Utils.EventEmitter {
     }
 
     /**
+     * Handle sidebar show (from edge button)
+     */
+    handleSidebarShow() {
+        this.updateState({ sidebarOpen: true });
+        this.updateSidebarVisibility();
+    }
+
+    /**
+     * Handle sidebar hide (from edge button)
+     */
+    handleSidebarHide() {
+        this.updateState({ sidebarOpen: false });
+        this.updateSidebarVisibility();
+    }
+
+    /**
      * Update sidebar visibility
      */
     updateSidebarVisibility() {
         if (this.state.sidebarOpen) {
             this.elements.sidebar.classList.add('open');
+            this.elements.sidebar.classList.remove('collapsed');
         } else {
             this.elements.sidebar.classList.remove('open');
+            this.elements.sidebar.classList.add('collapsed');
         }
     }
 

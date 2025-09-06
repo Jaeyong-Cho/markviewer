@@ -238,6 +238,7 @@ body {
     display: flex;
     flex: 1;
     overflow: hidden;
+    transition: all var(--transition-normal);
 }
 
 /* Content area */
@@ -247,6 +248,7 @@ body {
     flex-direction: column;
     overflow: hidden;
     background-color: var(--background-color);
+    transition: all var(--transition-normal);
 }
 
 .main-content {

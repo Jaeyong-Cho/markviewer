@@ -351,6 +351,17 @@ body.resizing * {
     border-radius: 2px;
 }
 
+/* Sidebar collapsed state for desktop */
+@media (min-width: 769px) {
+    .sidebar.collapsed {
+        display: none;
+    }
+    
+    .sidebar.collapsed ~ .sidebar-resizer {
+        display: none;
+    }
+}
+
 /* Responsive sidebar */
 @media (max-width: 768px) {
     .sidebar {
@@ -448,5 +459,75 @@ body.resizing * {
     
     .tree-expand-btn:not(.expanded)::before {
         content: '▶';
+    }
+}
+
+/* Sidebar Edge Toggle Buttons */
+.sidebar-edge-toggle {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 60px;
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-edge-toggle:hover {
+    background-color: var(--background-hover);
+    color: var(--primary-color);
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-edge-toggle:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.sidebar-show-btn {
+    left: 0;
+    border-radius: 0 12px 12px 0;
+    border-left: none;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-50%) translateX(-100%);
+    transition: all 0.3s ease;
+}
+
+.sidebar-hide-btn {
+    left: var(--sidebar-width);
+    border-radius: 0 12px 12px 0;
+    border-left: none;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%) translateX(0);
+    transition: all 0.3s ease;
+}
+
+/* Show/hide states */
+.sidebar.collapsed ~ .sidebar-show-btn {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%) translateX(0);
+}
+
+.sidebar.collapsed ~ .sidebar-hide-btn {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-50%) translateX(-100%);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .sidebar-edge-toggle {
+        display: none;
     }
 }
