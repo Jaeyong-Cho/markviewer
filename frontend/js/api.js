@@ -245,9 +245,22 @@ class ApiService {
     /**
      * Clear all cached data
      */
-    clearCache() {
-        this.cache.clear();
-        console.log('API cache cleared');
+    clearCache(filePath = null) {
+        if (filePath) {
+            // Clear cache for specific file
+            const keysToDelete = [];
+            for (const key of this.cache.keys()) {
+                if (key.includes(filePath)) {
+                    keysToDelete.push(key);
+                }
+            }
+            keysToDelete.forEach(key => this.cache.delete(key));
+            console.log(`Cache cleared for file: ${filePath}`);
+        } else {
+            // Clear all cache
+            this.cache.clear();
+            console.log('API cache cleared');
+        }
     }
 
     /**
@@ -312,7 +325,9 @@ class ApiService {
 }
 
 // Create global API service instance
-window.API = ApiService; // Export class
+window.API = {
+    ApiService: ApiService
+};
 window.api = new ApiService(); // Export instance
 
 // Periodic cache cleanup

@@ -2,9 +2,12 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
 const fileHandler = require('./services/file-handler');
 const plantumlService = require('./services/plantuml-service');
 const searchService = require('./services/search-service');
+const fileWatcher = require('./services/file-watcher');
 
 /**
  * Express server for markdown viewer backend
@@ -13,6 +16,30 @@ const searchService = require('./services/search-service');
 class MarkViewerServer {
     constructor(options = {}) {
         this.app = express();
+        this.server = createServer(this.app);
+        
+        // Initialize Socket.IO
+        this.io = new Server(this.server, {
+            cors: {
+                origin: function(origin, callback) {
+                    // Allow requests with no origin (mobile apps, curl, etc.)
+                    if (!origin) return callback(null, true);
+                    
+                    // Allow localhost and local network access
+                    const allowedOrigins = [
+                        /^https?:\/\/localhost(:\d+)?$/,
+                        /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
+                        /^https?:\/\/192\.168\.\d+\.\d+(:\d+)?$/,
+                        /^https?:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/,
+                        /^https?:\/\/172\.(1[6-9]|2\d|3[01])\.\d+\.\d+(:\d+)?$/
+                    ];
+                    
+                    const isAllowed = allowedOrigins.some(pattern => pattern.test(origin));
+                    callback(null, isAllowed);
+                },
+                credentials: true
+            }
+        });
         
         // Port configuration with multiple fallbacks
         this.port = options.port || 
@@ -26,6 +53,7 @@ class MarkViewerServer {
         
         this.setupMiddleware();
         this.setupRoutes();
+        this.setupWebSocket();
     }
 
     /**
@@ -102,6 +130,10 @@ class MarkViewerServer {
                 }
 
                 const directoryTree = await fileHandler.getDirectoryTree(rootPath);
+                
+                // Start file watcher for this directory
+                fileWatcher.startWatching(rootPath);
+                
                 res.json(directoryTree);
             } catch (error) {
                 console.error('Error getting directory tree:', error);
@@ -231,6 +263,17 @@ class MarkViewerServer {
             }
         });
 
+        // File watcher stats endpoint
+        this.app.get('/api/watcher/stats', (req, res) => {
+            try {
+                const stats = fileWatcher.getStats();
+                res.json(stats);
+            } catch (error) {
+                console.error('Error getting watcher stats:', error);
+                res.status(500).json({ error: error.message });
+            }
+        });
+
         // Serve frontend for all other routes (SPA support)
         this.app.get('*', (req, res) => {
             const frontendPath = path.join(__dirname, '..', 'frontend', 'index.html');
@@ -248,14 +291,71 @@ class MarkViewerServer {
     }
 
     /**
+     * Setup WebSocket connections for real-time file updates
+     */
+    setupWebSocket() {
+        this.io.on('connection', (socket) => {
+            console.log(`Client connected: ${socket.id}`);
+            
+            // Add client to file watcher subscribers
+            fileWatcher.addSubscriber(socket);
+            
+            // Handle client requests for watcher stats
+            socket.on('getWatcherStats', (callback) => {
+                const stats = fileWatcher.getStats();
+                if (callback && typeof callback === 'function') {
+                    callback(stats);
+                }
+            });
+            
+            // Handle client disconnect
+            socket.on('disconnect', () => {
+                console.log(`Client disconnected: ${socket.id}`);
+            });
+            
+            // Send welcome message
+            socket.emit('connected', {
+                message: 'Connected to MarkViewer file watcher',
+                timestamp: new Date().toISOString()
+            });
+        });
+        
+        console.log('WebSocket server initialized for real-time file updates');
+    }
+
+    /**
      * Start the server
      */
     start() {
-        this.app.listen(this.port, '0.0.0.0', () => {
+        this.server.listen(this.port, '0.0.0.0', () => {
             console.log(`MarkViewer server running on http://0.0.0.0:${this.port}`);
             console.log(`API available at http://0.0.0.0:${this.port}/api`);
             console.log(`Frontend available at http://0.0.0.0:${this.port}`);
+            console.log(`WebSocket available for real-time updates`);
             console.log(`External access: http://<your-ip>:${this.port}`);
+        });
+        
+        // Graceful shutdown
+        process.on('SIGTERM', () => this.shutdown());
+        process.on('SIGINT', () => this.shutdown());
+    }
+    
+    /**
+     * Graceful shutdown
+     */
+    async shutdown() {
+        console.log('Shutting down server...');
+        
+        // Stop all file watchers
+        await fileWatcher.stopAllWatchers();
+        
+        // Close WebSocket connections
+        this.io.close();
+        
+        // Close HTTP server
+        this.server.close(() => {
+            console.log('Server shut down complete');
+            process.exit(0);
         });
     }
 }

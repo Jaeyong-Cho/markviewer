@@ -4,11 +4,22 @@
  */
 
 class Sidebar extends Utils.EventEmitter {
-    constructor(container, app) {
+    constructor(container) {
         super();
         this.container = container;
-        this.app = app;
-        this.treeContainer = container.querySelector('#directory-tree');
+        
+        if (!this.container) {
+            console.error('Sidebar: Container element not found');
+            return;
+        }
+        
+        this.treeContainer = this.container.querySelector('#directory-tree');
+        
+        if (!this.treeContainer) {
+            console.error('Sidebar: Tree container not found');
+            return;
+        }
+        
         this.expandedDirectories = new Set();
         this.activeFile = null;
         
@@ -19,6 +30,11 @@ class Sidebar extends Utils.EventEmitter {
      * Setup event listeners for the sidebar
      */
     setupEventListeners() {
+        if (!this.treeContainer) {
+            console.error('Sidebar: Cannot setup event listeners - tree container not found');
+            return;
+        }
+        
         // Handle clicks on tree items
         this.treeContainer.addEventListener('click', (event) => {
             this.handleTreeClick(event);
@@ -294,6 +310,8 @@ class Sidebar extends Utils.EventEmitter {
      * @param {HTMLElement} itemContent - Item content element
      */
     selectFile(filePath, itemContent) {
+        console.log('Sidebar: selectFile called with:', filePath);
+        
         // Remove previous selection
         const previousSelection = this.treeContainer.querySelector('.tree-item-content.active');
         if (previousSelection) {
@@ -307,6 +325,7 @@ class Sidebar extends Utils.EventEmitter {
         // Ensure item is visible
         Utils.scrollToElement(itemContent);
 
+        console.log('Sidebar: Emitting fileSelect event with:', filePath);
         // Emit file selection event
         this.emit('fileSelect', filePath);
     }

@@ -8,16 +8,26 @@
     <title>MarkViewer - Markdown Viewer</title>
     
     <!-- Prevent module loading issues -->
-    <meta http-equiv="Content-Security-Policy" content="
+    <meta http-            // Check if all dependencies are loaded
+            const dependencies = {
+                Utils: typeof Utils !== 'undefined',
+                WebSocketClient: typeof WebSocketClient !== 'undefined',
+                API: typeof API !== 'undefined', 
+                MarkdownRenderer: typeof MarkdownRenderer !== 'undefined',
+                Sidebar: typeof Sidebar !== 'undefined',
+                SearchComponent: typeof SearchComponent !== 'undefined',
+                MarkViewerApp: typeof MarkViewerApp !== 'undefined'
+            };ntent-Security-Policy" content="
         default-src 'self'; 
-        script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; 
+        script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.socket.io; 
         style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; 
-        connect-src 'self' http://localhost:3001;
+        connect-src 'self' http://localhost:3001 ws://localhost:3001;
         img-src 'self' data: blob: https: http:;
     ">
     
     <!-- External libraries from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/marked@9.1.2/marked.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <!-- Use the official CDN with fallback -->
 
     <script>
@@ -310,7 +320,7 @@ function renderMarkdown(content) {
         // Enhanced script loading with error handling and proper dependency management
         const timestamp = new Date().getTime();
         let loadedScripts = 0;
-        const totalScripts = 6;
+        const totalScripts = 7;
         let allScriptsLoaded = false;
         
         const loadScript = (src) => {
@@ -337,15 +347,14 @@ function renderMarkdown(content) {
         // Load scripts sequentially to ensure proper dependency order
         const scripts = [
             'js/utils.js',
-            'js/api.js', 
+            'js/websocket.js',
+            'js/api.js',
             'js/renderer.js',
+            'js/search.js',
             'js/sidebar.js',
             'js/sidebar-resizer.js',
-            'js/search.js',
             'js/app.js'
-        ];
-        
-        // Load scripts one by one to ensure dependency order
+        ];        // Load scripts one by one to ensure dependency order
         async function loadScriptsSequentially() {
             try {
                 for (const script of scripts) {

@@ -376,10 +376,14 @@ class EventEmitter {
      * @param {Function} callback - Event handler
      */
     on(event, callback) {
+        console.log(`EventEmitter: Registering handler for event '${event}'`);
+        
         if (!this.events[event]) {
             this.events[event] = [];
         }
         this.events[event].push(callback);
+        
+        console.log(`EventEmitter: Total handlers for '${event}':`, this.events[event].length);
     }
 
     /**
@@ -398,9 +402,17 @@ class EventEmitter {
      * @param {...*} args - Arguments to pass to handlers
      */
     emit(event, ...args) {
-        if (!this.events[event]) return;
-        this.events[event].forEach(callback => {
+        console.log(`EventEmitter: Emitting event '${event}' with args:`, args);
+        console.log(`EventEmitter: Registered handlers for '${event}':`, this.events[event] ? this.events[event].length : 0);
+        
+        if (!this.events[event]) {
+            console.warn(`EventEmitter: No handlers registered for event '${event}'`);
+            return;
+        }
+        
+        this.events[event].forEach((callback, index) => {
             try {
+                console.log(`EventEmitter: Calling handler ${index} for '${event}'`);
                 callback(...args);
             } catch (error) {
                 console.error(`Error in event handler for ${event}:`, error);

@@ -3,10 +3,14 @@
  */
 
 class MarkdownRenderer extends Utils.EventEmitter {
-    constructor(container, app) {
+    constructor(container) {
         super();
         this.container = container;
-        this.app = app;
+        
+        if (!this.container) {
+            console.error('MarkdownRenderer: Container is null or undefined');
+        }
+        
         this.scrollSpyHandler = null;
         this.tocEnabled = this.getTocEnabledState();
         this.setupMarked();
@@ -164,6 +168,11 @@ class MarkdownRenderer extends Utils.EventEmitter {
      * @param {string} content - Markdown content
      */
     async renderMarkdown(content) {
+        if (!this.container) {
+            console.error('MarkdownRenderer: Container element not found');
+            throw new Error('Container element not found');
+        }
+        
         try {
             // Parse markdown to HTML
             let html = marked.parse(content);
@@ -456,8 +465,9 @@ class MarkdownRenderer extends Utils.EventEmitter {
     processImages() {
         const images = this.container.querySelectorAll('img[data-image-id]');
         
-        images.forEach(img => {
+        images.forEach((img, index) => {
             const originalSrc = img.dataset.originalSrc;
+            
             if (!originalSrc) return;
             
             // Check if this is a relative path (doesn't start with http/https or /)
@@ -466,8 +476,8 @@ class MarkdownRenderer extends Utils.EventEmitter {
                 !originalSrc.startsWith('/') && 
                 !originalSrc.startsWith('data:')) {
                 
-                // This is a relative path - use the API to serve it
-                const currentFile = this.app && this.app.state ? this.app.state.currentFile : null;
+                // Get current file from global app state
+                const currentFile = window.app && window.app.state ? window.app.state.currentFile : null;
                 
                 if (currentFile) {
                     // Build API URL for relative image
@@ -475,7 +485,8 @@ class MarkdownRenderer extends Utils.EventEmitter {
                     img.src = apiUrl;
                 } else {
                     // Fallback: try to load as relative to current location
-                    console.warn('No current file context for relative image:', originalSrc);
+                    console.warn('MarkdownRenderer: No current file context for relative image:', originalSrc);
+                    img.src = originalSrc; // Try as-is
                 }
             } else {
                 // This is an absolute URL (http/https) or data URL - use it directly
@@ -484,6 +495,7 @@ class MarkdownRenderer extends Utils.EventEmitter {
             
             // Add error handling for broken images
             img.addEventListener('error', function(event) {
+                console.error('MarkdownRenderer: Image failed to load:', originalSrc);
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'image-error';
                 errorDiv.innerHTML = `

@@ -22,6 +22,7 @@ class MarkViewerApp extends Utils.EventEmitter {
         this.sidebar = null;
         this.renderer = null;
         this.search = null;
+        this.webSocket = null;
 
         // DOM elements
         this.elements = {};
@@ -60,7 +61,10 @@ class MarkViewerApp extends Utils.EventEmitter {
             // Initialize components
             await this.initializeComponents();
 
-            // Setup event listeners
+            // Setup component event listeners
+            this.setupComponentEvents();
+
+            // Setup DOM event listeners
             this.setupEventListeners();
 
             // Load saved state
@@ -159,13 +163,32 @@ class MarkViewerApp extends Utils.EventEmitter {
      * Initialize component instances
      */
     async initializeComponents() {
-        // Import and initialize components
-        this.sidebar = new Sidebar(this.elements.sidebar, this);
-        this.renderer = new MarkdownRenderer(this.elements.markdownContent, this);
-        this.search = new SearchComponent(this.elements.searchInput, this);
-
-        // Set up inter-component communication
-        this.setupComponentEvents();
+        try {
+            // Initialize API service
+            window.api = new window.API.ApiService();
+            
+            // Initialize sidebar
+            this.sidebar = new Sidebar(this.elements.sidebar);
+            
+            // Initialize search
+            this.search = new SearchComponent();
+            
+            // Initialize markdown renderer
+            this.renderer = new MarkdownRenderer(this.elements.markdownContent);
+            
+            // Initialize WebSocket client (with error handling)
+            try {
+                this.webSocket = new WebSocketClient();
+            } catch (error) {
+                console.warn('WebSocket initialization failed, continuing without real-time updates:', error);
+                this.webSocket = null;
+            }
+            
+            console.log('All components initialized successfully');
+        } catch (error) {
+            console.error('Failed to initialize components:', error);
+            throw error;
+        }
     }
 
     /**
@@ -173,29 +196,52 @@ class MarkViewerApp extends Utils.EventEmitter {
      */
     setupComponentEvents() {
         // Sidebar events
-        this.sidebar.on('fileSelect', this.handleFileSelect);
-        this.sidebar.on('directoryLoad', (tree) => {
-            this.updateState({ directoryTree: tree });
-            this.updateFileCount();
-        });
+        if (this.sidebar) {
+            this.sidebar.on('fileSelect', this.handleFileSelect.bind(this));
+            this.sidebar.on('directoryLoad', (tree) => {
+                this.updateState({ directoryTree: tree });
+                this.updateFileCount();
+            });
+        } else {
+            console.error('App: Sidebar not initialized, cannot setup events');
+        }
 
         // Search events
-        this.search.on('searchResults', (results) => {
-            this.updateState({ searchResults: results, isSearchMode: true });
-            this.showSearchResults();
-        });
-        this.search.on('searchClear', () => {
-            this.updateState({ searchResults: null, isSearchMode: false });
-            this.hideSearchResults();
-        });
-        this.search.on('resultSelect', this.handleFileSelect);
-        this.search.on('openFile', this.handleFileSelect);
+        if (this.search) {
+            this.search.on('searchResults', (results) => {
+                this.updateState({ searchResults: results, isSearchMode: true });
+                this.showSearchResults();
+            });
+            this.search.on('searchClear', () => {
+                this.updateState({ searchResults: null, isSearchMode: false });
+                this.hideSearchResults();
+            });
+            this.search.on('resultSelect', this.handleFileSelect.bind(this));
+            this.search.on('openFile', this.handleFileSelect.bind(this));
 
-        // Make search component globally accessible for inline event handlers
-        window.searchComponent = this.search;
+            // Make search component globally accessible for inline event handlers
+            window.searchComponent = this.search;
+        } else {
+            console.error('App: Search not initialized, cannot setup events');
+        }
 
         // Renderer events
-        this.renderer.on('linkClick', this.handleInternalLink.bind(this));
+        if (this.renderer) {
+            this.renderer.on('linkClick', this.handleInternalLink.bind(this));
+        } else {
+            console.error('App: Renderer not initialized, cannot setup events');
+        }
+        
+        // WebSocket events for real-time file updates
+        if (this.webSocket) {
+            this.webSocket.on('fileChanged', this.handleFileChanged.bind(this));
+            this.webSocket.on('fileAdded', this.handleFileAdded.bind(this));
+            this.webSocket.on('fileRemoved', this.handleFileRemoved.bind(this));
+            this.webSocket.on('directoryAdded', this.handleDirectoryAdded.bind(this));
+            this.webSocket.on('directoryRemoved', this.handleDirectoryRemoved.bind(this));
+        } else {
+            console.warn('App: WebSocket not initialized, real-time updates disabled');
+        }
     }
 
     /**
@@ -246,14 +292,17 @@ class MarkViewerApp extends Utils.EventEmitter {
     loadSavedState() {
         const savedState = Utils.storage.get('markviewer-state', {});
         
-        if (savedState.rootDirectory) {
-            this.updateState({ rootDirectory: savedState.rootDirectory });
-            this.elements.workspaceInput.value = savedState.rootDirectory;
-            this.elements.currentWorkspacePath.textContent = savedState.rootDirectory;
+        // Set default directory if none is saved
+        const defaultDirectory = savedState.rootDirectory || '/Users/jaeyong/workspace/markviewer/test-content';
+        
+        if (defaultDirectory) {
+            this.updateState({ rootDirectory: defaultDirectory });
+            this.elements.workspaceInput.value = defaultDirectory;
+            this.elements.currentWorkspacePath.textContent = defaultDirectory;
             this.elements.currentWorkspacePath.classList.add('selected');
             
             // Load directory tree
-            this.loadDirectoryTree(savedState.rootDirectory);
+            this.loadDirectoryTree(defaultDirectory);
         }
 
         if (savedState.sidebarOpen !== undefined) {
@@ -626,6 +675,145 @@ class MarkViewerApp extends Utils.EventEmitter {
             this.updateState({ sidebarOpen: true });
             this.updateSidebarVisibility();
         }
+    }
+
+    /**
+     * Handle real-time file change events
+     * @param {Object} fileData - Updated file data
+     */
+    async handleFileChanged(fileData) {
+        // If the changed file is currently being viewed, reload it
+        if (this.state.currentFile === fileData.path) {
+            console.log('Current file changed, reloading content...');
+            
+            try {
+                // Update UI with new content
+                await this.renderer.renderMarkdown(fileData.content);
+                
+                // Update file info
+                this.updateFileInfo(fileData.path, fileData);
+                
+                // Show subtle indication that file was updated
+                Utils.showNotification('File updated automatically', 'success', 2000);
+            } catch (error) {
+                console.error('Failed to reload changed file:', error);
+                Utils.showNotification('Failed to reload file changes', 'error');
+            }
+        }
+        
+        // Clear cache for this file to ensure fresh data on next load
+        if (window.api && window.api.clearCache) {
+            window.api.clearCache(fileData.path);
+        }
+    }
+
+    /**
+     * Handle file added events
+     * @param {string} filePath - Path of added file
+     */
+    handleFileAdded(filePath) {
+        console.log('File added:', filePath);
+        
+        // Refresh directory tree if we have a root directory
+        if (this.state.rootDirectory) {
+            this.refreshDirectoryTree();
+        }
+    }
+
+    /**
+     * Handle file removed events
+     * @param {string} filePath - Path of removed file
+     */
+    handleFileRemoved(filePath) {
+        console.log('File removed:', filePath);
+        
+        // If the removed file is currently being viewed, show error message
+        if (this.state.currentFile === filePath) {
+            this.elements.markdownContent.innerHTML = `
+                <div class="error-message">
+                    <h2>File Not Found</h2>
+                    <p>The file "${filePath.split('/').pop()}" has been deleted.</p>
+                    <p>Please select another file from the sidebar.</p>
+                </div>
+            `;
+            
+            Utils.showNotification('Current file was deleted', 'warning');
+        }
+        
+        // Refresh directory tree
+        if (this.state.rootDirectory) {
+            this.refreshDirectoryTree();
+        }
+        
+        // Clear cache for this file
+        if (window.api && window.api.clearCache) {
+            window.api.clearCache(filePath);
+        }
+    }
+
+    /**
+     * Handle directory added events
+     * @param {string} dirPath - Path of added directory
+     */
+    handleDirectoryAdded(dirPath) {
+        console.log('Directory added:', dirPath);
+        
+        // Refresh directory tree
+        if (this.state.rootDirectory) {
+            this.refreshDirectoryTree();
+        }
+    }
+
+    /**
+     * Handle directory removed events
+     * @param {string} dirPath - Path of removed directory
+     */
+    handleDirectoryRemoved(dirPath) {
+        console.log('Directory removed:', dirPath);
+        
+        // Check if current file was in the removed directory
+        if (this.state.currentFile && this.state.currentFile.startsWith(dirPath)) {
+            this.elements.markdownContent.innerHTML = `
+                <div class="error-message">
+                    <h2>Directory Not Found</h2>
+                    <p>The directory containing the current file has been deleted.</p>
+                    <p>Please select another file from the sidebar.</p>
+                </div>
+            `;
+            
+            Utils.showNotification('Current directory was deleted', 'warning');
+        }
+        
+        // Refresh directory tree
+        if (this.state.rootDirectory) {
+            this.refreshDirectoryTree();
+        }
+    }
+
+    /**
+     * Refresh the directory tree
+     */
+    async refreshDirectoryTree() {
+        try {
+            const tree = await window.api.getDirectoryTree(this.state.rootDirectory);
+            this.sidebar.loadTree(tree);
+            this.updateState({ directoryTree: tree });
+            this.updateFileCount();
+        } catch (error) {
+            console.error('Failed to refresh directory tree:', error);
+        }
+    }
+
+    /**
+     * Get WebSocket connection status
+     * @returns {Object} Connection status information
+     */
+    getWebSocketStatus() {
+        if (!this.webSocket) {
+            return { connected: false, error: 'WebSocket not initialized' };
+        }
+        
+        return this.webSocket.getConnectionInfo();
     }
 }
 

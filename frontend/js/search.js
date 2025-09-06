@@ -3,17 +3,22 @@
  */
 
 class SearchComponent extends Utils.EventEmitter {
-    constructor(searchInput, app) {
+    constructor() {
         super();
-        this.searchInput = searchInput;
-        this.app = app;
         
         // Cache DOM elements
+        this.searchInput = document.getElementById('search-input');
         this.searchClear = document.getElementById('search-clear');
         this.searchResults = document.getElementById('search-results');
         this.searchResultsList = document.getElementById('search-results-list');
         this.searchQuery = document.getElementById('search-query');
         this.searchCount = document.getElementById('search-count');
+        
+        // Verify critical elements exist
+        if (!this.searchInput) {
+            console.error('Search input element not found');
+            return;
+        }
         
         // Search state
         this.currentQuery = '';
@@ -28,6 +33,11 @@ class SearchComponent extends Utils.EventEmitter {
      * Setup event listeners for search functionality
      */
     setupEventListeners() {
+        if (!this.searchInput) {
+            console.warn('Search input not found, skipping event listeners setup');
+            return;
+        }
+
         // Search input events
         this.searchInput.addEventListener('input', (event) => {
             this.handleSearchInput(event.target.value);
@@ -46,14 +56,18 @@ class SearchComponent extends Utils.EventEmitter {
         });
 
         // Clear button
-        this.searchClear.addEventListener('click', () => {
-            this.clear();
-        });
+        if (this.searchClear) {
+            this.searchClear.addEventListener('click', () => {
+                this.clear();
+            });
+        }
 
         // Handle result clicks
-        this.searchResultsList.addEventListener('click', (event) => {
-            this.handleResultClick(event);
-        });
+        if (this.searchResultsList) {
+            this.searchResultsList.addEventListener('click', (event) => {
+                this.handleResultClick(event);
+            });
+        }
     }
 
     /**
@@ -361,6 +375,8 @@ class SearchComponent extends Utils.EventEmitter {
      * Update clear button visibility
      */
     updateClearButtonVisibility() {
+        if (!this.searchClear) return;
+        
         if (this.currentQuery) {
             this.searchClear.style.opacity = '1';
             this.searchClear.style.pointerEvents = 'auto';
@@ -389,7 +405,9 @@ class SearchComponent extends Utils.EventEmitter {
      * Clear search input and results
      */
     clear() {
-        this.searchInput.value = '';
+        if (this.searchInput) {
+            this.searchInput.value = '';
+        }
         this.currentQuery = '';
         this.currentResults = null;
         
@@ -401,7 +419,9 @@ class SearchComponent extends Utils.EventEmitter {
         
         // Update UI
         this.updateClearButtonVisibility();
-        this.searchResults.classList.add('hidden');
+        if (this.searchResults) {
+            this.searchResults.classList.add('hidden');
+        }
         this.setSearchingState(false);
         
         // Emit clear event
