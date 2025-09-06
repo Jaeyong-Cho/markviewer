@@ -49,24 +49,46 @@ This starts separate frontend and backend servers for development.
 
 ### Option 3: Download Pre-packaged Release
 
-1. Download the latest release package
+#### Traditional Package (Node.js required)
+1. Download the latest release package (ZIP/TAR.GZ)
 2. Extract and run the installation:
    - **Unix/Linux/macOS**: `./install.sh && ./markviewer`
    - **Windows**: `install.bat` then `markviewer.bat`
 
-## Packaging for Distribution
+#### Standalone Executable (No dependencies)
+1. Download the platform-specific executable package
+2. Extract and run directly:
+   - **Unix/Linux/macOS**: `./markviewer` or `./start.sh`
+   - **Windows**: `markviewer.exe` or `start.bat`
+   - **No Node.js installation required!**
 
-To create a distributable package:
+## Distribution Packaging
 
+Create packages for distribution across platforms:
+
+### Quick Build (Everything)
 ```bash
-npm run package
+npm run build-all
 ```
 
-This creates:
-- Self-contained ZIP and TAR.GZ archives
-- Pre-installed dependencies
-- Cross-platform launcher scripts
-- Installation instructions
+### Individual Package Types
+```bash
+# Traditional packages (requires Node.js on target)
+npm run package
+
+# Standalone executables (no dependencies)
+npm run package-executables
+
+# Both types
+npm run package-all
+```
+
+**Available Formats:**
+- **Traditional**: ZIP (cross-platform), TAR.GZ (Unix preferred)
+- **Executables**: Windows EXE, macOS binaries, Linux binaries
+- **All include**: PlantUML support, documentation, easy installers
+
+See [PACKAGING.md](docs/PACKAGING.md) for detailed packaging documentation.
 
 ## Using the Application
 

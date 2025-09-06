@@ -15,8 +15,12 @@
     "setup": "npm run download-plantuml && npm run install-all",
     "download-plantuml": "node scripts/download-plantuml.js",
     "package": "./scripts/package.sh",
-    "test-package": "node start.js --test",
-    "clean": "rm -rf release node_modules backend/node_modules frontend/node_modules"
+    "package-executables": "node scripts/package-executables.js",
+    "package-all": "npm run package && npm run package-executables",
+    "build-all": "./scripts/build-all.sh",
+    "build-all-win": "scripts\\build-all.bat",
+    "test-package": "node scripts/test-package.js",
+    "clean": "rm -rf release node_modules backend/node_modules frontend/node_modules dist"
   },
   "keywords": ["markdown", "viewer", "plantuml", "mermaid", "search", "documentation"],
   "author": "",
@@ -25,6 +29,32 @@
     "node": ">=14.0.0"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "pkg": "^5.8.1",
+    "archiver": "^6.0.1"
+  },
+  "pkg": {
+    "scripts": [
+      "start.js",
+      "backend/**/*.js",
+      "frontend/**/*.js"
+    ],
+    "assets": [
+      "backend/package.json",
+      "frontend/package.json",
+      "frontend/**/*.html",
+      "frontend/**/*.css",
+      "frontend/**/*.js",
+      "frontend/libs/**/*",
+      "tools/**/*",
+      "docs/**/*"
+    ],
+    "targets": [
+      "node18-win-x64",
+      "node18-macos-x64",
+      "node18-macos-arm64", 
+      "node18-linux-x64"
+    ],
+    "outputPath": "dist"
   }
 }

@@ -18,6 +18,29 @@ class MarkViewerStarter {
         this.backendPort = 3001;
         this.frontendPort = 8080;
         this.testMode = process.argv.includes('--test');
+        this.noBrowser = process.argv.includes('--no-browser');
+        this.isPackaged = this.checkIfPackaged();
+        this.appDir = this.getAppDirectory();
+    }
+
+    /**
+     * Check if running as a packaged executable
+     */
+    checkIfPackaged() {
+        return process.pkg !== undefined;
+    }
+
+    /**
+     * Get the application directory (different for packaged vs development)
+     */
+    getAppDirectory() {
+        if (this.isPackaged) {
+            // When packaged, assets are embedded and __dirname points to the executable
+            return path.dirname(process.execPath);
+        } else {
+            // In development, use the script directory
+            return __dirname;
+        }
     }
 
     /**
@@ -28,11 +51,19 @@ class MarkViewerStarter {
         console.log('');
 
         try {
-            // Step 1: Verify Node.js
-            await this.checkNodeJs();
+            // Step 1: Verify environment
+            if (!this.isPackaged) {
+                await this.checkNodeJs();
+            } else {
+                console.log('✓ Running as packaged executable');
+            }
             
-            // Step 2: Check dependencies
-            await this.checkDependencies();
+            // Step 2: Check dependencies (skip for packaged)
+            if (!this.isPackaged) {
+                await this.checkDependencies();
+            } else {
+                console.log('✓ Dependencies bundled in executable');
+            }
             
             // Step 3: Find available ports
             await this.findAvailablePorts();
@@ -47,6 +78,14 @@ class MarkViewerStarter {
             this.setupShutdownHandlers();
             
             console.log('✅ MarkViewer is ready!');
+            console.log('');
+            console.log(`🌐 Web interface: http://localhost:${this.backendPort}`);
+            console.log('');
+            
+            // Open browser if not disabled
+            if (!this.noBrowser && !this.testMode) {
+                await this.openBrowser();
+            }
             
             if (this.testMode) {
                 console.log('🧪 Test mode - shutting down...');
@@ -57,6 +96,45 @@ class MarkViewerStarter {
         } catch (error) {
             console.error('❌ Failed to start MarkViewer:', error.message);
             process.exit(1);
+        }
+    }
+
+    /**
+     * Open browser automatically
+     */
+    async openBrowser() {
+        const url = `http://localhost:${this.backendPort}`;
+        const { exec } = require('child_process');
+        
+        let command;
+        switch (process.platform) {
+            case 'darwin': // macOS
+                command = `open "${url}"`;
+                break;
+            case 'win32': // Windows
+                command = `start "${url}"`;
+                break;
+            default: // Linux and others
+                command = `xdg-open "${url}"`;
+                break;
+        }
+        
+        try {
+            await new Promise((resolve, reject) => {
+                exec(command, (error) => {
+                    if (error) {
+                        console.log('⚠️  Could not open browser automatically');
+                        console.log(`   Please open: ${url}`);
+                        resolve();
+                    } else {
+                        console.log('🌐 Browser opened automatically');
+                        resolve();
+                    }
+                });
+            });
+        } catch (error) {
+            console.log('⚠️  Could not open browser automatically');
+            console.log(`   Please open: ${url}`);
         }
     }
 
@@ -183,28 +261,43 @@ class MarkViewerStarter {
         return new Promise((resolve, reject) => {
             const env = { 
                 ...process.env, 
-                PORT: this.backendPort.toString()
+                PORT: this.backendPort.toString(),
+                MARKVIEWER_APP_DIR: this.appDir
             };
             
-            this.backendProcess = spawn('node', ['server.js'], {
-                cwd: path.join(__dirname, 'backend'),
-                env: env,
-                stdio: 'inherit'
-            });
-            
-            this.backendProcess.on('error', (error) => {
-                reject(new Error(`Failed to start backend: ${error.message}`));
-            });
-            
-            // Wait a moment for backend to start
-            setTimeout(() => {
-                if (this.backendProcess && !this.backendProcess.killed) {
-                    console.log(`✓ Backend server started on port ${this.backendPort}`);
-                    resolve();
-                } else {
-                    reject(new Error('Backend process died during startup'));
+            if (this.isPackaged) {
+                // For packaged executable, start backend in the same process
+                try {
+                    const server = require('./backend/server.js');
+                    setTimeout(() => {
+                        console.log(`✓ Backend server started on port ${this.backendPort}`);
+                        resolve();
+                    }, 1000);
+                } catch (error) {
+                    reject(new Error(`Failed to start backend: ${error.message}`));
                 }
-            }, 2000);
+            } else {
+                // For development, run backend as separate process
+                this.backendProcess = spawn('node', ['server.js'], {
+                    cwd: path.join(__dirname, 'backend'),
+                    env: env,
+                    stdio: 'inherit'
+                });
+                
+                this.backendProcess.on('error', (error) => {
+                    reject(new Error(`Failed to start backend: ${error.message}`));
+                });
+                
+                // Wait a moment for backend to start
+                setTimeout(() => {
+                    if (this.backendProcess && !this.backendProcess.killed) {
+                        console.log(`✓ Backend server started on port ${this.backendPort}`);
+                        resolve();
+                    } else {
+                        reject(new Error('Backend process died during startup'));
+                    }
+                }, 2000);
+            }
         });
     }
 
