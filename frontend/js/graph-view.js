@@ -80,7 +80,10 @@ class GraphView extends Utils.EventEmitter {
                         'font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
                         'border-width': 2,
                         'border-color': '#a50034',
-                        'border-opacity': 0.8
+                        'border-opacity': 0.8,
+                        'transition-property': 'opacity, background-color, border-color, border-width',
+                        'transition-duration': '0.3s',
+                        'transition-timing-function': 'ease-out'
                     }
                 },
                 {
@@ -119,7 +122,10 @@ class GraphView extends Utils.EventEmitter {
                         'target-arrow-shape': 'triangle',
                         'curve-style': 'bezier',
                         'arrow-scale': 1.2,
-                        'opacity': 0.7
+                        'opacity': 0.7,
+                        'transition-property': 'opacity, line-color, target-arrow-color, width',
+                        'transition-duration': '0.3s',
+                        'transition-timing-function': 'ease-out'
                     }
                 },
                 {
@@ -1125,7 +1131,7 @@ class GraphView extends Utils.EventEmitter {
     }
 
     /**
-     * Focus on a specific node
+     * Focus on a specific node with smooth animation
      * @param {string} nodeId - Node ID to focus on
      */
     focusOnNode(nodeId) {
@@ -1138,7 +1144,8 @@ class GraphView extends Utils.EventEmitter {
             center: { eles: node },
             zoom: 1.5
         }, {
-            duration: 750
+            duration: 600,
+            easing: 'ease-in-out'
         });
     }
 
@@ -1429,7 +1436,7 @@ class GraphView extends Utils.EventEmitter {
     }
 
     /**
-     * Focus on a specific node
+     * Focus on a specific node with smooth animation and highlight effect
      */
     focusOnNode(nodeId) {
         if (!this.cy) return;
@@ -1437,18 +1444,18 @@ class GraphView extends Utils.EventEmitter {
         const node = this.cy.getElementById(nodeId);
         if (node.length === 0) return;
 
-        // Animate to focus on the node
+        // Animate to focus on the node with smooth easing
         this.cy.animate({
             center: {
                 eles: node
             },
             zoom: 2
         }, {
-            duration: 500,
-            easing: 'ease-out'
+            duration: 600,
+            easing: 'ease-in-out'
         });
 
-        // Highlight the node temporarily
+        // Highlight the node temporarily with smooth transition
         node.addClass('highlighted');
         setTimeout(() => {
             node.removeClass('highlighted');
@@ -1612,7 +1619,7 @@ class GraphView extends Utils.EventEmitter {
     }
 
     /**
-     * Focus on a node with specified depth and animation
+     * Focus on a node with specified depth and smooth animation
      */
     focusOnNodeWithDepth(node, depth) {
         if (!this.cy || !node) return;
@@ -1636,64 +1643,129 @@ class GraphView extends Utils.EventEmitter {
             focusNodes = this.cy.elements();
         }
         
-        // Hide non-focus nodes completely
+        // Get all nodes and edges
         const allNodes = this.cy.nodes();
         const allEdges = this.cy.edges();
         const hiddenNodes = allNodes.difference(focusNodes.nodes());
         const focusEdges = focusNodes.edgesWith(focusNodes);
         const hiddenEdges = allEdges.difference(focusEdges);
         
-        // Completely hide nodes and edges outside focus area
-        hiddenNodes.style({
-            'display': 'none'
+        // Step 1: Smoothly fade out non-focus elements
+        hiddenNodes.animate({
+            style: { 'opacity': 0 }
+        }, {
+            duration: 300,
+            easing: 'ease-out',
+            complete: () => {
+                // Hide them completely after fade out
+                hiddenNodes.style({ 'display': 'none' });
+            }
         });
         
-        hiddenEdges.style({
-            'display': 'none'
+        hiddenEdges.animate({
+            style: { 'opacity': 0 }
+        }, {
+            duration: 300,
+            easing: 'ease-out',
+            complete: () => {
+                // Hide them completely after fade out
+                hiddenEdges.style({ 'display': 'none' });
+            }
         });
         
-        // Show focus nodes and edges
+        // Step 2: Ensure focus elements are visible and animate them in
         focusNodes.nodes().style({
-            'display': 'element',
-            'opacity': 1,
-            'background-color': '#a50034'
+            'display': 'element'
+        }).animate({
+            style: {
+                'opacity': 1,
+                'background-color': '#a50034'
+            }
+        }, {
+            duration: 400,
+            easing: 'ease-out'
         });
         
         focusEdges.style({
-            'display': 'element',
-            'opacity': 0.7
+            'display': 'element'
+        }).animate({
+            style: {
+                'opacity': 0.7
+            }
+        }, {
+            duration: 400,
+            easing: 'ease-out'
         });
         
-        // Focus and zoom to the target node without animation for better performance
-        this.cy.center(node);
-        this.cy.zoom(1.5);
+        // Step 3: Smoothly animate camera to focus on the target node
+        setTimeout(() => {
+            this.cy.animate({
+                center: { eles: node },
+                zoom: 1.5
+            }, {
+                duration: 600,
+                easing: 'ease-in-out'
+            });
+        }, 150); // Small delay to let the fade effects start
         
         // Update selected node
         this.selectNode(node);
     }
 
     /**
-     * Clear focus and show all nodes
+     * Clear focus and show all nodes with smooth animation
      */
     clearFocus() {
         if (!this.cy) return;
 
         this.currentFocusNode = null;
         
-        // Show all nodes and edges
-        this.cy.nodes().style({
+        // First, make all hidden elements visible but transparent
+        const hiddenNodes = this.cy.nodes().filter(node => node.style('display') === 'none');
+        const hiddenEdges = this.cy.edges().filter(edge => edge.style('display') === 'none');
+        
+        hiddenNodes.style({
             'display': 'element',
-            'opacity': 1,
-            'background-color': '#a50034'
+            'opacity': 0
         });
         
-        this.cy.edges().style({
+        hiddenEdges.style({
             'display': 'element',
-            'opacity': 0.7
+            'opacity': 0
         });
         
-        // Fit to view without animation
-        this.cy.fit(this.cy.elements(), 50);
+        // Animate all nodes and edges back to full visibility
+        this.cy.nodes().animate({
+            style: {
+                'opacity': 1,
+                'background-color': '#a50034'
+            }
+        }, {
+            duration: 500,
+            easing: 'ease-out'
+        });
+        
+        this.cy.edges().animate({
+            style: {
+                'opacity': 0.7
+            }
+        }, {
+            duration: 500,
+            easing: 'ease-out'
+        });
+        
+        // Smoothly animate camera to fit all elements
+        setTimeout(() => {
+            this.cy.animate({
+                fit: {
+                    eles: this.cy.elements(),
+                    padding: 50
+                }
+            }, {
+                duration: 600,
+                easing: 'ease-in-out'
+            });
+        }, 100); // Small delay to let the fade-in effects start
     }
 
     /**
