@@ -269,11 +269,38 @@ class MarkdownRenderer extends Utils.EventEmitter {
         if (!tags || !Array.isArray(tags) || tags.length === 0) {
             return '';
         }
-        
-        const tagBadges = tags.map(tag => 
-            `<span class="tag-badge">#${Utils.escapeHtml(tag)}</span>`
-        ).join(' ');
-        
+
+        // Color palette for tags
+        const palette = [
+            '#d97706', // amber
+            '#2563eb', // blue
+            '#059669', // green
+            '#a21caf', // purple
+            '#be185d', // pink
+            '#e11d48', // red
+            '#f59e42', // orange
+            '#10b981', // teal
+            '#6366f1', // indigo
+            '#f43f5e', // rose
+            '#64748b', // slate
+            '#fbbf24', // yellow
+        ];
+
+        // Simple hash function for tag color
+        function tagColor(tag) {
+            let hash = 0;
+            for (let i = 0; i < tag.length; i++) {
+                hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const idx = Math.abs(hash) % palette.length;
+            return palette[idx];
+        }
+
+        const tagBadges = tags.map(tag => {
+            const color = tagColor(tag);
+            return `<span class="tag-badge" style="background:${color};">#${Utils.escapeHtml(tag)}</span>`;
+        }).join(' ');
+
         return `<div class="document-tags">
             <div class="tags-label">Tags:</div>
             <div class="tags-container">${tagBadges}</div>

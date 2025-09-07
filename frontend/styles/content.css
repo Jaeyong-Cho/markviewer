@@ -1012,17 +1012,31 @@
     gap: 6px;
 }
 
+/* Tag badge fallback and color classes */
 .document-tags .tag-badge {
     display: inline-block;
     padding: 4px 8px;
-    background: var(--primary-color);
-    color: #ffffff;
+    color: #fff;
     border-radius: 12px;
     font-size: 12px;
     font-weight: 500;
     text-decoration: none;
     transition: background-color 0.2s ease;
+    background: #d97706; /* fallback, overridden by inline style */
 }
+
+.tag-badge.color-amber { background: #d97706; }
+.tag-badge.color-blue { background: #2563eb; }
+.tag-badge.color-green { background: #059669; }
+.tag-badge.color-purple { background: #a21caf; }
+.tag-badge.color-pink { background: #be185d; }
+.tag-badge.color-red { background: #e11d48; }
+.tag-badge.color-orange { background: #f59e42; }
+.tag-badge.color-teal { background: #10b981; }
+.tag-badge.color-indigo { background: #6366f1; }
+.tag-badge.color-rose { background: #f43f5e; }
+.tag-badge.color-slate { background: #64748b; }
+.tag-badge.color-yellow { background: #fbbf24; }
 
 .document-tags .tag-badge:hover {
     background: var(--secondary-color);

@@ -1215,6 +1215,12 @@ function renderMarkdown(content) {
             
             if (response.success) {
                 await this.graphView.loadGraphData(response.data);
+                // Focus on current file after graph is loaded
+                if (this.state.currentFile) {
+                    setTimeout(() => {
+                        this.graphView.focusOnCurrentFile(this.state.currentFile);
+                    }, 300);
+                }
                 Utils.showNotification('Graph view loaded successfully', 'success');
             } else {
                 throw new Error(response.message || 'Failed to load graph data');

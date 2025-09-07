@@ -126,8 +126,8 @@ class GraphView extends Utils.EventEmitter {
                     selector: 'edge.tag',
                     style: {
                         'width': 2,
-                        'line-color': '#d97706',
-                        'target-arrow-color': '#d97706',
+                        'line-color': 'data(edgeColor)',
+                        'target-arrow-color': 'data(edgeColor)',
                         'target-arrow-shape': 'triangle',
                         'curve-style': 'bezier',
                         'arrow-scale': 1.2,
@@ -138,7 +138,7 @@ class GraphView extends Utils.EventEmitter {
                         'font-size': '10px',
                         'text-rotation': 'autorotate',
                         'text-margin-y': -8,
-                        'color': '#d97706',
+                        'color': 'data(edgeColor)',
                         'text-outline-width': 1,
                         'text-outline-color': '#ffffff'
                     }
@@ -155,13 +155,13 @@ class GraphView extends Utils.EventEmitter {
                 {
                     selector: 'edge.tag.highlighted',
                     style: {
-                        'line-color': '#d97706',
-                        'target-arrow-color': '#d97706',
+                        'line-color': 'data(edgeColor)',
+                        'target-arrow-color': 'data(edgeColor)',
                         'width': 3,
                         'opacity': 1,
                         'line-style': 'dashed',
                         'line-dash-pattern': [6, 3],
-                        'color': '#d97706'
+                        'color': 'data(edgeColor)'
                     }
                 }
             ]
@@ -182,6 +182,37 @@ class GraphView extends Utils.EventEmitter {
         this.createGraphContainer();
         this.createControls();
         this.setupEventListeners();
+    }
+
+    /**
+     * Get consistent color for a tag name (same logic as renderer)
+     * @param {string} tag - Tag name
+     * @returns {string} Hex color
+     */
+    getTagColor(tag) {
+        // Color palette for tags (same as in renderer)
+        const palette = [
+            '#d97706', // amber
+            '#2563eb', // blue
+            '#059669', // green
+            '#a21caf', // purple
+            '#be185d', // pink
+            '#e11d48', // red
+            '#f59e42', // orange
+            '#10b981', // teal
+            '#6366f1', // indigo
+            '#f43f5e', // rose
+            '#64748b', // slate
+            '#fbbf24', // yellow
+        ];
+
+        // Simple hash function for tag color
+        let hash = 0;
+        for (let i = 0; i < tag.length; i++) {
+            hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const idx = Math.abs(hash) % palette.length;
+        return palette[idx];
     }
 
     /**
@@ -421,9 +452,10 @@ class GraphView extends Utils.EventEmitter {
     }
 
     /**
-     * Show the graph view
+     * Show the graph view and focus on current file if available
+     * @param {string} currentFilePath - Optional current file path to focus on
      */
-    async show() {
+    async show(currentFilePath = null) {
         console.log('GraphView.show() called');
         console.log('isVisible:', this.isVisible);
         
@@ -467,6 +499,14 @@ class GraphView extends Utils.EventEmitter {
         
         this.isVisible = true;
         this.emit('show');
+        
+        // Focus on current file if provided and graph is loaded
+        if (currentFilePath && this.cy) {
+            setTimeout(() => {
+                this.focusOnCurrentFile(currentFilePath);
+            }, 200);
+        }
+        
         console.log('Graph view shown successfully');
     }
 
@@ -494,12 +534,13 @@ class GraphView extends Utils.EventEmitter {
 
     /**
      * Toggle graph view visibility
+     * @param {string} currentFilePath - Optional current file path to focus on when showing
      */
-    toggle() {
+    toggle(currentFilePath = null) {
         if (this.isVisible) {
             this.hide();
         } else {
-            this.show();
+            this.show(currentFilePath);
         }
     }
 
@@ -510,7 +551,12 @@ class GraphView extends Utils.EventEmitter {
     async loadGraphData(data) {
         console.log('GraphView.loadGraphData() called with data:', data);
         this.graphData = data;
-        await this.show();
+        
+        // Show the graph view if not already visible
+        if (!this.isVisible) {
+            await this.show();
+        }
+        
         this.renderGraph();
         this.updateStats();
         console.log('Graph data loaded and rendered');
@@ -576,6 +622,12 @@ class GraphView extends Utils.EventEmitter {
                     ? edge.sharedTags.join(', ') 
                     : '';
                 
+                // For tag edges, get color from the first shared tag
+                let edgeColor = '#d97706'; // fallback color
+                if (edge.type === 'tag' && edge.sharedTags && edge.sharedTags.length > 0) {
+                    edgeColor = this.getTagColor(edge.sharedTags[0]);
+                }
+                
                 elements.push({
                     data: {
                         id: `${edge.source}-${edge.target}`,
@@ -585,7 +637,8 @@ class GraphView extends Utils.EventEmitter {
                         targetPath: edge.targetPath,
                         type: edge.type || 'link',
                         sharedTags: edge.sharedTags || [],
-                        edgeLabel: edgeLabel
+                        edgeLabel: edgeLabel,
+                        edgeColor: edgeColor
                     },
                     classes: edgeClasses
                 });
@@ -854,7 +907,7 @@ class GraphView extends Utils.EventEmitter {
                 <div class="tooltip-title">Tag Connection</div>
                 <div class="tooltip-files">${source} ↔ ${target}</div>
                 <div class="tooltip-tags">Shared tags: ${edgeData.sharedTags.map(tag => 
-                    `<span class="tag-badge mini">${tag}</span>`
+                    `<span class="tag-badge mini" style="background:${this.getTagColor(tag)};">${tag}</span>`
                 ).join(' ')}</div>
             </div>`;
         } else {
@@ -950,7 +1003,7 @@ class GraphView extends Utils.EventEmitter {
         const tagsElement = document.getElementById('node-info-tags');
         if (data.tags && data.tags.length > 0) {
             tagsElement.innerHTML = data.tags.map(tag => 
-                `<span class="tag-badge">${tag}</span>`
+                `<span class="tag-badge" style="background:${this.getTagColor(tag)};">${tag}</span>`
             ).join(' ');
         } else {
             tagsElement.textContent = 'None';
@@ -1015,7 +1068,7 @@ class GraphView extends Utils.EventEmitter {
             
             if (connection.type === 'tag' && connection.sharedTags.length > 0) {
                 connectionInfo += `<div class="shared-tags">Shared tags: ${connection.sharedTags.map(tag => 
-                    `<span class="tag-badge small">${tag}</span>`
+                    `<span class="tag-badge small" style="background:${this.getTagColor(tag)};">${tag}</span>`
                 ).join(' ')}</div>`;
             }
             
@@ -1338,18 +1391,41 @@ class GraphView extends Utils.EventEmitter {
         const currentFile = window.app.state.currentFile;
         const node = this.cy.nodes().filter(n => n.data('path') === currentFile);
         
-        if (node.length === 0) {
+        if (node.length > 0) {
+            this.selectNode(node);
+            this.focusOnNode(node.id());
+            Utils.showNotification('Focused on current file', 'success');
+        } else {
             Utils.showNotification('Current file not found in graph', 'warning');
+        }
+    }
+
+    /**
+     * Focus on a specific file in the graph
+     * @param {string} filePath - Path to the file to focus on
+     */
+    focusOnCurrentFile(filePath) {
+        console.log('focusOnCurrentFile called with:', filePath);
+        
+        if (!this.cy || !filePath) {
+            console.log('Cannot focus: cy or filePath missing', { cy: !!this.cy, filePath });
             return;
         }
 
-        // Focus on the node
-        this.focusOnNode(node.id());
+        const node = this.cy.nodes().filter(n => n.data('path') === filePath);
+        console.log('Found node for path:', filePath, 'node count:', node.length);
         
-        // Select the node
-        this.selectNode(node);
-        
-        Utils.showNotification('Focused on current file', 'success');
+        if (node.length > 0) {
+            console.log('Focusing on node:', node.id());
+            this.selectNode(node);
+            this.focusOnNode(node.id());
+            Utils.showNotification('Focused on current file', 'success');
+        } else {
+            console.log('Node not found for path:', filePath);
+            // Log available paths for debugging
+            const allPaths = this.cy.nodes().map(n => n.data('path'));
+            console.log('Available paths:', allPaths);
+        }
     }
 
     /**
