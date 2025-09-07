@@ -270,6 +270,12 @@ body {
     transition: all var(--transition-normal);
 }
 
+/* When graph view is active, use specific width instead of flex */
+.app-main.graph-view-active .content-area {
+    flex: none; /* Disable flex when width is explicitly set */
+    transition: width var(--transition-normal);
+}
+
 .main-content {
     flex: 1;
     display: flex;
@@ -712,12 +718,6 @@ body {
     background: var(--text-muted);
     border-color: var(--text-muted);
     cursor: not-allowed;
-}
-
-/* Graph view adjustments for main content */
-.app-main.graph-view-active .content-area {
-    width: 60vw; /* 100vw - 40vw graph panel */
-    transition: width var(--transition-normal);
 }
 
 /* Ensure smooth transitions when graph view is toggled */

@@ -142,20 +142,14 @@ class SidebarResizer {
     updateGraphViewLayout() {
         const graphView = window.graphView;
         if (graphView && graphView.isVisible) {
-            // Get current sidebar width
-            const sidebarWidth = parseInt(document.defaultView.getComputedStyle(this.sidebar).width, 10);
+            // Update the content area width to account for sidebar changes
+            graphView.updateContentAreaWidth();
             
-            // Update graph panel position to account for new sidebar width
-            const graphPanel = document.querySelector('.graph-panel');
-            if (graphPanel) {
-                graphPanel.style.left = `${sidebarWidth}px`;
-                
-                // Trigger graph resize
-                if (graphView.cy) {
-                    setTimeout(() => {
-                        graphView.resizeAndAdjustGraph();
-                    }, 100);
-                }
+            // Trigger graph resize
+            if (graphView.cy) {
+                setTimeout(() => {
+                    graphView.resizeAndAdjustGraph();
+                }, 100);
             }
         }
     }

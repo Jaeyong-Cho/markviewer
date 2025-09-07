@@ -446,6 +446,9 @@ class GraphView extends Utils.EventEmitter {
         window.addEventListener('resize', () => {
             if (this.isVisible && this.cy) {
                 this.resizeAndAdjustGraph();
+                
+                // Update content area width on window resize
+                this.updateContentAreaWidth();
             }
         });
     }
@@ -484,6 +487,11 @@ class GraphView extends Utils.EventEmitter {
         const appMain = document.querySelector('.app-main');
         if (appMain) {
             appMain.classList.add('graph-view-active');
+            
+            // Set initial content area width based on current graph panel width
+            setTimeout(() => {
+                this.updateContentAreaWidth();
+            }, 10); // Small delay to ensure panel is rendered
         }
         
         // Update sidebar resizer to account for graph view
@@ -524,10 +532,17 @@ class GraphView extends Utils.EventEmitter {
 
         this.graphPanel.style.display = 'none';
         
-        // Remove class from app-main
+        // Remove class from app-main and reset content area width
         const appMain = document.querySelector('.app-main');
         if (appMain) {
             appMain.classList.remove('graph-view-active');
+            
+            // Reset content area width and margin to use flex behavior
+            const contentArea = appMain.querySelector('.content-area');
+            if (contentArea) {
+                contentArea.style.width = '';
+                contentArea.style.marginLeft = '';
+            }
         }
         
         // Reset ToC position when hiding graph view
@@ -1279,6 +1294,33 @@ class GraphView extends Utils.EventEmitter {
     }
 
     /**
+     * Update content area width based on graph panel size and sidebar width
+     */
+    updateContentAreaWidth() {
+        const appMain = document.querySelector('.app-main');
+        if (appMain && appMain.classList.contains('graph-view-active')) {
+            const contentArea = appMain.querySelector('.content-area');
+            if (contentArea && this.graphPanel) {
+                const sidebar = document.querySelector('.sidebar');
+                const sidebarWidth = sidebar ? sidebar.offsetWidth : 0;
+                const graphPanelWidth = this.graphPanel.offsetWidth;
+                const contentWidth = window.innerWidth - sidebarWidth - graphPanelWidth;
+                
+                console.log('Graph view layout update:', {
+                    windowWidth: window.innerWidth,
+                    sidebarWidth,
+                    graphPanelWidth,
+                    contentWidth
+                });
+                
+                // Set the content area width and ensure it's positioned after the sidebar
+                contentArea.style.width = contentWidth + 'px';
+                contentArea.style.marginLeft = '0'; // Reset any margin, flexbox handles positioning
+            }
+        }
+    }
+
+    /**
      * Setup panel resizer functionality
      */
     setupResizer() {
@@ -1310,11 +1352,7 @@ class GraphView extends Utils.EventEmitter {
             this.graphPanel.style.width = newWidth + 'px';
             
             // Update content area width accordingly
-            const appMain = document.querySelector('.app-main');
-            if (appMain && appMain.classList.contains('graph-view-active')) {
-                const contentWidth = window.innerWidth - newWidth;
-                appMain.querySelector('.content-area').style.width = contentWidth + 'px';
-            }
+            this.updateContentAreaWidth();
             
             // Update ToC position in real-time during resize
             const tocSidebar = document.querySelector('.toc-sidebar');
