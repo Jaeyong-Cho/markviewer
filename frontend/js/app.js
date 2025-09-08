@@ -746,6 +746,9 @@ function renderMarkdown(content) {
             // Update current file state
             this.updateState({ currentFile: filePath });
             
+            // Set current file for the renderer
+            this.renderer.setCurrentFile(filePath);
+            
             // Cache content in tab
             const tab = this.tabManager.findTabByPath(filePath);
             if (tab) {

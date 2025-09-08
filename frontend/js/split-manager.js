@@ -378,6 +378,9 @@ class SplitManager {
             // Use the pane's dedicated renderer
             const renderer = pane === 'left' ? this.leftRenderer : this.rightRenderer;
             
+            // Set the current file path for this renderer instance
+            renderer.setCurrentFile(tab.filePath);
+            
             // Render content
             await renderer.renderMarkdown(fileData.content);
             
@@ -406,6 +409,9 @@ class SplitManager {
         const tabManager = pane === 'left' ? this.leftTabManager : this.rightTabManager;
         const renderer = pane === 'left' ? this.leftRenderer : this.rightRenderer;
         const cachedContent = tabManager.getTabContent(tab.id);
+        
+        // Set the current file path for this renderer instance
+        renderer.setCurrentFile(tab.filePath);
         
         if (cachedContent) {
             // Use cached content with the pane's dedicated renderer

@@ -13,6 +13,9 @@ class MarkdownRenderer extends Utils.EventEmitter {
         
         this.scrollSpyHandler = null;
         
+        // Current file context for this renderer instance
+        this.currentFilePath = null;
+        
         // Check if ToC should be disabled (e.g., for split panes)
         if (options.disableToC) {
             this.tocEnabled = false;
@@ -305,6 +308,23 @@ class MarkdownRenderer extends Utils.EventEmitter {
             <div class="tags-label">Tags:</div>
             <div class="tags-container">${tagBadges}</div>
         </div>`;
+    }
+
+    /**
+     * Set the current file path for this renderer instance
+     * @param {string} filePath - The current file path
+     */
+    setCurrentFile(filePath) {
+        this.currentFilePath = filePath;
+        console.log('MarkdownRenderer: Current file set to:', filePath);
+    }
+
+    /**
+     * Get the current file path for this renderer instance
+     * @returns {string|null} The current file path or null if not set
+     */
+    getCurrentFile() {
+        return this.currentFilePath;
     }
 
     /**
@@ -690,8 +710,9 @@ class MarkdownRenderer extends Utils.EventEmitter {
                 !originalSrc.startsWith('/') && 
                 !originalSrc.startsWith('data:')) {
                 
-                // Get current file from global app state
-                const currentFile = window.app && window.app.state ? window.app.state.currentFile : null;
+                // Get current file from this renderer instance first, fallback to global app state
+                const currentFile = this.currentFilePath || 
+                                  (window.app && window.app.state ? window.app.state.currentFile : null);
                 
                 if (currentFile) {
                     // Build API URL for relative image
