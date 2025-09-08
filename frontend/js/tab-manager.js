@@ -276,7 +276,12 @@ class TabManager {
             <button class="tab-close" aria-label="Close tab">×</button>
         `;
         
-        this.tabContainer.appendChild(tabElement);
+        // Insert tab before close all button if it exists, otherwise append normally
+        if (this.closeAllButton) {
+            this.tabContainer.insertBefore(tabElement, this.closeAllButton);
+        } else {
+            this.tabContainer.appendChild(tabElement);
+        }
     }
     
     /**
@@ -311,6 +316,38 @@ class TabManager {
     updateTabBarVisibility() {
         const hasActiveTabs = this.tabs.size > 0;
         this.tabBar.style.display = hasActiveTabs ? 'flex' : 'none';
+        
+        // Manage close all button
+        this.updateCloseAllButton();
+    }
+    
+    /**
+     * Update close all button - add it if tabs exist, remove if no tabs
+     */
+    updateCloseAllButton() {
+        const hasActiveTabs = this.tabs.size > 0;
+        
+        if (hasActiveTabs && !this.closeAllButton) {
+            // Create close all button
+            this.closeAllButton = document.createElement('button');
+            this.closeAllButton.className = 'tab-close-all';
+            this.closeAllButton.innerHTML = '×';
+            this.closeAllButton.title = 'Close all tabs';
+            this.closeAllButton.setAttribute('aria-label', 'Close all tabs');
+            
+            // Add event listener
+            this.closeAllButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.clearAllTabs();
+            });
+            
+            // Append to tab container (after all tabs)
+            this.tabContainer.appendChild(this.closeAllButton);
+        } else if (!hasActiveTabs && this.closeAllButton) {
+            // Remove close all button
+            this.closeAllButton.remove();
+            this.closeAllButton = null;
+        }
     }
     
     /**

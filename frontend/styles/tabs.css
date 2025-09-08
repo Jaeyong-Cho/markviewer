@@ -27,6 +27,53 @@
     display: none; /* Chrome, Safari, Opera */
 }
 
+/* Close All Button */
+.tab-close-all {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border-color);
+    background: var(--surface-color);
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0;
+    margin: 0 0 0 8px;
+    flex-shrink: 0;
+    transition: all var(--transition-fast);
+}
+
+.tab-close-all:hover {
+    background: var(--background-hover);
+    color: var(--text-primary);
+    border-color: var(--border-color-hover);
+}
+
+.tab-close-all:active {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.tab-close-all:focus {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+.tab-close-all:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: var(--text-disabled);
+}
+
+.tab-close-all:disabled:hover {
+    background: var(--surface-color);
+    color: var(--text-disabled);
+    border-color: var(--border-color);
+}
+
 /* Individual Tab Styles */
 .tab {
     display: flex;
