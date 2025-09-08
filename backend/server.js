@@ -194,6 +194,28 @@ class MarkViewerServer {
             }
         });
 
+        // Cache management endpoints
+        this.app.post('/api/cache/clear-diagrams', (req, res) => {
+            try {
+                // Clear PlantUML cache
+                if (plantumlService && plantumlService.clearCache) {
+                    plantumlService.clearCache();
+                    console.log('PlantUML cache cleared');
+                }
+                
+                res.json({ 
+                    success: true, 
+                    message: 'Diagram cache cleared successfully' 
+                });
+            } catch (error) {
+                console.error('Error clearing diagram cache:', error);
+                res.status(500).json({ 
+                    error: 'Failed to clear diagram cache',
+                    details: error.message 
+                });
+            }
+        });
+
         // Search endpoint
         this.app.get('/api/search', async (req, res) => {
             try {

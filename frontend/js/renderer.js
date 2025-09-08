@@ -444,8 +444,40 @@ class MarkdownRenderer extends Utils.EventEmitter {
     /**
      * Process diagrams asynchronously and in parallel
      */
+    /**
+     * Clear all existing diagrams before re-rendering
+     */
+    clearExistingDiagrams() {
+        try {
+            // Clear PlantUML diagrams
+            const plantumlBlocks = this.container.querySelectorAll('.plantuml-block');
+            plantumlBlocks.forEach(block => {
+                const diagramDiv = block.querySelector('.plantuml-diagram');
+                if (diagramDiv) {
+                    diagramDiv.remove();
+                }
+            });
+            
+            // Clear Mermaid diagrams
+            const mermaidBlocks = this.container.querySelectorAll('.mermaid-block');
+            mermaidBlocks.forEach(block => {
+                const diagramDiv = block.querySelector('.mermaid-diagram');
+                if (diagramDiv) {
+                    diagramDiv.remove();
+                }
+            });
+            
+            console.log('Cleared existing diagrams for re-rendering');
+        } catch (error) {
+            console.error('Error clearing existing diagrams:', error);
+        }
+    }
+
     async processDiagramsAsync() {
         try {
+            // Clear existing diagrams first to prevent conflicts
+            this.clearExistingDiagrams();
+            
             // Start both diagram types processing in parallel
             const plantumlPromise = this.processPlantUMLBlocksAsync();
             const mermaidPromise = this.processMermaidBlocksAsync();
@@ -492,19 +524,29 @@ class MarkdownRenderer extends Utils.EventEmitter {
             const source = tempDiv.textContent || tempDiv.innerText;
             const id = block.dataset.id;
             
-            // Enhanced loading state with Korean support
-            const loadingDiv = block.querySelector('.plantuml-loading');
-            if (loadingDiv) {
-                loadingDiv.innerHTML = `
-                    <div class="diagram-loading-container">
-                        <div class="spinner"></div>
-                        <p class="loading-text">PlantUML 다이어그램 렌더링 중...</p>
-                        <div class="loading-progress">
-                            <div class="progress-bar"></div>
-                        </div>
-                    </div>
-                `;
+            // Remove existing diagram if present
+            const existingDiagram = block.querySelector('.plantuml-diagram');
+            if (existingDiagram) {
+                existingDiagram.remove();
             }
+            
+            // Enhanced loading state with Korean support
+            let loadingDiv = block.querySelector('.plantuml-loading');
+            if (!loadingDiv) {
+                loadingDiv = document.createElement('div');
+                loadingDiv.className = 'plantuml-loading';
+                block.appendChild(loadingDiv);
+            }
+            
+            loadingDiv.innerHTML = `
+                <div class="diagram-loading-container">
+                    <div class="spinner"></div>
+                    <p class="loading-text">PlantUML 다이어그램 렌더링 중...</p>
+                    <div class="loading-progress">
+                        <div class="progress-bar"></div>
+                    </div>
+                </div>
+            `;
             
             // Create timeout for rendering
             const timeoutPromise = new Promise((_, reject) => {
@@ -525,12 +567,20 @@ class MarkdownRenderer extends Utils.EventEmitter {
                 throw new Error('PlantUML service returned invalid response');
             }
             
-            // Display SVG result with fade-in animation
-            const diagramHtml = `<div class="plantuml-diagram fade-in" id="plantuml-${id}">${svg}</div>`;
-            block.innerHTML = diagramHtml;
+            // Remove loading div and display SVG result with fade-in animation
+            loadingDiv.remove();
+            const diagramDiv = document.createElement('div');
+            diagramDiv.className = 'plantuml-diagram fade-in';
+            diagramDiv.id = `plantuml-${id}`;
+            diagramDiv.innerHTML = svg;
+            block.appendChild(diagramDiv);
             
         } catch (error) {
             console.error('PlantUML rendering failed:', error);
+            const loadingDiv = block.querySelector('.plantuml-loading');
+            if (loadingDiv) {
+                loadingDiv.remove();
+            }
             this.showPlantUMLError(block, error, source || 'Unknown source');
         }
     }
@@ -570,24 +620,29 @@ class MarkdownRenderer extends Utils.EventEmitter {
             const source = tempDiv.textContent || tempDiv.innerText;
             const id = block.dataset.id;
             
-            // Enhanced loading state with Korean support
-            const loadingDiv = block.querySelector('.mermaid-loading');
-            if (loadingDiv) {
-                loadingDiv.innerHTML = `
-                    <div class="diagram-loading-container">
-                        <div class="spinner"></div>
-                        <p class="loading-text">Mermaid 다이어그램 렌더링 중...</p>
-                        <div class="loading-progress">
-                            <div class="progress-bar"></div>
-                        </div>
-                    </div>
-                `;
+            // Remove existing diagram if present
+            const existingDiagram = block.querySelector('.mermaid-diagram');
+            if (existingDiagram) {
+                existingDiagram.remove();
             }
             
-            // Create container for Mermaid diagram
-            const diagramContainer = document.createElement('div');
-            diagramContainer.className = 'mermaid-diagram fade-in';
-            diagramContainer.id = `mermaid-${id}`;
+            // Enhanced loading state with Korean support
+            let loadingDiv = block.querySelector('.mermaid-loading');
+            if (!loadingDiv) {
+                loadingDiv = document.createElement('div');
+                loadingDiv.className = 'mermaid-loading';
+                block.appendChild(loadingDiv);
+            }
+            
+            loadingDiv.innerHTML = `
+                <div class="diagram-loading-container">
+                    <div class="spinner"></div>
+                    <p class="loading-text">Mermaid 다이어그램 렌더링 중...</p>
+                    <div class="loading-progress">
+                        <div class="progress-bar"></div>
+                    </div>
+                </div>
+            `;
             
             // Create timeout for rendering
             const timeoutPromise = new Promise((_, reject) => {
@@ -598,14 +653,22 @@ class MarkdownRenderer extends Utils.EventEmitter {
             const renderPromise = mermaid.render(`mermaid-svg-${id}`, source);
             const { svg } = await Promise.race([renderPromise, timeoutPromise]);
             
+            // Remove loading div and create container for Mermaid diagram
+            loadingDiv.remove();
+            const diagramContainer = document.createElement('div');
+            diagramContainer.className = 'mermaid-diagram fade-in';
+            diagramContainer.id = `mermaid-${id}`;
             diagramContainer.innerHTML = svg;
             
-            // Replace loading block with diagram
-            block.innerHTML = '';
+            // Add diagram to block
             block.appendChild(diagramContainer);
             
         } catch (error) {
             console.error('Mermaid rendering failed:', error);
+            const loadingDiv = block.querySelector('.mermaid-loading');
+            if (loadingDiv) {
+                loadingDiv.remove();
+            }
             this.showMermaidError(block, error, source || 'Unknown source');
         }
     }

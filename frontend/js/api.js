@@ -421,6 +421,30 @@ class ApiService {
     }
 
     /**
+     * Clear diagram cache on the backend
+     */
+    async clearDiagramCache() {
+        try {
+            await this.client.request(`${this.client.baseUrl}/cache/clear-diagrams`, {
+                method: 'POST'
+            });
+            
+            // Also clear local PlantUML and Mermaid cache entries
+            const keysToDelete = [];
+            for (const key of this.cache.keys()) {
+                if (key.includes('renderPlantUML') || key.includes('renderMermaid')) {
+                    keysToDelete.push(key);
+                }
+            }
+            keysToDelete.forEach(key => this.cache.delete(key));
+            
+            console.log('Diagram cache cleared on backend and frontend');
+        } catch (error) {
+            console.warn('Failed to clear diagram cache on backend:', error);
+        }
+    }
+
+    /**
      * Clear cache for specific method
      * @param {string} method - Method name to clear cache for
      */

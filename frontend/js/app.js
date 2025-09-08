@@ -1045,6 +1045,16 @@ function renderMarkdown(content) {
             console.log('Current file changed, reloading content...');
             
             try {
+                // Clear cache for this file to ensure fresh data on next load
+                if (window.api && window.api.clearCache) {
+                    window.api.clearCache(fileData.path);
+                }
+                
+                // Force clear any PlantUML/Mermaid caches on the backend
+                if (window.api && window.api.clearDiagramCache) {
+                    await window.api.clearDiagramCache();
+                }
+                
                 // Update UI with new content
                 await this.renderer.renderMarkdown(fileData.content);
                 
