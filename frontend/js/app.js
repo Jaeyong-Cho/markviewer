@@ -1070,11 +1070,25 @@ function renderMarkdown(content) {
      * @param {string} filePath - Path of added file
      */
     handleFileAdded(filePath) {
-        console.log('File added:', filePath);
+        console.log('App: File added event received:', filePath);
         
-        // Refresh directory tree if we have a root directory
-        if (this.state.rootDirectory) {
-            this.refreshDirectoryTree();
+        // Try to add the file incrementally to preserve sidebar state
+        if (this.sidebar && this.state.rootDirectory) {
+            console.log('App: Current root directory:', this.state.rootDirectory);
+            const fileName = filePath.split('/').pop();
+            console.log('App: Extracted filename:', fileName);
+            
+            const success = this.sidebar.addFileToTree(filePath, fileName);
+            
+            if (!success) {
+                console.log('App: Incremental update failed, falling back to full refresh');
+                // Fallback to full refresh if incremental update failed
+                this.refreshDirectoryTree();
+            } else {
+                console.log('App: File successfully added incrementally');
+            }
+        } else {
+            console.log('App: Sidebar or root directory not available');
         }
     }
 
@@ -1098,9 +1112,14 @@ function renderMarkdown(content) {
             Utils.showNotification('Current file was deleted', 'warning');
         }
         
-        // Refresh directory tree
-        if (this.state.rootDirectory) {
-            this.refreshDirectoryTree();
+        // Try to remove the file incrementally to preserve sidebar state
+        if (this.sidebar && this.state.rootDirectory) {
+            const success = this.sidebar.removeFileFromTree(filePath);
+            
+            if (!success) {
+                // Fallback to full refresh if incremental update failed
+                this.refreshDirectoryTree();
+            }
         }
         
         // Clear cache for this file
@@ -1116,9 +1135,15 @@ function renderMarkdown(content) {
     handleDirectoryAdded(dirPath) {
         console.log('Directory added:', dirPath);
         
-        // Refresh directory tree
-        if (this.state.rootDirectory) {
-            this.refreshDirectoryTree();
+        // Try to add the directory incrementally to preserve sidebar state
+        if (this.sidebar && this.state.rootDirectory) {
+            const dirName = dirPath.split('/').pop();
+            const success = this.sidebar.addDirectoryToTree(dirPath, dirName);
+            
+            if (!success) {
+                // Fallback to full refresh if incremental update failed
+                this.refreshDirectoryTree();
+            }
         }
     }
 
@@ -1142,19 +1167,25 @@ function renderMarkdown(content) {
             Utils.showNotification('Current directory was deleted', 'warning');
         }
         
-        // Refresh directory tree
-        if (this.state.rootDirectory) {
-            this.refreshDirectoryTree();
+        // Try to remove the directory incrementally to preserve sidebar state
+        if (this.sidebar && this.state.rootDirectory) {
+            const success = this.sidebar.removeDirectoryFromTree(dirPath);
+            
+            if (!success) {
+                // Fallback to full refresh if incremental update failed
+                this.refreshDirectoryTree();
+            }
         }
     }
 
     /**
      * Refresh the directory tree
+     * @param {boolean} preserveState - Whether to preserve expanded state
      */
-    async refreshDirectoryTree() {
+    async refreshDirectoryTree(preserveState = true) {
         try {
             const tree = await window.api.getDirectoryTree(this.state.rootDirectory);
-            this.sidebar.loadTree(tree);
+            this.sidebar.loadTree(tree, preserveState);
             this.updateState({ directoryTree: tree });
             this.updateFileCount();
         } catch (error) {

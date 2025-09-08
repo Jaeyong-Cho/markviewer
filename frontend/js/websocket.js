@@ -143,6 +143,7 @@ class WebSocketClient extends Utils.EventEmitter {
      */
     handleFileUpdate(eventData) {
         const { type, file, data } = eventData;
+        console.log('WebSocket received file update:', type, data || file?.path);
 
         switch (type) {
             case 'fileChanged':
@@ -151,20 +152,24 @@ class WebSocketClient extends Utils.EventEmitter {
                 break;
                 
             case 'fileAdded':
+                console.log('WebSocket emitting fileAdded:', data);
                 this.emit('fileAdded', data);
                 this.showFileChangeNotification(data, 'added');
                 break;
                 
             case 'fileRemoved':
+                console.log('WebSocket emitting fileRemoved:', data);
                 this.emit('fileRemoved', data);
                 this.showFileChangeNotification(data, 'removed');
                 break;
                 
             case 'directoryAdded':
+                console.log('WebSocket emitting directoryAdded:', data);
                 this.emit('directoryAdded', data);
                 break;
                 
             case 'directoryRemoved':
+                console.log('WebSocket emitting directoryRemoved:', data);
                 this.emit('directoryRemoved', data);
                 break;
                 

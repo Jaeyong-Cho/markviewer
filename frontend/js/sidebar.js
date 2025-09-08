@@ -49,8 +49,12 @@ class Sidebar extends Utils.EventEmitter {
     /**
      * Load and display directory tree
      * @param {Object} tree - Directory tree data
+     * @param {boolean} preserveState - Whether to preserve expanded state
      */
-    loadTree(tree) {
+    loadTree(tree, preserveState = false) {
+        // Save expanded state if requested
+        const expandedState = preserveState ? new Set(this.expandedDirectories) : new Set();
+        
         this.treeContainer.innerHTML = '';
         
         if (!tree || !tree.children || tree.children.length === 0) {
@@ -60,6 +64,11 @@ class Sidebar extends Utils.EventEmitter {
 
         const treeElement = this.createTreeElement(tree);
         this.treeContainer.appendChild(treeElement);
+        
+        // Restore expanded state if requested
+        if (preserveState && expandedState.size > 0) {
+            this.restoreExpandedState(expandedState);
+        }
         
         this.emit('directoryLoad', tree);
     }
@@ -500,6 +509,297 @@ class Sidebar extends Utils.EventEmitter {
                 this.expandDirectory(item);
             }
         });
+    }
+
+    /**
+     * Add a new file to the tree without rebuilding
+     * @param {string} filePath - Path of the new file
+     * @param {string} fileName - Name of the new file
+     */
+    addFileToTree(filePath, fileName) {
+        console.log('Adding file to tree:', filePath, fileName);
+        
+        const dirPath = filePath.substring(0, filePath.lastIndexOf('/'));
+        console.log('Parent directory path:', dirPath);
+        
+        // Find the parent directory element
+        let parentElement = this.findDirectoryElement(dirPath);
+        
+        if (!parentElement) {
+            console.log('Parent directory not found in tree, searching for root...');
+            // Try to find the root element if dirPath is empty or matches root
+            const rootElements = this.treeContainer.querySelectorAll('.tree-item[data-type="directory"]');
+            for (const rootEl of rootElements) {
+                const rootPath = rootEl.dataset.path;
+                console.log('Checking root element:', rootPath);
+                if (filePath.startsWith(rootPath + '/') || filePath.startsWith(rootPath)) {
+                    // If the file is directly under this root, use it as parent
+                    if (dirPath === rootPath) {
+                        parentElement = rootEl;
+                        console.log('Found matching root element:', rootPath);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (!parentElement) {
+            // Parent directory not found, need to refresh entire tree
+            console.log('Parent directory not found, refreshing tree');
+            return false;
+        }
+
+        console.log('Found parent element:', parentElement.dataset.path);
+
+        // Check if file already exists
+        const existingFile = this.treeContainer.querySelector(`[data-path="${filePath}"]`);
+        if (existingFile) {
+            console.log('File already exists in tree:', filePath);
+            return true;
+        }
+
+        // Create the new file item
+        const fileNode = {
+            name: fileName,
+            path: filePath,
+            type: 'file'
+        };
+
+        // Get the parent's children container
+        let childrenContainer = parentElement.querySelector('.tree-children');
+        if (!childrenContainer) {
+            // Create children container if it doesn't exist
+            childrenContainer = document.createElement('ul');
+            childrenContainer.className = 'tree-node tree-children';
+            parentElement.appendChild(childrenContainer);
+            
+            // Add expand button if parent doesn't have one
+            const itemContent = parentElement.querySelector('.tree-item-content');
+            const expandBtn = itemContent.querySelector('.tree-expand-btn');
+            if (expandBtn && !expandBtn.innerHTML.trim()) {
+                expandBtn.innerHTML = '▶';
+                expandBtn.className = 'tree-expand-btn';
+                expandBtn.setAttribute('aria-label', `Expand ${parentElement.querySelector('.tree-item-text').textContent}`);
+            }
+        }
+
+        // Calculate the nesting level
+        const level = this.calculateNestingLevel(parentElement);
+        
+        // Create the file item
+        const fileItem = this.createTreeItem(fileNode, level + 1);
+        
+        // Find the correct insertion point (maintain alphabetical order)
+        const insertionPoint = this.findInsertionPoint(childrenContainer, fileName, 'file');
+        
+        if (insertionPoint) {
+            childrenContainer.insertBefore(fileItem, insertionPoint);
+        } else {
+            childrenContainer.appendChild(fileItem);
+        }
+
+        // Ensure the parent directory is expanded to show the new file
+        if (childrenContainer.classList.contains('collapsed')) {
+            this.expandDirectory(parentElement);
+        }
+
+        console.log('Successfully added file to tree:', filePath);
+        return true;
+    }
+
+    /**
+     * Remove a file from the tree without rebuilding
+     * @param {string} filePath - Path of the file to remove
+     */
+    removeFileFromTree(filePath) {
+        const fileElement = this.treeContainer.querySelector(`[data-path="${filePath}"]`);
+        if (fileElement) {
+            const parentElement = fileElement.parentElement;
+            fileElement.remove();
+            
+            // If this was the last child, remove the children container
+            if (parentElement && parentElement.classList.contains('tree-children') && parentElement.children.length === 0) {
+                const grandParent = parentElement.parentElement;
+                parentElement.remove();
+                
+                // Remove expand button from the directory
+                if (grandParent && grandParent.classList.contains('tree-item')) {
+                    const itemContent = grandParent.querySelector('.tree-item-content');
+                    const expandBtn = itemContent.querySelector('.tree-expand-btn');
+                    if (expandBtn) {
+                        expandBtn.innerHTML = '';
+                        expandBtn.className = 'tree-expand-btn';
+                    }
+                }
+            }
+            
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Find a directory element by path
+     * @param {string} dirPath - Directory path to find
+     * @returns {HTMLElement|null} Directory element or null if not found
+     */
+    findDirectoryElement(dirPath) {
+        return this.treeContainer.querySelector(`[data-path="${dirPath}"][data-type="directory"]`);
+    }
+
+    /**
+     * Calculate the nesting level of an element
+     * @param {HTMLElement} element - Element to check
+     * @returns {number} Nesting level
+     */
+    calculateNestingLevel(element) {
+        let level = 0;
+        let current = element.parentElement;
+        
+        while (current && !current.classList.contains('tree-node')) {
+            if (current.classList.contains('tree-children')) {
+                level++;
+            }
+            current = current.parentElement;
+        }
+        
+        return level;
+    }
+
+    /**
+     * Find the correct insertion point for a new item to maintain alphabetical order
+     * @param {HTMLElement} container - Container to insert into
+     * @param {string} itemName - Name of the item to insert
+     * @param {string} itemType - Type of the item ('file' or 'directory')
+     * @returns {HTMLElement|null} Element to insert before, or null to append
+     */
+    findInsertionPoint(container, itemName, itemType) {
+        const children = Array.from(container.children);
+        
+        for (const child of children) {
+            const childName = child.querySelector('.tree-item-text').textContent;
+            const childType = child.dataset.type;
+            
+            // Directories come first, then files
+            if (itemType === 'directory' && childType === 'file') {
+                return child;
+            }
+            
+            // Within the same type, sort alphabetically
+            if (itemType === childType && itemName.localeCompare(childName) < 0) {
+                return child;
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Add a new directory to the tree without rebuilding
+     * @param {string} dirPath - Path of the new directory
+     * @param {string} dirName - Name of the new directory
+     */
+    addDirectoryToTree(dirPath, dirName) {
+        const parentPath = dirPath.substring(0, dirPath.lastIndexOf('/'));
+        
+        // Find the parent directory element
+        let parentElement = this.findDirectoryElement(parentPath);
+        
+        if (!parentElement) {
+            // Parent directory not found, need to refresh entire tree
+            console.log('Parent directory not found, refreshing tree');
+            return false;
+        }
+
+        // Check if directory already exists
+        const existingDir = this.treeContainer.querySelector(`[data-path="${dirPath}"]`);
+        if (existingDir) {
+            console.log('Directory already exists in tree:', dirPath);
+            return true;
+        }
+
+        // Create the new directory item
+        const dirNode = {
+            name: dirName,
+            path: dirPath,
+            type: 'directory',
+            children: [] // Empty initially
+        };
+
+        // Get the parent's children container
+        let childrenContainer = parentElement.querySelector('.tree-children');
+        if (!childrenContainer) {
+            // Create children container if it doesn't exist
+            childrenContainer = document.createElement('ul');
+            childrenContainer.className = 'tree-node tree-children';
+            parentElement.appendChild(childrenContainer);
+            
+            // Add expand button if parent doesn't have one
+            const itemContent = parentElement.querySelector('.tree-item-content');
+            const expandBtn = itemContent.querySelector('.tree-expand-btn');
+            if (expandBtn && !expandBtn.innerHTML.trim()) {
+                expandBtn.innerHTML = '▶';
+                expandBtn.className = 'tree-expand-btn';
+                expandBtn.setAttribute('aria-label', `Expand ${parentElement.querySelector('.tree-item-text').textContent}`);
+            }
+        }
+
+        // Calculate the nesting level
+        const level = this.calculateNestingLevel(parentElement);
+        
+        // Create the directory item
+        const dirItem = this.createTreeItem(dirNode, level + 1);
+        
+        // Find the correct insertion point (maintain alphabetical order)
+        const insertionPoint = this.findInsertionPoint(childrenContainer, dirName, 'directory');
+        
+        if (insertionPoint) {
+            childrenContainer.insertBefore(dirItem, insertionPoint);
+        } else {
+            childrenContainer.appendChild(dirItem);
+        }
+
+        // Ensure the parent directory is expanded to show the new directory
+        if (childrenContainer.classList.contains('collapsed')) {
+            this.expandDirectory(parentElement);
+        }
+
+        return true;
+    }
+
+    /**
+     * Remove a directory from the tree without rebuilding
+     * @param {string} dirPath - Path of the directory to remove
+     */
+    removeDirectoryFromTree(dirPath) {
+        const dirElement = this.treeContainer.querySelector(`[data-path="${dirPath}"][data-type="directory"]`);
+        if (dirElement) {
+            const parentElement = dirElement.parentElement;
+            
+            // Remove from expanded directories set if it was expanded
+            this.expandedDirectories.delete(dirPath);
+            
+            dirElement.remove();
+            
+            // If this was the last child, remove the children container
+            if (parentElement && parentElement.classList.contains('tree-children') && parentElement.children.length === 0) {
+                const grandParent = parentElement.parentElement;
+                parentElement.remove();
+                
+                // Remove expand button from the parent directory
+                if (grandParent && grandParent.classList.contains('tree-item')) {
+                    const itemContent = grandParent.querySelector('.tree-item-content');
+                    const expandBtn = itemContent.querySelector('.tree-expand-btn');
+                    if (expandBtn) {
+                        expandBtn.innerHTML = '';
+                        expandBtn.className = 'tree-expand-btn';
+                    }
+                }
+            }
+            
+            return true;
+        }
+        return false;
     }
 }
 
