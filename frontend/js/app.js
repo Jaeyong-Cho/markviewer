@@ -456,17 +456,20 @@ class MarkViewerApp extends Utils.EventEmitter {
     loadSavedState() {
         const savedState = Utils.storage.get('markviewer-state', {});
         
-        // Set default directory if none is saved
-        const defaultDirectory = savedState.rootDirectory || '/Users/jaeyong/workspace/markviewer/test-content';
+        // Only load saved directory if it exists in localStorage
+        const savedDirectory = savedState.rootDirectory;
         
-        if (defaultDirectory) {
-            this.updateState({ rootDirectory: defaultDirectory });
-            this.elements.workspaceInput.value = defaultDirectory;
-            this.elements.currentWorkspacePath.textContent = defaultDirectory;
+        if (savedDirectory) {
+            this.updateState({ rootDirectory: savedDirectory });
+            this.elements.workspaceInput.value = savedDirectory;
+            this.elements.currentWorkspacePath.textContent = savedDirectory;
             this.elements.currentWorkspacePath.classList.add('selected');
             
             // Load directory tree
-            this.loadDirectoryTree(defaultDirectory);
+            this.loadDirectoryTree(savedDirectory);
+        } else {
+            // No workspace configured - show setup guide
+            this.showWorkspaceSetupGuide();
         }
 
         if (savedState.sidebarOpen !== undefined) {
@@ -571,6 +574,9 @@ class MarkViewerApp extends Utils.EventEmitter {
         // Clear search and show main content
         this.search.clear();
         this.hideSearchResults();
+        
+        // Try to automatically open index.md if it exists
+        await this.tryOpenIndexFile(path);
     }
 
     /**
@@ -586,6 +592,53 @@ class MarkViewerApp extends Utils.EventEmitter {
         } catch (error) {
             console.error('Failed to load directory tree:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Try to automatically open index.md file if it exists in the workspace
+     * @param {string} rootPath - Root directory path
+     */
+    async tryOpenIndexFile(rootPath) {
+        try {
+            // Common index file names to try
+            const indexFiles = ['index.md', 'INDEX.md', 'readme.md', 'README.md'];
+            
+            for (const indexFile of indexFiles) {
+                const indexPath = `${rootPath}/${indexFile}`;
+                
+                try {
+                    // Check if the file exists by trying to get its content
+                    await window.api.getFileContent(indexPath);
+                    
+                    // If we reach here, the file exists - open it
+                    console.log(`Auto-opening ${indexFile} from workspace`);
+                    
+                    if (this.splitManager && this.splitManager.isSplit()) {
+                        // Open in the active pane
+                        const activePane = this.splitManager.getActivePane();
+                        this.splitManager.openFileInPane(activePane, indexPath);
+                    } else {
+                        // Open file in a tab
+                        this.tabManager.openFile(indexPath);
+                    }
+                    
+                    // Show notification about auto-opened file
+                    Utils.showNotification(`Opened ${indexFile} as your workspace entry point`, 'success');
+                    return; // Stop after opening the first found index file
+                    
+                } catch (fileError) {
+                    // File doesn't exist, try the next one
+                    continue;
+                }
+            }
+            
+            // No index file found - that's okay, just continue normally
+            console.log('No index file found in workspace');
+            
+        } catch (error) {
+            // Don't throw error for auto-opening index - it's not critical
+            console.warn('Failed to auto-open index file:', error);
         }
     }
 
@@ -726,6 +779,79 @@ function renderMarkdown(content) {
         
         // Clear file info
         this.elements.currentFileName.textContent = 'Welcome';
+        this.elements.fileModified.textContent = '';
+        this.elements.breadcrumb.innerHTML = '';
+        
+        // Update state
+        this.updateState({ currentFile: null });
+    }
+
+    /**
+     * Show workspace setup guide when no workspace is configured
+     */
+    showWorkspaceSetupGuide() {
+        this.elements.content.innerHTML = `
+            <div class="workspace-setup-guide">
+                <div class="setup-header">
+                    <h1>🚀 Welcome to MarkViewer!</h1>
+                    <p class="setup-description">
+                        Get started by setting up your workspace directory containing markdown files.
+                    </p>
+                </div>
+                
+                <div class="setup-steps">
+                    <h2>📁 Setup Your Workspace</h2>
+                    <ol class="setup-list">
+                        <li>
+                            <strong>Enter your workspace path</strong> in the input field at the top of the sidebar
+                            <br><small>This should be a directory containing your markdown files</small>
+                        </li>
+                        <li>
+                            <strong>Press Enter</strong> to load the directory and browse files
+                        </li>
+                        <li>
+                            <strong>MarkViewer will automatically open index.md</strong> if it exists in your workspace
+                            <br><small>This serves as your main entry point</small>
+                        </li>
+                    </ol>
+                </div>
+                
+                <div class="setup-features">
+                    <h2>✨ What You'll Get</h2>
+                    <div class="feature-grid">
+                        <div class="feature-item">
+                            <h3>📖 Live Preview</h3>
+                            <p>Real-time markdown rendering with math support</p>
+                        </div>
+                        <div class="feature-item">
+                            <h3>🎨 Diagrams</h3>
+                            <p>PlantUML and Mermaid diagram support</p>
+                        </div>
+                        <div class="feature-item">
+                            <h3>🔍 Smart Search</h3>
+                            <p>Full-text search across all your files</p>
+                        </div>
+                        <div class="feature-item">
+                            <h3>📑 Tabs & Splits</h3>
+                            <p>Multi-file editing with split screen</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="setup-tips">
+                    <h2>💡 Pro Tips</h2>
+                    <ul>
+                        <li><strong>Create an index.md</strong> in your workspace root as your main documentation page</li>
+                        <li>Use relative links between your markdown files for easy navigation</li>
+                        <li>Organize your files in folders for better structure</li>
+                        <li>Try the search function to quickly find content across all files</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+        
+        // Clear file info
+        this.elements.currentFileName.textContent = 'Setup Workspace';
         this.elements.fileModified.textContent = '';
         this.elements.breadcrumb.innerHTML = '';
         

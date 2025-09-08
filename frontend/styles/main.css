@@ -725,6 +725,175 @@ body {
     transition: width var(--transition-normal);
 }
 
+/* Workspace Setup Guide Styles */
+.workspace-setup-guide {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--spacing-xl);
+    line-height: 1.6;
+}
+
+.setup-header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.setup-header h1 {
+    color: var(--primary-color);
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-md);
+    font-weight: 700;
+}
+
+.setup-description {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.setup-steps {
+    background: var(--background-secondary);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    border: 1px solid var(--border-color);
+}
+
+.setup-steps h2 {
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-lg);
+    font-size: 1.5rem;
+}
+
+.setup-list {
+    list-style: none;
+    counter-reset: step-counter;
+    padding: 0;
+}
+
+.setup-list li {
+    counter-increment: step-counter;
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: var(--background-color);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    position: relative;
+    padding-left: 60px;
+}
+
+.setup-list li::before {
+    content: counter(step-counter);
+    position: absolute;
+    left: var(--spacing-md);
+    top: var(--spacing-md);
+    background: var(--primary-color);
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.setup-list li strong {
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: var(--spacing-xs);
+}
+
+.setup-list li small {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.setup-features {
+    margin-bottom: var(--spacing-xl);
+}
+
+.setup-features h2 {
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-lg);
+    font-size: 1.5rem;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.feature-item {
+    background: var(--background-color);
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    text-align: center;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.feature-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.feature-item h3 {
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-sm);
+    font-size: 1.1rem;
+}
+
+.feature-item p {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.setup-tips {
+    background: linear-gradient(135deg, rgba(165, 0, 52, 0.05), rgba(40, 167, 69, 0.05));
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    border: 1px solid var(--border-color);
+}
+
+.setup-tips h2 {
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-lg);
+    font-size: 1.5rem;
+}
+
+.setup-tips ul {
+    list-style: none;
+    padding: 0;
+}
+
+.setup-tips li {
+    padding: var(--spacing-sm) 0;
+    padding-left: var(--spacing-lg);
+    position: relative;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.setup-tips li:last-child {
+    border-bottom: none;
+}
+
+.setup-tips li::before {
+    content: "💡";
+    position: absolute;
+    left: 0;
+    top: var(--spacing-sm);
+}
+
+.setup-tips li strong {
+    color: var(--primary-color);
+}
+
 @media (max-width: 480px) {
     .modal-content {
         min-width: auto;
@@ -736,5 +905,27 @@ body {
     .modal-body,
     .modal-footer {
         padding: var(--spacing-md);
+    }
+    
+    .workspace-setup-guide {
+        padding: var(--spacing-lg);
+    }
+    
+    .setup-header h1 {
+        font-size: 2rem;
+    }
+    
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .setup-list li {
+        padding-left: 50px;
+    }
+    
+    .setup-list li::before {
+        width: 25px;
+        height: 25px;
+        font-size: 0.8rem;
     }
 }
