@@ -19,6 +19,28 @@ class LinkAnalysisService {
     }
 
     /**
+     * Normalize path separators for cross-platform compatibility
+     * Converts Windows backslashes to forward slashes
+     * @param {string} filePath - Path to normalize
+     * @returns {string} Normalized path with forward slashes
+     */
+    normalizePath(filePath) {
+        if (!filePath) return filePath;
+        return filePath.replace(/\\/g, '/');
+    }
+
+    /**
+     * Get normalized relative path for cross-platform compatibility
+     * @param {string} from - Base path
+     * @param {string} to - Target path
+     * @returns {string} Normalized relative path with forward slashes
+     */
+    getRelativePath(from, to) {
+        const relativePath = path.relative(from, to);
+        return this.normalizePath(relativePath);
+    }
+
+    /**
      * Analyze all markdown files in a directory to build link relationship graph
      * @param {string} rootPath - Root directory path to analyze
      * @returns {Promise<Object>} Graph data with nodes and edges
@@ -194,18 +216,26 @@ class LinkAnalysisService {
      */
     resolveLinkPath(linkPath, currentDir, rootPath) {
         try {
+            // Normalize input paths for cross-platform compatibility
+            const normalizedLinkPath = this.normalizePath(linkPath);
+            const normalizedCurrentDir = this.normalizePath(currentDir);
+            const normalizedRootPath = this.normalizePath(rootPath);
+            
             let resolvedPath;
 
-            if (path.isAbsolute(linkPath)) {
+            if (path.isAbsolute(normalizedLinkPath)) {
                 // Absolute path from root
-                resolvedPath = path.join(rootPath, linkPath.substring(1));
+                resolvedPath = path.join(rootPath, normalizedLinkPath.substring(1));
             } else {
                 // Relative path from current file
-                resolvedPath = path.resolve(currentDir, linkPath);
+                resolvedPath = path.resolve(currentDir, normalizedLinkPath);
             }
 
+            // Normalize the resolved path
+            resolvedPath = this.normalizePath(resolvedPath);
+            
             // Ensure the resolved path is within the root directory
-            const relativePath = path.relative(rootPath, resolvedPath);
+            const relativePath = this.getRelativePath(normalizedRootPath, resolvedPath);
             if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
                 return null; // Path escapes root directory
             }
@@ -223,6 +253,7 @@ class LinkAnalysisService {
 
             return resolvedPath;
         } catch (error) {
+            console.warn(`Error resolving link path: ${linkPath}`, error);
             return null;
         }
     }
@@ -299,7 +330,7 @@ class LinkAnalysisService {
                 id: key,
                 path: filePath,
                 name: path.basename(filePath),
-                relativePath: path.relative(rootPath, filePath),
+                relativePath: this.getRelativePath(rootPath, filePath),
                 size: stats.size,
                 modified: stats.modified,
                 incomingLinks: 0,
@@ -404,10 +435,11 @@ class LinkAnalysisService {
      * Get file key (relative path from root)
      * @param {string} filePath - Absolute file path
      * @param {string} rootPath - Root directory path
-     * @returns {string} File key
+     * @returns {string} File key with normalized path separators
      */
     getFileKey(filePath, rootPath) {
-        return path.relative(rootPath, filePath);
+        const relativePath = path.relative(rootPath, filePath);
+        return this.normalizePath(relativePath);
     }
 
     /**

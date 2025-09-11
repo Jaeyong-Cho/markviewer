@@ -247,18 +247,22 @@ class MarkViewerServer {
                     return res.status(400).json({ error: 'Image path parameter is required' });
                 }
 
-                // Resolve image path relative to markdown file
-                let resolvedImagePath = imagePath;
+                // Normalize paths for cross-platform compatibility
+                const normalizedImagePath = imagePath.replace(/\\/g, '/');
+                const normalizedMarkdownPath = markdownPath ? markdownPath.replace(/\\/g, '/') : null;
                 
-                if (markdownPath && !path.isAbsolute(imagePath)) {
+                // Resolve image path relative to markdown file
+                let resolvedImagePath = normalizedImagePath;
+                
+                if (normalizedMarkdownPath && !path.isAbsolute(normalizedImagePath)) {
                     // Get directory of the markdown file
-                    const markdownDir = path.dirname(markdownPath);
+                    const markdownDir = path.dirname(normalizedMarkdownPath);
                     // Resolve image path relative to markdown directory
-                    resolvedImagePath = path.resolve(markdownDir, imagePath);
+                    resolvedImagePath = path.resolve(markdownDir, normalizedImagePath);
                 }
 
                 // Security: Ensure the resolved path doesn't escape using path traversal
-                const normalizedPath = path.normalize(resolvedImagePath);
+                const normalizedPath = path.normalize(resolvedImagePath).replace(/\\/g, '/');
                 if (normalizedPath.includes('..')) {
                     return res.status(403).json({ error: 'Invalid image path' });
                 }

@@ -13,6 +13,17 @@ class FileHandler {
     }
 
     /**
+     * Normalize path separators for cross-platform compatibility
+     * Converts Windows backslashes to forward slashes
+     * @param {string} filePath - Path to normalize
+     * @returns {string} Normalized path with forward slashes
+     */
+    normalizePath(filePath) {
+        if (!filePath) return filePath;
+        return filePath.replace(/\\/g, '/');
+    }
+
+    /**
      * Validate that a path is safe and within allowed boundaries
      * @param {string} filePath - Path to validate
      * @throws {Error} If path is invalid or unsafe
@@ -22,8 +33,11 @@ class FileHandler {
             throw new Error('Path is required');
         }
 
+        // Normalize path for cross-platform compatibility
+        const normalizedPath = this.normalizePath(filePath);
+        
         // Resolve path to prevent directory traversal
-        const resolvedPath = path.resolve(filePath);
+        const resolvedPath = path.resolve(normalizedPath);
         
         // Check if path exists
         if (!fsSync.existsSync(resolvedPath)) {
