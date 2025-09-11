@@ -903,20 +903,49 @@ function renderMarkdown(content) {
      * @param {string} href - Link href
      */
     async handleInternalLink(href) {
-        // If it's a relative path, resolve it relative to current file
-        if (this.state.currentFile && !href.startsWith('/') && !href.includes('://')) {
-            const currentDir = this.state.currentFile.substring(0, this.state.currentFile.lastIndexOf('/'));
-            const resolvedPath = `${currentDir}/${href}`;
-            
-            if (Utils.isMarkdownFile(resolvedPath)) {
-                await this.handleFileSelect(resolvedPath);
-                return;
-            }
-        }
+        console.log('handleInternalLink called with href:', href);
+        console.log('Current file:', this.state.currentFile);
+        console.log('Root directory:', this.state.rootDirectory);
         
-        // For external links, open in new tab
+        // Handle external links
         if (href.includes('://')) {
             window.open(href, '_blank');
+            return;
+        }
+        
+        // Skip anchor links (same page navigation)
+        if (href.startsWith('#')) {
+            return;
+        }
+        
+        // If no current file or root directory, can't resolve relative links
+        if (!this.state.currentFile || !this.state.rootDirectory) {
+            console.warn('Cannot resolve link: missing current file or root directory');
+            return;
+        }
+        
+        let resolvedPath;
+        
+        // If it's an absolute path starting with root directory, use as is
+        if (href.startsWith(this.state.rootDirectory)) {
+            resolvedPath = href;
+        }
+        // If it's a root-relative path starting with /
+        else if (href.startsWith('/')) {
+            resolvedPath = Utils.joinPaths(this.state.rootDirectory, href);
+        }
+        // Otherwise treat as relative path
+        else {
+            resolvedPath = Utils.resolveLinkPath(href, this.state.currentFile, this.state.rootDirectory);
+        }
+        
+        console.log('Resolved path:', resolvedPath);
+        
+        // Check if it's a markdown file
+        if (Utils.isMarkdownFile(resolvedPath)) {
+            await this.handleFileSelect(resolvedPath);
+        } else {
+            console.warn('Not a markdown file:', resolvedPath);
         }
     }
 

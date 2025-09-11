@@ -148,6 +148,62 @@ function isMarkdownFile(filename) {
 }
 
 /**
+ * Normalize path separators for cross-platform compatibility
+ * Converts Windows backslashes to forward slashes
+ * @param {string} filePath - Path to normalize
+ * @returns {string} Normalized path with forward slashes
+ */
+function normalizePath(filePath) {
+    if (!filePath) return filePath;
+    return filePath.replace(/\\/g, '/');
+}
+
+/**
+ * Resolve a link path relative to a current file
+ * @param {string} linkPath - The link path to resolve
+ * @param {string} currentFilePath - Path of the current file
+ * @param {string} rootDirectory - Root directory path
+ * @returns {string} Resolved absolute file path
+ */
+function resolveLinkPath(linkPath, currentFilePath, rootDirectory) {
+    // Normalize all paths
+    const normalizedLinkPath = normalizePath(linkPath);
+    const normalizedCurrentPath = normalizePath(currentFilePath);
+    const normalizedRootPath = normalizePath(rootDirectory);
+    
+    // If link path is already absolute, return as is
+    if (normalizedLinkPath.startsWith('/')) {
+        return normalizedLinkPath;
+    }
+    
+    // If link path starts with root directory, return as is
+    if (normalizedLinkPath.startsWith(normalizedRootPath)) {
+        return normalizedLinkPath;
+    }
+    
+    // Get current file's directory
+    const currentDir = normalizedCurrentPath.substring(0, normalizedCurrentPath.lastIndexOf('/'));
+    
+    // Resolve relative path
+    const resolvedPath = joinPaths(currentDir, normalizedLinkPath);
+    
+    return normalizePath(resolvedPath);
+}
+
+/**
+ * Join path components with proper separators
+ * @param {...string} paths - Path components to join
+ * @returns {string} Joined path
+ */
+function joinPaths(...paths) {
+    return paths
+        .map(p => normalizePath(p))
+        .filter(p => p)
+        .join('/')
+        .replace(/\/+/g, '/'); // Remove duplicate slashes
+}
+
+/**
  * Generate a unique ID
  * @returns {string} Unique identifier
  */
@@ -431,6 +487,9 @@ window.Utils = {
     formatRelativeTime,
     getFileExtension,
     isMarkdownFile,
+    normalizePath,
+    resolveLinkPath,
+    joinPaths,
     generateId,
     deepClone,
     showLoading,
