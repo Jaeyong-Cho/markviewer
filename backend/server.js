@@ -11,6 +11,7 @@ const searchService = require('./services/search-service');
 const fileWatcher = require('./services/file-watcher');
 const WorkspaceScanner = require('./services/workspace-scanner');
 const LinkAnalysisService = require('./services/link-analysis-service');
+const pathUtils = require('./utils/path-utils');
 
 /**
  * Browser opening functionality has been removed
@@ -254,17 +255,25 @@ class MarkViewerServer {
                 // Resolve image path relative to markdown file
                 let resolvedImagePath = normalizedImagePath;
                 
-                if (normalizedMarkdownPath && !path.isAbsolute(normalizedImagePath)) {
+                if (normalizedMarkdownPath && !pathUtils.isAbsolutePath(normalizedImagePath)) {
                     // Get directory of the markdown file
-                    const markdownDir = path.dirname(normalizedMarkdownPath);
+                    const markdownDir = pathUtils.getDirname(normalizedMarkdownPath);
                     // Resolve image path relative to markdown directory
-                    resolvedImagePath = path.resolve(markdownDir, normalizedImagePath);
+                    resolvedImagePath = pathUtils.resolvePath(markdownDir, normalizedImagePath);
                 }
 
                 // Security: Ensure the resolved path doesn't escape using path traversal
-                const normalizedPath = path.normalize(resolvedImagePath).replace(/\\/g, '/');
-                if (normalizedPath.includes('..')) {
-                    return res.status(403).json({ error: 'Invalid image path' });
+                const normalizedPath = pathUtils.normalizePath(resolvedImagePath);
+                
+                // Check if path is within allowed directories
+                const isWithinMarkdownDir = normalizedMarkdownPath && 
+                    pathUtils.isPathWithinDirectory(pathUtils.getDirname(normalizedMarkdownPath), normalizedPath);
+                const isWithinWorkspace = this.config && this.config.rootPath && 
+                    pathUtils.isPathWithinDirectory(this.config.rootPath, normalizedPath);
+                
+                if (!isWithinMarkdownDir && !isWithinWorkspace) {
+                    console.warn('Image path security violation:', normalizedPath);
+                    return res.status(403).json({ error: 'Invalid image path - outside allowed directories' });
                 }
 
                 // Check if file exists and is an image
@@ -276,7 +285,7 @@ class MarkViewerServer {
                 }
 
                 // Get file extension to determine content type
-                const ext = path.extname(normalizedPath).toLowerCase();
+                const ext = pathUtils.getExtension(normalizedPath).toLowerCase();
                 const imageTypes = {
                     '.png': 'image/png',
                     '.jpg': 'image/jpeg',

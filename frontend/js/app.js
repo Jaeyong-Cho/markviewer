@@ -926,26 +926,47 @@ function renderMarkdown(content) {
         
         let resolvedPath;
         
+        // Normalize href to handle Windows paths
+        const normalizedHref = Utils.normalizePath(href);
+        const normalizedRoot = Utils.normalizePath(this.state.rootDirectory);
+        const normalizedCurrent = Utils.normalizePath(this.state.currentFile);
+        
+        console.log('Normalized values:', {
+            href: normalizedHref,
+            root: normalizedRoot,
+            current: normalizedCurrent
+        });
+        
         // If it's an absolute path starting with root directory, use as is
-        if (href.startsWith(this.state.rootDirectory)) {
-            resolvedPath = href;
+        if (normalizedHref.startsWith(normalizedRoot)) {
+            resolvedPath = normalizedHref;
         }
         // If it's a root-relative path starting with /
-        else if (href.startsWith('/')) {
-            resolvedPath = Utils.joinPaths(this.state.rootDirectory, href);
+        else if (normalizedHref.startsWith('/')) {
+            resolvedPath = Utils.joinPaths(normalizedRoot, normalizedHref.substring(1));
         }
         // Otherwise treat as relative path
         else {
-            resolvedPath = Utils.resolveLinkPath(href, this.state.currentFile, this.state.rootDirectory);
+            resolvedPath = Utils.resolveLinkPath(normalizedHref, normalizedCurrent, normalizedRoot);
         }
         
-        console.log('Resolved path:', resolvedPath);
+        console.log('Final resolved path:', resolvedPath);
         
         // Check if it's a markdown file
         if (Utils.isMarkdownFile(resolvedPath)) {
             await this.handleFileSelect(resolvedPath);
         } else {
             console.warn('Not a markdown file:', resolvedPath);
+            // Try adding .md extension if not present
+            if (!resolvedPath.endsWith('.md')) {
+                const withExtension = resolvedPath + '.md';
+                console.log('Trying with .md extension:', withExtension);
+                if (Utils.isMarkdownFile(withExtension)) {
+                    await this.handleFileSelect(withExtension);
+                    return;
+                }
+            }
+            console.warn('Could not resolve link:', href);
         }
     }
 

@@ -148,14 +148,23 @@ function isMarkdownFile(filename) {
 }
 
 /**
- * Normalize path separators for cross-platform compatibility
- * Converts Windows backslashes to forward slashes
- * @param {string} filePath - Path to normalize
- * @returns {string} Normalized path with forward slashes
+ * Normalize file path to use forward slashes and handle Windows paths
  */
 function normalizePath(filePath) {
     if (!filePath) return filePath;
-    return filePath.replace(/\\/g, '/');
+    
+    // Convert backslashes to forward slashes
+    let normalized = filePath.replace(/\\/g, '/');
+    
+    // Handle Windows drive letters (C:/ -> /C:/)
+    if (/^[A-Za-z]:\//.test(normalized)) {
+        normalized = '/' + normalized;
+    }
+    
+    // Remove duplicate slashes except for the first one
+    normalized = normalized.replace(/\/+/g, '/');
+    
+    return normalized;
 }
 
 /**
@@ -166,26 +175,39 @@ function normalizePath(filePath) {
  * @returns {string} Resolved absolute file path
  */
 function resolveLinkPath(linkPath, currentFilePath, rootDirectory) {
+    console.log('resolveLinkPath called with:', { linkPath, currentFilePath, rootDirectory });
+    
     // Normalize all paths
     const normalizedLinkPath = normalizePath(linkPath);
     const normalizedCurrentPath = normalizePath(currentFilePath);
     const normalizedRootPath = normalizePath(rootDirectory);
     
-    // If link path is already absolute, return as is
-    if (normalizedLinkPath.startsWith('/')) {
+    console.log('Normalized paths:', { 
+        normalizedLinkPath, 
+        normalizedCurrentPath, 
+        normalizedRootPath 
+    });
+    
+    // If link path is already absolute and starts with root, return as is
+    if (normalizedLinkPath.startsWith(normalizedRootPath)) {
+        console.log('Link path already absolute within root');
         return normalizedLinkPath;
     }
     
-    // If link path starts with root directory, return as is
-    if (normalizedLinkPath.startsWith(normalizedRootPath)) {
-        return normalizedLinkPath;
+    // If link path is absolute but not within root, try to resolve within root
+    if (normalizedLinkPath.startsWith('/')) {
+        const resolvedPath = joinPaths(normalizedRootPath, normalizedLinkPath.substring(1));
+        console.log('Resolved absolute path within root:', resolvedPath);
+        return resolvedPath;
     }
     
     // Get current file's directory
     const currentDir = normalizedCurrentPath.substring(0, normalizedCurrentPath.lastIndexOf('/'));
+    console.log('Current directory:', currentDir);
     
     // Resolve relative path
     const resolvedPath = joinPaths(currentDir, normalizedLinkPath);
+    console.log('Resolved relative path:', resolvedPath);
     
     return normalizePath(resolvedPath);
 }
@@ -196,11 +218,14 @@ function resolveLinkPath(linkPath, currentFilePath, rootDirectory) {
  * @returns {string} Joined path
  */
 function joinPaths(...paths) {
-    return paths
+    const joined = paths
         .map(p => normalizePath(p))
         .filter(p => p)
         .join('/')
         .replace(/\/+/g, '/'); // Remove duplicate slashes
+    
+    console.log('joinPaths result:', joined);
+    return joined;
 }
 
 /**
