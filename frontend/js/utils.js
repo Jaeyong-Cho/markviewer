@@ -156,13 +156,20 @@ function normalizePath(filePath) {
     // Convert backslashes to forward slashes
     let normalized = filePath.replace(/\\/g, '/');
     
-    // Handle Windows drive letters (C:/ -> /C:/)
-    if (/^[A-Za-z]:\//.test(normalized)) {
-        normalized = '/' + normalized;
+    // Handle Windows drive letters
+    // Remove leading slash from Windows paths like /C:/ -> C:/
+    if (/^\/[A-Za-z]:\//.test(normalized)) {
+        normalized = normalized.substring(1);
     }
     
-    // Remove duplicate slashes except for the first one
-    normalized = normalized.replace(/\/+/g, '/');
+    // Handle double slashes at the beginning for Windows UNC paths
+    // Keep them for UNC paths like //server/share
+    if (normalized.startsWith('//') && !normalized.startsWith('///')) {
+        // UNC path, keep as is
+    } else {
+        // Remove duplicate slashes except for UNC paths
+        normalized = normalized.replace(/\/+/g, '/');
+    }
     
     return normalized;
 }
@@ -191,6 +198,12 @@ function resolveLinkPath(linkPath, currentFilePath, rootDirectory) {
     // If link path is already absolute and starts with root, return as is
     if (normalizedLinkPath.startsWith(normalizedRootPath)) {
         console.log('Link path already absolute within root');
+        return normalizedLinkPath;
+    }
+    
+    // Check if it's a Windows absolute path (C:/, D:/, etc.)
+    if (/^[A-Za-z]:\//.test(normalizedLinkPath)) {
+        console.log('Windows absolute path detected:', normalizedLinkPath);
         return normalizedLinkPath;
     }
     

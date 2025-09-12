@@ -931,14 +931,21 @@ function renderMarkdown(content) {
         const normalizedRoot = Utils.normalizePath(this.state.rootDirectory);
         const normalizedCurrent = Utils.normalizePath(this.state.currentFile);
         
+        console.log('Before normalization:', { href });
+        console.log('After normalization:', { normalizedHref });
         console.log('Normalized values:', {
             href: normalizedHref,
             root: normalizedRoot,
             current: normalizedCurrent
         });
         
+        // Check if it's a Windows absolute path
+        if (/^[A-Za-z]:\//.test(normalizedHref)) {
+            console.log('Windows absolute path detected:', normalizedHref);
+            resolvedPath = normalizedHref;
+        }
         // If it's an absolute path starting with root directory, use as is
-        if (normalizedHref.startsWith(normalizedRoot)) {
+        else if (normalizedHref.startsWith(normalizedRoot)) {
             resolvedPath = normalizedHref;
         }
         // If it's a root-relative path starting with /
@@ -968,9 +975,7 @@ function renderMarkdown(content) {
             }
             console.warn('Could not resolve link:', href);
         }
-    }
-
-    /**
+    }    /**
      * Handle search
      * @param {string} query - Search query
      */

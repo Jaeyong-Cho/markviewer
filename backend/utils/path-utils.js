@@ -18,8 +18,18 @@ function normalizePath(filePath) {
     // Convert backslashes to forward slashes for consistency
     normalized = normalized.replace(/\\/g, '/');
     
-    // Remove duplicate slashes
-    normalized = normalized.replace(/\/+/g, '/');
+    // Handle Windows drive letters - remove leading slash
+    // /C:/ -> C:/
+    if (/^\/[A-Za-z]:\//.test(normalized)) {
+        normalized = normalized.substring(1);
+    }
+    
+    // Remove duplicate slashes (but preserve UNC paths)
+    if (normalized.startsWith('//') && !normalized.startsWith('///')) {
+        // UNC path, keep double slash
+    } else {
+        normalized = normalized.replace(/\/+/g, '/');
+    }
     
     return normalized;
 }
@@ -44,8 +54,16 @@ function resolvePath(basePath, relativePath) {
  * @returns {boolean} True if path is within parent directory
  */
 function isPathWithinDirectory(parentDir, targetPath) {
+    if (!parentDir || !targetPath) return false;
+    
     const normalizedParent = normalizePath(path.resolve(parentDir));
     const normalizedTarget = normalizePath(path.resolve(targetPath));
+    
+    console.log('isPathWithinDirectory check:', {
+        parent: normalizedParent,
+        target: normalizedTarget,
+        result: normalizedTarget.startsWith(normalizedParent)
+    });
     
     return normalizedTarget.startsWith(normalizedParent);
 }
