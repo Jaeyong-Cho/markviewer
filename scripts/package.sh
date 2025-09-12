@@ -121,6 +121,7 @@ info "Preparing backend..."
 cp -r backend/package.json "$PACKAGE_DIR/backend/"
 cp -r backend/server.js "$PACKAGE_DIR/backend/"
 cp -r backend/services "$PACKAGE_DIR/backend/"
+cp -r backend/utils "$PACKAGE_DIR/backend/"
 
 # Install backend dependencies
 info "Installing backend dependencies..."
